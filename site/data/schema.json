@@ -1,5 +1,6 @@
 {
  "repo": "",
+ "flags_base": "/W3",
  "games": [
   {
    "id": "universal",
@@ -95,6 +96,24 @@
    "name": "Retail compatibility"
   },
   {
+   "id": "bugs",
+   "name": "Retail bugs and quirks",
+   "note": "ON keeps the original retail behaviour, OFF applies the fix. Changing these can change gameplay and stop matches from staying in sync with other players."
+  },
+  {
+   "id": "compat",
+   "name": "Retail compatibility, in detail",
+   "note": "Only available while the Retail compatibility switch above is on Auto. Setting it to ON or OFF sets all of these at once."
+  },
+  {
+   "id": "gameplay",
+   "name": "Gameplay and interface"
+  },
+  {
+   "id": "files",
+   "name": "Files and loading"
+  },
+  {
    "id": "debug",
    "name": "Debug features"
   },
@@ -114,7 +133,7 @@
    "group": "retail",
    "type": "tristate",
    "default": "DEFAULT",
-   "help": "OFF enables retail-incompatible fixes (CRC, data, save and network changes). DEFAULT follows GameDefines.h."
+   "help": "OFF enables retail-incompatible fixes (CRC, data, save and network changes). Auto leaves each detail switch below as the source has it; ON or OFF sets them all."
   },
   {
    "id": "debug_logging",
@@ -122,7 +141,7 @@
    "group": "debug",
    "type": "tristate",
    "default": "DEFAULT",
-   "help": "Debug logging. DEFAULT = on for debug builds."
+   "help": "Debug logging. Auto: on in debug builds."
   },
   {
    "id": "debug_crashing",
@@ -130,7 +149,7 @@
    "group": "debug",
    "type": "tristate",
    "default": "DEFAULT",
-   "help": "Debug assert dialogs."
+   "help": "Debug assert dialogs. Auto: on in debug builds."
   },
   {
    "id": "debug_stacktrace",
@@ -138,7 +157,7 @@
    "group": "debug",
    "type": "tristate",
    "default": "DEFAULT",
-   "help": "Stack tracing. Implies debug logging."
+   "help": "Stack tracing. Implies debug logging. Auto: on in debug builds."
   },
   {
    "id": "debug_profile",
@@ -146,7 +165,7 @@
    "group": "debug",
    "type": "tristate",
    "default": "DEFAULT",
-   "help": "Debug profiling."
+   "help": "Debug profiling. Auto: on in debug builds."
   },
   {
    "id": "debug_cheats",
@@ -428,6 +447,714 @@
    "type": "bool",
    "default": "OFF",
    "help": "Build extra tools and tests."
+  },
+  {
+   "id": "bug_building_resumption_delay",
+   "define": "PRESERVE_BUILDING_RESUMPTION_DELAY",
+   "group": "bugs",
+   "title": "Building resumption delay",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "bug_chinook_passenger_dumping",
+   "define": "PRESERVE_CHINOOK_PASSENGER_DUMPING",
+   "group": "bugs",
+   "title": "Chinook passenger dumping",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix."
+  },
+  {
+   "id": "bug_hardcoded_black_lotus_cash_hack",
+   "define": "PRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK",
+   "group": "bugs",
+   "title": "Hardcoded Black Lotus cash hack",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix."
+  },
+  {
+   "id": "bug_multi_crate_pickup",
+   "define": "PRESERVE_MULTI_CRATE_PICKUP",
+   "group": "bugs",
+   "title": "Multi crate pickup",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "bug_no_xp_from_flame_kills",
+   "define": "PRESERVE_NO_XP_FROM_FLAME_KILLS",
+   "group": "bugs",
+   "title": "No XP from flame kills",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "bug_no_xp_from_ocl_kills",
+   "define": "PRESERVE_NO_XP_FROM_OCL_KILLS",
+   "group": "bugs",
+   "title": "No XP from OCL kills",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix."
+  },
+  {
+   "id": "bug_no_xp_from_poison_kills",
+   "define": "PRESERVE_NO_XP_FROM_POISON_KILLS",
+   "group": "bugs",
+   "title": "No XP from poison kills",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "bug_occupant_detection_via_drag_selection",
+   "define": "PRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION",
+   "group": "bugs",
+   "title": "Occupant detection via drag selection",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "bug_perpetual_horde_bonus",
+   "define": "PRESERVE_PERPETUAL_HORDE_BONUS",
+   "group": "bugs",
+   "title": "Perpetual horde bonus",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix."
+  },
+  {
+   "id": "bug_premature_battle_bus_death",
+   "define": "PRESERVE_PREMATURE_BATTLE_BUS_DEATH",
+   "group": "bugs",
+   "title": "Premature Battle Bus death",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "bug_radar_warning_suppression",
+   "define": "PRESERVE_RADAR_WARNING_SUPPRESSION",
+   "group": "bugs",
+   "title": "Radar warning suppression",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix."
+  },
+  {
+   "id": "bug_structure_stealth_during_repair",
+   "define": "PRESERVE_STRUCTURE_STEALTH_DURING_REPAIR",
+   "group": "bugs",
+   "title": "Structure stealth during repair",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "bug_tunnel_heal_stacking",
+   "define": "PRESERVE_TUNNEL_HEAL_STACKING",
+   "group": "bugs",
+   "title": "Tunnel heal stacking",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix."
+  },
+  {
+   "id": "bug_unreliable_firestorms",
+   "define": "PRESERVE_UNRELIABLE_FIRESTORMS",
+   "group": "bugs",
+   "title": "Unreliable firestorms",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "bug_sniping_empty_stinger_sites",
+   "define": "PRESERVE_SNIPING_EMPTY_STINGER_SITES",
+   "group": "bugs",
+   "title": "Sniping empty Stinger sites",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "bug_retail_scripted_camera",
+   "define": "PRESERVE_RETAIL_SCRIPTED_CAMERA",
+   "group": "bugs",
+   "title": "Retail scripted camera",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Retain scripted camera behaviour present in retail Generals 1.08 and Zero Hour 1.04."
+  },
+  {
+   "id": "bug_retail_particles",
+   "define": "PRESERVE_RETAIL_PARTICLES",
+   "group": "bugs",
+   "title": "Retail particle look",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Preserve the original look of particles present in retail Generals 1.08 and Zero Hour 1.04."
+  },
+  {
+   "id": "bug_retail_nuke_missile_outer_radius_search",
+   "define": "PRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH",
+   "group": "bugs",
+   "title": "Nuke missile outer radius search",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "bug_retail_nuke_missile_outer_radius_damage",
+   "define": "PRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE",
+   "group": "bugs",
+   "title": "Nuke missile outer radius damage",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "Keep retail",
+    "OFF": "Fixed"
+   },
+   "help": "Keep the original retail behaviour, or apply the fix. The fix was approved by the Game Design Committee."
+  },
+  {
+   "id": "compat_crc",
+   "define": "RETAIL_COMPATIBLE_CRC",
+   "group": "compat",
+   "title": "CRC",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Retail",
+    "OFF": "Changed"
+   },
+   "when": [
+    {
+     "switch": "retail_compat",
+     "in": [
+      "DEFAULT"
+     ]
+    }
+   ],
+   "why": "Set by the Retail compatibility switch above.",
+   "help": "Game is expected to be CRC compatible with retail Generals 1.08 and Zero Hour 1.04."
+  },
+  {
+   "id": "compat_data",
+   "define": "RETAIL_COMPATIBLE_DATA",
+   "group": "compat",
+   "title": "Data files",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Retail",
+    "OFF": "Changed"
+   },
+   "when": [
+    {
+     "switch": "retail_compat",
+     "in": [
+      "DEFAULT"
+     ]
+    }
+   ],
+   "why": "Set by the Retail compatibility switch above.",
+   "help": "Game and tool data files are expected to be compatible with retail Generals 1.08 and Zero Hour 1.04."
+  },
+  {
+   "id": "compat_xfer_save",
+   "define": "RETAIL_COMPATIBLE_XFER_SAVE",
+   "group": "compat",
+   "title": "Save files",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Retail",
+    "OFF": "Changed"
+   },
+   "when": [
+    {
+     "switch": "retail_compat",
+     "in": [
+      "DEFAULT"
+     ]
+    }
+   ],
+   "why": "Set by the Retail compatibility switch above.",
+   "help": "Game is expected to be Xfer-save compatible with retail Generals 1.08 and Zero Hour 1.04."
+  },
+  {
+   "id": "compat_pathfinding",
+   "define": "RETAIL_COMPATIBLE_PATHFINDING",
+   "group": "compat",
+   "title": "Pathfinding",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Retail",
+    "OFF": "Changed"
+   },
+   "when": [
+    {
+     "switch": "retail_compat",
+     "in": [
+      "DEFAULT"
+     ]
+    }
+   ],
+   "why": "Set by the Retail compatibility switch above.",
+   "help": "Retail-compatible pathfinding with a fixed fallback, or pure fixed pathfinding."
+  },
+  {
+   "id": "compat_pathfinding_allocation",
+   "define": "RETAIL_COMPATIBLE_PATHFINDING_ALLOCATION",
+   "group": "compat",
+   "title": "Pathfinding memory",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Retail",
+    "OFF": "Changed"
+   },
+   "when": [
+    {
+     "switch": "retail_compat",
+     "in": [
+      "DEFAULT"
+     ]
+    }
+   ],
+   "why": "Set by the Retail compatibility switch above.",
+   "help": "Retail-compatible pathfinding memory allocation, or the new statically allocated data."
+  },
+  {
+   "id": "compat_circle_fill_algorithm",
+   "define": "RETAIL_COMPATIBLE_CIRCLE_FILL_ALGORITHM",
+   "group": "compat",
+   "title": "Circle fill",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Retail",
+    "OFF": "Changed"
+   },
+   "when": [
+    {
+     "switch": "retail_compat",
+     "in": [
+      "DEFAULT"
+     ]
+    }
+   ],
+   "why": "Set by the Retail compatibility switch above.",
+   "help": "Use the original circle fill algorithm, which is more efficient but less accurate."
+  },
+  {
+   "id": "compat_networking",
+   "define": "RETAIL_COMPATIBLE_NETWORKING",
+   "group": "compat",
+   "title": "Networking",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Retail",
+    "OFF": "Changed"
+   },
+   "when": [
+    {
+     "switch": "retail_compat",
+     "in": [
+      "DEFAULT"
+     ]
+    }
+   ],
+   "why": "Set by the Retail compatibility switch above.",
+   "help": "Turn off non-retail networking fixes, such as putting more data per UDP packet."
+  },
+  {
+   "id": "compat_aigroup",
+   "define": "RETAIL_COMPATIBLE_AIGROUP",
+   "group": "compat",
+   "title": "AI groups",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Retail",
+    "OFF": "Changed"
+   },
+   "when": [
+    {
+     "switch": "retail_compat",
+     "in": [
+      "DEFAULT"
+     ]
+    }
+   ],
+   "why": "Set by the Retail compatibility switch above.",
+   "help": "AIGroup logic stays CRC compatible with retail (essentially the same as CRC compatibility)."
+  },
+  {
+   "id": "feat_enable_gametext_substitutes",
+   "define": "ENABLE_GAMETEXT_SUBSTITUTES",
+   "group": "gameplay",
+   "title": "Substitute texts",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "help": "Provide substitute texts when labels and strings are missing in the STR or CSF translation file."
+  },
+  {
+   "id": "feat_allow_money_per_minute_for_player",
+   "define": "ALLOW_MONEY_PER_MINUTE_FOR_PLAYER",
+   "group": "gameplay",
+   "title": "Money per minute",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "help": "Calculate and display a money-per-minute stat in game."
+  },
+  {
+   "id": "feat_enable_configurable_shroud",
+   "define": "ENABLE_CONFIGURABLE_SHROUD",
+   "group": "gameplay",
+   "title": "Configurable shroud",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "help": "The global data gets a field to turn the shroud on or off. Off makes shroud hacking less accessible in release builds."
+  },
+  {
+   "id": "feat_enable_gui_hacks",
+   "define": "ENABLE_GUI_HACKS",
+   "group": "gameplay",
+   "title": "GUI hacks",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "help": "Overwrite window settings until the wnd data files are adapted or fixed."
+  },
+  {
+   "id": "feat_prioritize_textures_by_size",
+   "define": "PRIORITIZE_TEXTURES_BY_SIZE",
+   "group": "gameplay",
+   "title": "Larger textures first",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "help": "Prefer the larger Generals textures in Zero Hour (481 textures). The content is identical."
+  },
+  {
+   "id": "feat_use_buffered_io",
+   "define": "USE_BUFFERED_IO",
+   "group": "files",
+   "title": "Buffered file IO",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "help": "Buffered IO in the file system. It was off in retail and is much faster for small reads and writes."
+  },
+  {
+   "id": "feat_enable_filesystem_existence_cache",
+   "define": "ENABLE_FILESYSTEM_EXISTENCE_CACHE",
+   "group": "files",
+   "title": "File existence cache",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "help": "Cache local file existence to cut disk access, at the cost of correctness if a cached file is deleted at runtime."
+  },
+  {
+   "id": "vc6_full_debug",
+   "cmake": "RTS_BUILD_OPTION_VC6_FULL_DEBUG",
+   "group": "extras",
+   "title": "VC6 full debug info",
+   "type": "bool",
+   "default": "OFF",
+   "when": [
+    {
+     "compiler": [
+      "vc6"
+     ]
+    }
+   ],
+   "why": "Only VC6 has this option.",
+   "help": "Build VC6 with full debug info (the weekly configuration turns this on)."
+  },
+  {
+   "id": "zh_tools",
+   "cmake": "RTS_BUILD_ZEROHOUR_TOOLS",
+   "group": "extras",
+   "title": "Zero Hour tools",
+   "type": "bool",
+   "default": "ON",
+   "when": [
+    {
+     "game": [
+      "zh",
+      "universal"
+     ]
+    }
+   ],
+   "why": "Zero Hour is not part of this build.",
+   "help": "Build the Zero Hour mod tools."
+  },
+  {
+   "id": "zh_extras",
+   "cmake": "RTS_BUILD_ZEROHOUR_EXTRAS",
+   "group": "extras",
+   "title": "Zero Hour extras",
+   "type": "bool",
+   "default": "OFF",
+   "when": [
+    {
+     "game": [
+      "zh",
+      "universal"
+     ]
+    }
+   ],
+   "why": "Zero Hour is not part of this build.",
+   "help": "Build the extra Zero Hour tools and tests."
+  },
+  {
+   "id": "zh_docs",
+   "cmake": "RTS_BUILD_ZEROHOUR_DOCS",
+   "group": "extras",
+   "title": "Zero Hour documentation",
+   "type": "bool",
+   "default": "OFF",
+   "when": [
+    {
+     "game": [
+      "zh",
+      "universal"
+     ]
+    }
+   ],
+   "why": "Zero Hour is not part of this build.",
+   "help": "Build the Zero Hour documentation."
+  },
+  {
+   "id": "generals_tools",
+   "cmake": "RTS_BUILD_GENERALS_TOOLS",
+   "group": "extras",
+   "title": "Generals tools",
+   "type": "bool",
+   "default": "ON",
+   "when": [
+    {
+     "game": [
+      "generals",
+      "universal"
+     ]
+    }
+   ],
+   "why": "Generals is not part of this build.",
+   "help": "Build the Generals mod tools."
+  },
+  {
+   "id": "generals_extras",
+   "cmake": "RTS_BUILD_GENERALS_EXTRAS",
+   "group": "extras",
+   "title": "Generals extras",
+   "type": "bool",
+   "default": "OFF",
+   "when": [
+    {
+     "game": [
+      "generals",
+      "universal"
+     ]
+    }
+   ],
+   "why": "Generals is not part of this build.",
+   "help": "Build the extra Generals tools and tests."
+  },
+  {
+   "id": "generals_docs",
+   "cmake": "RTS_BUILD_GENERALS_DOCS",
+   "group": "extras",
+   "title": "Generals documentation",
+   "type": "bool",
+   "default": "OFF",
+   "when": [
+    {
+     "game": [
+      "generals",
+      "universal"
+     ]
+    }
+   ],
+   "why": "Generals is not part of this build.",
+   "help": "Build the Generals documentation."
+  },
+  {
+   "id": "feat_use_obsolete_generals_code",
+   "define": "USE_OBSOLETE_GENERALS_CODE",
+   "group": "gameplay",
+   "title": "Obsolete Generals code",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "when": [
+    {
+     "game": [
+      "generals",
+      "universal"
+     ]
+    }
+   ],
+   "why": "Only exists in the Generals code.",
+   "help": "Code that existed in Generals but was removed in Zero Hour. The source plans to remove it when the two games are merged."
+  },
+  {
+   "id": "feat_tell_computer_identity_in_lan_lobby",
+   "define": "TELL_COMPUTER_IDENTITY_IN_LAN_LOBBY",
+   "group": "gameplay",
+   "title": "Computer identity in LAN lobby",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "when": [
+    {
+     "config": [
+      "debug"
+     ]
+    }
+   ],
+   "why": "The source only compiles this in when RTS_DEBUG is defined (the Debug configuration).",
+   "help": "Tell your computer identity in the LAN lobby. Retail did, and exposed the login and host names. Turn off for privacy."
+  },
+  {
+   "id": "feat_enable_filesystem_logging",
+   "define": "ENABLE_FILESYSTEM_LOGGING",
+   "group": "files",
+   "title": "File system logging",
+   "type": "bool",
+   "default": "OFF",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "help": "Log file system activity."
+  },
+  {
+   "id": "feat_ww3d_enable_raw_anim_interpolation",
+   "define": "WW3D_ENABLE_RAW_ANIM_INTERPOLATION",
+   "group": "gameplay",
+   "title": "Raw animation interpolation",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "On",
+    "OFF": "Off"
+   },
+   "help": "Interpolate raw animations. Wanted for meshes that move and rotate, but not for animations that teleport meshes, such as blinking lights."
   }
  ],
  "rules": [
@@ -532,7 +1259,7 @@
   {
    "id": "retail-on",
    "name": "Retail forced on",
-   "blurb": "Retail compatibility ON explicitly (the default behaviour, kept as a reference build).",
+   "blurb": "Retail compatibility ON explicitly (what the source does anyway, kept as a reference build).",
    "where": [
     {
      "compiler": [
@@ -705,6 +1432,80 @@
    ],
    "switches": {
     "ffmpeg": "ON"
+   }
+  },
+  {
+   "id": "all-bugs-kept",
+   "name": "Every retail bug kept",
+   "blurb": "All retail bug switches ON: the original behaviour, quirks included.",
+   "where": [
+    {
+     "compiler": [
+      "vc6",
+      "msvc"
+     ],
+     "config": [
+      "release"
+     ]
+    }
+   ],
+   "switches": {
+    "bug_building_resumption_delay": "ON",
+    "bug_chinook_passenger_dumping": "ON",
+    "bug_hardcoded_black_lotus_cash_hack": "ON",
+    "bug_multi_crate_pickup": "ON",
+    "bug_no_xp_from_flame_kills": "ON",
+    "bug_no_xp_from_ocl_kills": "ON",
+    "bug_no_xp_from_poison_kills": "ON",
+    "bug_occupant_detection_via_drag_selection": "ON",
+    "bug_perpetual_horde_bonus": "ON",
+    "bug_premature_battle_bus_death": "ON",
+    "bug_radar_warning_suppression": "ON",
+    "bug_structure_stealth_during_repair": "ON",
+    "bug_tunnel_heal_stacking": "ON",
+    "bug_unreliable_firestorms": "ON",
+    "bug_sniping_empty_stinger_sites": "ON",
+    "bug_retail_scripted_camera": "ON",
+    "bug_retail_particles": "ON",
+    "bug_retail_nuke_missile_outer_radius_search": "ON",
+    "bug_retail_nuke_missile_outer_radius_damage": "ON"
+   }
+  },
+  {
+   "id": "all-bugs-fixed",
+   "name": "Every retail bug fixed",
+   "blurb": "All retail bug switches OFF: the fixed behaviour. Will not stay in sync with retail players.",
+   "where": [
+    {
+     "compiler": [
+      "vc6",
+      "msvc"
+     ],
+     "config": [
+      "release"
+     ]
+    }
+   ],
+   "switches": {
+    "bug_building_resumption_delay": "OFF",
+    "bug_chinook_passenger_dumping": "OFF",
+    "bug_hardcoded_black_lotus_cash_hack": "OFF",
+    "bug_multi_crate_pickup": "OFF",
+    "bug_no_xp_from_flame_kills": "OFF",
+    "bug_no_xp_from_ocl_kills": "OFF",
+    "bug_no_xp_from_poison_kills": "OFF",
+    "bug_occupant_detection_via_drag_selection": "OFF",
+    "bug_perpetual_horde_bonus": "OFF",
+    "bug_premature_battle_bus_death": "OFF",
+    "bug_radar_warning_suppression": "OFF",
+    "bug_structure_stealth_during_repair": "OFF",
+    "bug_tunnel_heal_stacking": "OFF",
+    "bug_unreliable_firestorms": "OFF",
+    "bug_sniping_empty_stinger_sites": "OFF",
+    "bug_retail_scripted_camera": "OFF",
+    "bug_retail_particles": "OFF",
+    "bug_retail_nuke_missile_outer_radius_search": "OFF",
+    "bug_retail_nuke_missile_outer_radius_damage": "OFF"
    }
   }
  ]

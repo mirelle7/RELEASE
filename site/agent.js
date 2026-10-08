@@ -24,7 +24,7 @@
   const m = /(?:^#|[&#])agent-token=([\w-]+)/.exec(location.hash);
   if (m) { hashToken = m[1]; history.replaceState(null, "", location.pathname + location.search); }
 
-  const Agent = { connected: false, url: null, token: null, current: null, queue: [], results: [], timer: null, fails: 0 };
+  const Agent = { connected: false, url: null, token: null, current: null, progress: "", queue: [], results: [], timer: null, fails: 0 };
   window.PortalAgent = Agent;
   const changed = () => window.dispatchEvent(new CustomEvent("portal:agent"));
   const say = (msg, cls = "") => { const s = $("agent-status"); s.textContent = msg; s.className = "agent-status " + cls; };
@@ -67,7 +67,7 @@
 
   function disconnect() {
     clearInterval(Agent.timer);
-    Object.assign(Agent, { connected: false, current: null, queue: [], results: [] });
+    Object.assign(Agent, { connected: false, current: null, progress: "", queue: [], results: [] });
     store.set("agent-token", null);
     $("agent-connect").hidden = false; $("agent-disconnect").hidden = true;
     say("Disconnected.");
@@ -75,7 +75,7 @@
   }
 
   function apply(s) {
-    Object.assign(Agent, { current: s.current || null, queue: s.queue || [], results: s.results || [] });
+    Object.assign(Agent, { current: s.current || null, progress: s.progress || "", queue: s.queue || [], results: s.results || [] });
     renderQueue();
   }
 
@@ -84,9 +84,10 @@
       const st = await call("/api/status");
       if (st.status !== 200) throw new Error("status " + st.status);
       Agent.fails = 0;
-      const before = JSON.stringify([Agent.current, Agent.queue, Agent.results.map((r) => r.id + r.at_unix)]);
+      const sig = () => JSON.stringify([Agent.current, Agent.progress, Agent.queue, Agent.results.map((r) => r.id + r.at_unix)]);
+      const before = sig();
       apply(st.body);
-      if (before !== JSON.stringify([Agent.current, Agent.queue, Agent.results.map((r) => r.id + r.at_unix)])) changed();
+      if (before !== sig()) changed();
     } catch (e) {
       if (++Agent.fails >= 3) { disconnect(); say("Lost contact with the agent.", "bad"); }
     }
@@ -98,6 +99,12 @@
     if (r.status === 202) say(`Queued ${r.body.id} on your PC.`, "ok");
     else if (r.status === 200) say(`${r.body.id} is already queued.`);
     else say("The agent refused that build: " + ((r.body && r.body.error) || r.status), "bad");
+    poll();
+  };
+
+  Agent.cancel = async function () {
+    const r = await call("/api/cancel", { method: "POST" });
+    say(r.status === 200 ? "Cancelled. Nothing more will start." : "Could not cancel (" + r.status + ").", r.status === 200 ? "" : "bad");
     poll();
   };
 
@@ -117,13 +124,27 @@
     box.replaceChildren();
     if (!Agent.connected) return;
     const row = (label, id, cls, extra) => box.append(el("div", { class: "qrow" }, el("span", { class: "tag " + cls, text: label }), el("code", { text: id }), ...(extra || [])));
-    if (Agent.current) row("building", Agent.current, "info");
+    if (Agent.current || Agent.queue.length) {
+      box.append(el("p", { class: "progress" },
+        el("span", { text: Agent.current ? `Building ${Agent.current}${Agent.progress ? " — " + Agent.progress : ""}` : "Waiting to start" }),
+        el("button", { type: "button", class: "ghost", text: "Cancel", onclick: () => Agent.cancel() })));
+    }
     Agent.queue.forEach((id) => row("queued", id, ""));
-    Agent.results.slice(0, 8).forEach((r) => {
-      if (r.dry_run) row("dry run", r.id, "");
-      else if (r.ok) row("done", r.id, "ok", [el("button", { type: "button", class: "ghost", text: "Download", onclick: () => Agent.download(r.id) })]);
-      else row("failed", r.id, "bad", [el("span", { class: "hint", text: r.error || "" })]);
-    });
+    const finished = (r) => {
+      const name = r.label ? `${r.label}${r.sha ? " · " + r.sha.slice(0, 7) : ""}` : r.id;
+      if (r.dry_run) return row("dry run", name, "");
+      if (r.ok) return row("done", name, "ok", [el("button", { type: "button", class: "ghost", text: "Download", onclick: () => Agent.download(r.id) })]);
+      row("failed", name, "bad", [el("span", { class: "hint", text: r.error || "" })]);
+    };
+    // Range steps are shown together under their range; everything else as before.
+    const groups = new Map(), singles = [];
+    for (const r of Agent.results.slice(0, 60)) (r.group ? (groups.has(r.group) ? groups.get(r.group) : groups.set(r.group, []).get(r.group)).push(r) : singles.push(r));
+    for (const [id, steps] of groups) {
+      const ok = steps.filter((s) => s.ok).length;
+      box.append(el("div", { class: "qgroup", text: `Range ${id}: ${ok} of ${steps.length} built` }));
+      steps.sort((x, y) => x.at_unix - y.at_unix).forEach(finished);
+    }
+    singles.slice(0, 8).forEach(finished);
     if (!box.children.length) box.append(el("p", { class: "hint", text: "Nothing yet. Pick a configuration above and press “Build on my PC”." }));
   }
 

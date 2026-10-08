@@ -34,6 +34,8 @@ def cond_ok(cond, ctx):
         return False
     if "config" in cond and ctx["config"] not in cond["config"]:
         return False
+    if "game" in cond and ctx["game"] not in cond["game"]:
+        return False
     if "switch" in cond:
         val = ctx["values"][cond["switch"]]
         if "in" in cond and val not in cond["in"]:
@@ -92,7 +94,7 @@ def resolve(m, sel):
 
     # Effective values, in declaration order (a switch may only depend on earlier ones).
     values = {}
-    ctx = {"compiler": compiler, "config": config, "values": values}
+    ctx = {"compiler": compiler, "config": config, "game": game, "values": values}
     for s in m["switches"]:
         want = user.get(s["id"], s["default"])
         allowed = ["DEFAULT", "ON", "OFF"] if s["type"] == "tristate" else ["ON", "OFF"]
@@ -116,9 +118,12 @@ def resolve(m, sel):
     switches = {s["id"]: values[s["id"]] for s in m["switches"]
                 if s["id"] not in disabled and values[s["id"]] != s["default"]}
 
-    # Retail CRC compatibility: VC6 and the master switch not forced OFF.
-    retail = compilers[compiler]["retail_crc"] and values["retail_compat"] != "OFF"
-    if not retail and values["retail_compat"] != "OFF":
+    # Retail CRC compatibility: VC6, the master switch not OFF, and the two CRC-related detail switches not OFF.
+    def eff(i):  # a switch that is not available counts as its source value
+        return sw_by_id[i]["default"] if i in disabled else values[i]
+    retail = (compilers[compiler]["retail_crc"] and eff("retail_compat") != "OFF"
+              and eff("compat_crc") != "OFF" and eff("compat_aigroup") != "OFF")
+    if not compilers[compiler]["retail_crc"] and values["retail_compat"] != "OFF":
         warnings.append("Not CRC-compatible with retail: " + compilers[compiler]["note"])
 
     out = {
@@ -144,12 +149,17 @@ def command_for(m, game, preset, values, switches):
         preset = m["vcpkg_presets"].get(preset, preset)
     g = next(g for g in m["games"] if g["id"] == game)
     args = [f"-D{k}={v}" for k, v in g["cmake"].items()]
-    args += [f"-D{sw_by_id[k]['cmake']}={v}" for k, v in switches.items()]
+    args += [f"-D{sw_by_id[k]['cmake']}={v}" for k, v in switches.items() if "cmake" in sw_by_id[k]]
+    # Code flags are compile definitions, carried in RTS_FLAGS (a ;-list, which the presets also use for /W3).
+    defines = [f"/D{sw_by_id[k]['define']}={'1' if v == 'ON' else '0'}" for k, v in switches.items() if "define" in sw_by_id[k]]
+    if defines:
+        args.append("-DRTS_FLAGS=" + ";".join([m["flags_base"]] + defines))
+    shown = [f'{a[:a.index("=") + 1]}"{a[a.index("=") + 1:]}"' if a.startswith("-DRTS_FLAGS=") else a for a in args]
     return {
         "preset": preset,
         "ci_game": g["ci_name"],
         "cmake_args": args,
-        "command": " ".join(["cmake", "--preset", preset] + args),
+        "command": " ".join(["cmake", "--preset", preset] + shown),
     }
 
 
@@ -177,7 +187,7 @@ def expand(m):
     for t in m["tier1"]:
         for g in m["games"]:
             add(g["id"], t["compiler"], t["config"], {}, 1,
-                f"{cfg_name[t['config']]} ({comp_name[t['compiler']]})", "CI preset, default switches.")
+                f"{cfg_name[t['config']]} ({comp_name[t['compiler']]})", "The CI preset, built as is.")
     for v in m["tier2"]:
         for on in v["where"]:
             variant_games = (g["id"] for g in m["games"] if g.get("tier2", True))

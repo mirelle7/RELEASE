@@ -53,15 +53,53 @@ var (
 	reID     = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,80}$`)
 	rePreset = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
 	reArg    = regexp.MustCompile(`^-DRTS_[A-Z0-9_]{1,80}=(ON|OFF|DEFAULT)$`)
+	// Code flags travel as compile definitions in RTS_FLAGS: the presets' /W3, then /DNAME=0 or /DNAME=1 entries.
+	reFlags  = regexp.MustCompile(`^-DRTS_FLAGS=/W3(;/D[A-Z][A-Z0-9_]{2,80}=[01])+$`)
+	reRemote = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,40}$`)
 	games    = map[string]bool{"Generals": true, "GeneralsMD": true, "Universal": true}
 )
 
 // Job is what the page sends: an already-resolved build.
 type Job struct {
-	ID     string   `json:"id"`
-	Preset string   `json:"preset"`
-	Game   string   `json:"game"` // CI folder name: Generals or GeneralsMD
-	Args   []string `json:"args"` // -DRTS_...=ON|OFF|DEFAULT
+	ID     string     `json:"id"`
+	Preset string     `json:"preset"`
+	Game   string     `json:"game"`            // CI folder name: Generals, GeneralsMD or Universal
+	Args   []string   `json:"args"`            // -DRTS_...=ON|OFF|DEFAULT, and -DRTS_FLAGS=/W3;/DNAME=0|1;...
+	Range  *RangeSpec `json:"range,omitempty"` // build this configuration at many points in history
+}
+
+// RangeSpec builds the same configuration at From, From+Step, ... up to To.
+// Unit "pr" checks out the head of that pull request number; "commit" the Nth commit (counted from the oldest,
+// first-parent) of the history of your current checkout.
+type RangeSpec struct {
+	Unit string `json:"unit"`
+	From int    `json:"from"`
+	To   int    `json:"to"`
+	Step int    `json:"step"`
+}
+
+const maxRangeSteps = 100
+
+func (r RangeSpec) Points() []int {
+	var out []int
+	for n := r.From; n <= r.To; n += r.Step {
+		out = append(out, n)
+	}
+	return out
+}
+
+func (r RangeSpec) Validate() error {
+	switch {
+	case r.Unit != "pr" && r.Unit != "commit":
+		return errors.New(`range unit must be "pr" or "commit"`)
+	case r.From < 1 || r.To < r.From || r.To > 100000000:
+		return errors.New("range needs 1 <= from <= to")
+	case r.Step < 1:
+		return errors.New("range step must be at least 1")
+	case len(r.Points()) > maxRangeSteps:
+		return fmt.Errorf("that range is %d builds; the limit is %d. Use a larger interval", len(r.Points()), maxRangeSteps)
+	}
+	return nil
 }
 
 // Result is stored as <out>/<id>/manifest.json and reported by /api/status.
@@ -70,6 +108,9 @@ type Result struct {
 	OK     bool   `json:"ok"`
 	DryRun bool   `json:"dry_run,omitempty"`
 	Error  string `json:"error,omitempty"`
+	Group  string `json:"group,omitempty"` // the range this step belongs to
+	Label  string `json:"label,omitempty"` // e.g. "PR #510"
+	Sha    string `json:"sha,omitempty"`
 	At     string `json:"at"`
 	AtUnix int64  `json:"at_unix"`
 	Files  int    `json:"files,omitempty"`
@@ -95,14 +136,26 @@ type Agent struct {
 	Run             Runner
 	Site            fs.FS
 
-	mu      sync.Mutex
-	current string
-	pending []string
-	jobs    chan Job
+	Remote string  // git remote that range builds fetch pull requests from
+	Git    GitFunc // nil = the real git; replaced in tests
+
+	mu        sync.Mutex
+	current   string
+	progress  string
+	pending   []string
+	jobs      chan queued
+	cancelGen int
+	cancel    context.CancelFunc
+}
+
+// queued remembers which generation of the queue a job was added in, so Cancel can drop everything older.
+type queued struct {
+	Job Job
+	Gen int
 }
 
 func NewAgent(src, out, token string, allow []string, dryRun bool, run Runner) *Agent {
-	a := &Agent{Src: src, Out: out, Token: token, Allow: map[string]bool{}, DryRun: dryRun, Run: run, jobs: make(chan Job, 64)}
+	a := &Agent{Src: src, Out: out, Token: token, Allow: map[string]bool{}, DryRun: dryRun, Run: run, Remote: "origin", jobs: make(chan queued, 64)}
 	for _, o := range allow {
 		a.Allow[strings.TrimRight(o, "/")] = true
 	}
@@ -143,12 +196,25 @@ func (a *Agent) Validate(j Job) error {
 		return errors.New("bad preset name")
 	case !games[j.Game]:
 		return errors.New("game must be Generals, GeneralsMD or Universal")
-	case len(j.Args) > 40:
+	case len(j.Args) > 80:
 		return errors.New("too many arguments")
 	}
+	flagArgs := 0
 	for _, arg := range j.Args {
-		if !reArg.MatchString(arg) {
-			return fmt.Errorf("argument %q is not an allowed -DRTS_*=ON|OFF|DEFAULT switch", arg)
+		if reFlags.MatchString(arg) {
+			if strings.Count(arg, ";") > 120 {
+				return errors.New("too many compile definitions")
+			}
+			if flagArgs++; flagArgs > 1 {
+				return errors.New("only one -DRTS_FLAGS argument is allowed")
+			}
+		} else if !reArg.MatchString(arg) {
+			return fmt.Errorf("argument %q is not an allowed -DRTS_*=ON|OFF|DEFAULT switch or RTS_FLAGS list", arg)
+		}
+	}
+	if j.Range != nil {
+		if err := j.Range.Validate(); err != nil {
+			return err
 		}
 	}
 	known, err := a.presets()
@@ -164,25 +230,58 @@ func (a *Agent) Validate(j Job) error {
 // ---------------------------------------------------------------------------------------------- building
 
 func (a *Agent) worker() {
-	for j := range a.jobs {
+	for q := range a.jobs {
+		j := q.Job
 		a.mu.Lock()
-		a.current = j.ID
 		a.pending = remove(a.pending, j.ID)
+		if q.Gen < a.cancelGen { // cancelled while it was waiting
+			a.mu.Unlock()
+			continue
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		a.current, a.progress, a.cancel = j.ID, "", cancel
 		a.mu.Unlock()
 
-		res := a.build(j)
-		if raw, err := json.MarshalIndent(res, "", " "); err == nil {
-			_ = os.MkdirAll(filepath.Join(a.Out, j.ID), 0o755)
-			_ = os.WriteFile(filepath.Join(a.Out, j.ID, "manifest.json"), raw, 0o644)
-		}
-		if res.OK {
-			fmt.Printf("built %s\n", j.ID)
+		if j.Range != nil {
+			a.runRange(ctx, j)
 		} else {
-			fmt.Printf("FAILED %s: %s\n", j.ID, res.Error)
+			a.record(a.build(ctx, a.Src, j, j.ID, nil))
 		}
+
+		cancel()
 		a.mu.Lock()
-		a.current = ""
+		a.current, a.progress, a.cancel = "", "", nil
 		a.mu.Unlock()
+	}
+}
+
+// Cancel drops everything waiting and stops the build in progress (a range stops before its next step).
+func (a *Agent) Cancel() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.cancelGen++
+	a.pending = nil
+	if a.cancel != nil {
+		a.cancel()
+	}
+}
+
+func (a *Agent) setCurrent(id, progress string) {
+	a.mu.Lock()
+	a.current, a.progress = id, progress
+	a.mu.Unlock()
+}
+
+// record writes the result next to the build and reports it.
+func (a *Agent) record(res Result) {
+	if raw, err := json.MarshalIndent(res, "", " "); err == nil {
+		_ = os.MkdirAll(filepath.Join(a.Out, res.ID), 0o755)
+		_ = os.WriteFile(filepath.Join(a.Out, res.ID, "manifest.json"), raw, 0o644)
+	}
+	if res.OK {
+		fmt.Printf("built %s\n", res.ID)
+	} else {
+		fmt.Printf("FAILED %s: %s\n", res.ID, res.Error)
 	}
 }
 
@@ -201,60 +300,80 @@ func now() (string, int64) {
 	return t.UTC().Format("2006-01-02 15:04 UTC"), t.Unix()
 }
 
-func (a *Agent) fail(id, msg string) Result {
+// stepMeta describes where in history a build was made.
+type stepMeta struct{ Group, Label, Sha string }
+
+func (a *Agent) fail(id string, meta *stepMeta, msg string) Result {
 	at, unix := now()
-	return Result{ID: id, At: at, AtUnix: unix, Error: msg}
+	r := Result{ID: id, At: at, AtUnix: unix, Error: msg}
+	if meta != nil {
+		r.Group, r.Label, r.Sha = meta.Group, meta.Label, meta.Sha
+	}
+	return r
 }
 
-func (a *Agent) build(j Job) Result {
-	dir := filepath.Join(a.Out, j.ID)
+// build runs one configuration in src (your checkout, or a temporary worktree for range builds).
+func (a *Agent) build(ctx context.Context, src string, j Job, id string, meta *stepMeta) Result {
+	dir := filepath.Join(a.Out, id)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return a.fail(j.ID, err.Error())
+		return a.fail(id, meta, err.Error())
 	}
 	logf, err := os.Create(filepath.Join(dir, "build.log"))
 	if err != nil {
-		return a.fail(j.ID, err.Error())
+		return a.fail(id, meta, err.Error())
 	}
 	defer logf.Close()
-	_ = os.Remove(filepath.Join(dir, j.ID+".zip"))
+	_ = os.Remove(filepath.Join(dir, id+".zip"))
 
 	steps := [][]string{append([]string{"--preset", j.Preset}, j.Args...), {"--build", "--preset", j.Preset}}
 	if a.DryRun {
 		for _, s := range steps {
 			fmt.Fprintf(logf, "would run: cmake %s\n", strings.Join(s, " "))
 		}
-		at, unix := now()
-		return Result{ID: j.ID, OK: true, DryRun: true, At: at, AtUnix: unix}
+		r := a.fail(id, meta, "")
+		r.OK, r.DryRun = true, true
+		return r
 	}
 	if _, err := exec.LookPath("cmake"); err != nil && a.Run == nil {
-		return a.fail(j.ID, "cmake was not found on PATH. Start the agent from a developer shell with the compiler and CMake set up.")
+		return a.fail(id, meta, "cmake was not found on PATH. Start the agent from a developer shell with the compiler and CMake set up.")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), buildBudget)
+	ctx, cancel := context.WithTimeout(ctx, buildBudget)
 	defer cancel()
 	run := a.Run
 	if run == nil {
 		run = execRunner
 	}
 	for _, s := range steps {
-		if err := run(ctx, a.Src, logf, "cmake", s...); err != nil {
-			return a.fail(j.ID, fmt.Sprintf("cmake %s failed: %v (see %s)", s[0], err, filepath.Join(dir, "build.log")))
+		if err := run(ctx, src, logf, "cmake", s...); err != nil {
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return a.fail(id, meta, "cancelled")
+			}
+			return a.fail(id, meta, fmt.Sprintf("cmake %s failed: %v (see %s)", s[0], err, filepath.Join(dir, "build.log")))
 		}
 	}
 
-	files := collect(a.Src, j.Preset, j.Game)
+	files := collect(src, j.Preset, j.Game)
 	if len(files) == 0 {
-		return a.fail(j.ID, "the build finished but produced no .exe/.dll/.pdb under build/"+j.Preset)
+		return a.fail(id, meta, "the build finished but produced no .exe/.dll/.pdb under build/"+j.Preset)
 	}
-	zpath := filepath.Join(dir, j.ID+".zip")
-	if err := writeZip(zpath, files, fmt.Sprintf("id: %s\nbuilt: %s\npreset: %s\nargs: %s\n", j.ID, time.Now().UTC().Format(time.RFC3339), j.Preset, strings.Join(j.Args, " "))); err != nil {
-		return a.fail(j.ID, err.Error())
+	zpath := filepath.Join(dir, id+".zip")
+	info := fmt.Sprintf("id: %s\nbuilt: %s\npreset: %s\nargs: %s\n", id, time.Now().UTC().Format(time.RFC3339), j.Preset, strings.Join(j.Args, " "))
+	if meta != nil {
+		info += fmt.Sprintf("source: %s %s\n", meta.Label, meta.Sha)
+	}
+	if err := writeZip(zpath, files, info); err != nil {
+		return a.fail(id, meta, err.Error())
 	}
 	sum, size, err := hashFile(zpath)
 	if err != nil {
-		return a.fail(j.ID, err.Error())
+		return a.fail(id, meta, err.Error())
 	}
 	at, unix := now()
-	return Result{ID: j.ID, OK: true, At: at, AtUnix: unix, Files: len(files), Size: size, SHA256: sum, File: j.ID + ".zip"}
+	r := Result{ID: id, OK: true, At: at, AtUnix: unix, Files: len(files), Size: size, SHA256: sum, File: id + ".zip"}
+	if meta != nil {
+		r.Group, r.Label, r.Sha = meta.Group, meta.Label, meta.Sha
+	}
+	return r
 }
 
 // collect gathers the binaries the way the CI workflow does.
@@ -351,8 +470,8 @@ func (a *Agent) results() []Result {
 		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].AtUnix > out[j].AtUnix })
-	if len(out) > 30 {
-		out = out[:30]
+	if len(out) > 120 {
+		out = out[:120]
 	}
 	return out
 }
@@ -394,12 +513,20 @@ func (a *Agent) Handler() http.Handler {
 	})
 	mux.HandleFunc("/api/status", a.auth(func(w http.ResponseWriter, r *http.Request) {
 		a.mu.Lock()
-		st := map[string]any{"busy": a.current != "", "current": a.current, "queue": append([]string{}, a.pending...), "dry_run": a.DryRun}
+		st := map[string]any{"busy": a.current != "", "current": a.current, "progress": a.progress, "queue": append([]string{}, a.pending...), "dry_run": a.DryRun}
 		a.mu.Unlock()
 		st["results"] = a.results()
 		writeJSON(w, 200, st)
 	}))
 	mux.HandleFunc("/api/queue", a.auth(a.handleQueue))
+	mux.HandleFunc("/api/cancel", a.auth(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, 405, map[string]string{"error": "POST only"})
+			return
+		}
+		a.Cancel()
+		writeJSON(w, 200, map[string]bool{"cancelled": true})
+	}))
 	mux.HandleFunc("/api/download/", a.auth(a.handleDownload))
 	if a.Site != nil {
 		mux.Handle("/", http.FileServer(http.FS(a.Site)))
@@ -464,7 +591,7 @@ func (a *Agent) handleQueue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	select {
-	case a.jobs <- j:
+	case a.jobs <- queued{Job: j, Gen: a.cancelGen}:
 		a.pending = append(a.pending, j.ID)
 		pos := len(a.pending)
 		a.mu.Unlock()
@@ -550,6 +677,7 @@ func main() {
 		out       = flag.String("out", filepath.Join(exeDir(), "agent-output"), "where finished builds and logs go")
 		dryRun    = flag.Bool("dry-run", false, "accept jobs but build nothing")
 		noBrowser = flag.Bool("no-browser", false, "do not open the page automatically")
+		remote    = flag.String("remote", "origin", "git remote that range builds fetch pull requests from")
 		allow     multiFlag
 	)
 	flag.Var(&allow, "allow-origin", "also answer a copy of the page hosted at this origin, e.g. https://you.github.io (repeatable)")
@@ -577,7 +705,12 @@ func main() {
 	if tok == "" {
 		tok = newToken()
 	}
+	if !reRemote.MatchString(*remote) {
+		pause("bad --remote name")
+		os.Exit(1)
+	}
 	a := NewAgent(abs, *out, tok, allow, *dryRun, nil)
+	a.Remote = *remote
 	if _, err := a.presets(); err != nil {
 		pause(err.Error())
 		os.Exit(1)

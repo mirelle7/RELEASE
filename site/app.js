@@ -47,6 +47,7 @@ function sha1hex(str) {
 function condOk(c, ctx) {
   if (c.compiler && !c.compiler.includes(ctx.compiler)) return false;
   if (c.config && !c.config.includes(ctx.config)) return false;
+  if (c.game && !c.game.includes(ctx.game)) return false;
   if (c.switch) {
     const v = ctx.values[c.switch];
     if (c.in && !c.in.includes(v)) return false;
@@ -79,7 +80,7 @@ function resolve(m, sel) {
   if (!preset) errors.push(`${configs[config].name} is not available with ${compilers[compiler].name}`);
 
   const values = {};
-  const ctx = { compiler, config, values };
+  const ctx = { compiler, config, game, values };
   for (const s of m.switches) {
     let want = user[s.id] ?? s.default;
     const allowed = s.type === "tristate" ? ["DEFAULT", "ON", "OFF"] : ["ON", "OFF"];
@@ -95,18 +96,25 @@ function resolve(m, sel) {
 
   const switches = {};
   for (const s of m.switches) if (!(s.id in disabled) && values[s.id] !== s.default) switches[s.id] = values[s.id];
-  const retail = compilers[compiler].retail_crc && values.retail_compat !== "OFF";
-  if (!retail && values.retail_compat !== "OFF") warnings.push("Not CRC-compatible with retail: " + compilers[compiler].note);
+  const eff = (i) => (i in disabled ? swById[i].default : values[i]);
+  const retail = compilers[compiler].retail_crc && eff("retail_compat") !== "OFF" && eff("compat_crc") !== "OFF" && eff("compat_aigroup") !== "OFF";
+  if (!compilers[compiler].retail_crc && values.retail_compat !== "OFF") warnings.push("Not CRC-compatible with retail: " + compilers[compiler].note);
 
   const out = { valid: errors.length === 0, errors, warnings, disabled, game, compiler, config, switches, retail_crc: retail, values, id: buildId(game, compiler, config, switches) };
   if (preset && !errors.length) {
     const p = values.ffmpeg === "ON" ? (m.vcpkg_presets[preset] || preset) : preset;
     const args = Object.entries(games[game].cmake).map(([k, v]) => `-D${k}=${v}`);
-    for (const [k, v] of Object.entries(switches)) args.push(`-D${swById[k].cmake}=${v}`);
+    const defines = [];
+    for (const [k, v] of Object.entries(switches)) {
+      if (swById[k].cmake) args.push(`-D${swById[k].cmake}=${v}`);
+      else defines.push(`/D${swById[k].define}=${v === "ON" ? 1 : 0}`);
+    }
+    if (defines.length) args.push("-DRTS_FLAGS=" + [m.flags_base, ...defines].join(";"));
+    const shown = args.map((a) => (a.startsWith("-DRTS_FLAGS=") ? `-DRTS_FLAGS="${a.slice(12)}"` : a));
     out.preset = p;
     out.cmake_args = args;
     out.ci_game = games[game].ci_name;
-    out.command = ["cmake", "--preset", p, ...args].join(" ");
+    out.command = ["cmake", "--preset", p, ...shown].join(" ");
   }
   return out;
 }
@@ -191,6 +199,7 @@ function renderResult(r) {
   } else if (r.valid) {
     acts.append(el("a", { class: "btn alt", href: "#desktop", text: "Build on my PC…" }));
   }
+  renderRange(r);
   $("res-cmd").textContent = r.valid ? r.command : "Fix the problems above to see the build command.";
   $("copy-cmd").disabled = !r.valid;
   const kv = $("res-kv");
@@ -205,25 +214,72 @@ function renderResult(r) {
   }
 }
 
+/* ---- build across history ---- */
+const RANGE_LIMIT = 100;
+function rangeSpec() {
+  return { unit: $("range-unit").value, from: parseInt($("range-from").value, 10), to: parseInt($("range-to").value, 10), step: parseInt($("range-step").value, 10) };
+}
+function rangeProblem(s) {
+  if (![s.from, s.to, s.step].every(Number.isInteger)) return "Enter whole numbers.";
+  if (s.from < 1) return "From must be at least 1.";
+  if (s.to < s.from) return "To must not be lower than From.";
+  if (s.step < 1) return "Every must be at least 1.";
+  const n = Math.floor((s.to - s.from) / s.step) + 1;
+  if (n > RANGE_LIMIT) return `That is ${n} builds; the limit is ${RANGE_LIMIT}. Use a larger interval.`;
+  return null;
+}
+function rangePoints(s) { const out = []; for (let n = s.from; n <= s.to; n += s.step) out.push(n); return out; }
+
+function renderRange(r) {
+  const s = rangeSpec(), problem = rangeProblem(s), ag = window.PortalAgent;
+  const pts = problem ? [] : rangePoints(s), tag = s.unit === "pr" ? "PR #" : "commit #";
+  const show = pts.length > 6 ? [...pts.slice(0, 3), "…", ...pts.slice(-2)] : pts;
+  $("range-preview").textContent = problem || `${pts.length} build${pts.length === 1 ? "" : "s"}: ${show.map((n) => (n === "…" ? n : tag + n)).join(", ")}`;
+  $("range-preview").className = "hint" + (problem ? " bad" : "");
+  const go = $("range-go");
+  go.disabled = !(r.valid && !problem && ag && ag.connected);
+  go.title = !ag || !ag.connected ? "Connect to your PC first (see Build on my PC)" : "";
+}
+
+function wireRange() {
+  for (const id of ["range-unit", "range-from", "range-to", "range-step"]) $(id).addEventListener("input", render);
+  $("range-go").addEventListener("click", () => {
+    const sel = { game: state.game, compiler: state.compiler, config: state.config, switches: state.switches };
+    const r = resolve(M, sel), s = rangeSpec();
+    if (!r.valid || rangeProblem(s) || !window.PortalAgent.connected) return;
+    window.PortalAgent.queueBuild({ id: r.id, preset: r.preset, game: r.ci_game, args: r.cmake_args, range: s });
+  });
+}
+
 function renderSwitches(r) {
   const root = $("switch-groups");
+  const wasOpen = new Set([...root.querySelectorAll("details.group[open]")].map((d) => d.dataset.group));
   root.replaceChildren();
   for (const g of M.groups) {
-    const group = el("div", { class: "group" }, el("h5", { text: g.name }));
-    for (const s of M.switches.filter((x) => x.group === g.id)) {
+    const items = M.switches.filter((x) => x.group === g.id);
+    if (!items.length) continue;
+    const changed = items.filter((s) => !(s.id in r.disabled) && (state.switches[s.id] ?? s.default) !== s.default).length;
+    const box = el("details", { class: "group", "data-group": g.id });
+    if (wasOpen.has(g.id) || changed) box.open = true;
+    box.append(el("summary", {}, g.name, " ", el("span", { class: "count", text: `${items.length} switches` + (changed ? `, ${changed} changed` : "") })));
+    if (g.note) box.append(el("p", { class: "hint", text: g.note }));
+    for (const s of items) {
       const off = s.id in r.disabled;
       const val = off ? s.default : state.switches[s.id] ?? s.default;
       const row = el("div", { class: "sw" + (off ? " off" : "") + (val !== s.default ? " changed" : "") });
-      const name = el("div", { class: "name", text: s.id.replace(/_/g, " ") + " " }, el("code", { text: s.cmake }));
-      const opts = (s.type === "tristate" ? ["DEFAULT", "ON", "OFF"] : ["ON", "OFF"]).map((v) => [v, v === "DEFAULT" ? "Default" : v]);
-      const ctl = el("div", { class: "seg", role: "radiogroup", "aria-label": s.id });
-      seg(ctl, opts, val, (v) => { if (v === s.default) delete state.switches[s.id]; else state.switches[s.id] = v; render(); }, () => off);
-      row.append(name, ctl, el("div", { class: "help", text: s.help + (s.type === "bool" ? ` (default ${s.default})` : "") }));
+      const code = s.define || s.cmake;
+      row.append(el("div", { class: "name", text: (s.title || s.id.replace(/_/g, " ")) + " " }, el("code", { text: code })));
+      const values = s.type === "tristate" ? ["DEFAULT", "ON", "OFF"] : ["ON", "OFF"];
+      const label = (v) => (v === "DEFAULT" ? "Auto" : (s.labels && s.labels[v]) || v);
+      const ctl = el("div", { class: "seg", role: "radiogroup", "aria-label": s.title || s.id });
+      seg(ctl, values.map((v) => [v, label(v)]), val, (v) => { if (v === s.default) delete state.switches[s.id]; else state.switches[s.id] = v; render(); }, () => off);
+      ctl.querySelectorAll("button").forEach((b, k) => { if (values[k] === s.default) { b.classList.add("src"); b.title = "As the source has it"; } });
+      row.append(ctl, el("div", { class: "help", text: s.help }));
       if (off) row.append(el("div", { class: "why", text: s.why || "Not available here." }));
       else if (s.warn && val !== s.default) row.append(el("div", { class: "why", text: s.warn }));
-      group.append(row);
+      box.append(row);
     }
-    root.append(group);
+    root.append(box);
   }
   const n = Object.keys(r.switches || {}).length;
   $("adv-count").textContent = n ? `(${n} changed)` : "";
@@ -251,18 +307,17 @@ function renderGrid() {
 
 function renderCards() {
   const quick = [
-    ["universal", "vc6", "Universal", "Both games in one package, built with VC6. Retail-compatible: use this for online play.", true],
+    ["universal", "vc6", "Universal", "Both games in one package, built with VC6. Retail-compatible: use this for online play."],
     ["universal", "msvc", "Universal", "Both games, modern compiler. Easier to debug; not retail-compatible."],
     ["zh", "vc6", "Zero Hour", "Zero Hour only. Retail-compatible."],
     ["generals", "vc6", "Generals", "Generals only. Retail-compatible."],
     ["zh", "msvc", "Zero Hour", "Zero Hour only, modern compiler. Not retail-compatible."],
     ["generals", "msvc", "Generals", "Generals only, modern compiler. Not retail-compatible."],
   ];
-  $("quick-cards").replaceChildren(...quick.map(([g, c, n, blurb, isDefault]) => {
+  $("quick-cards").replaceChildren(...quick.map(([g, c, n, blurb]) => {
     const b = byId[buildId(g, c, "release", {})];
     const head = el("h4", { text: `${n} · ${c === "vc6" ? "VC6" : "Modern MSVC"}` });
-    if (isDefault) head.append(" ", el("span", { class: "tag ok", text: "default" }));
-    const card = el("div", { class: "card" + (isDefault ? " primary" : "") }, head, el("p", { text: blurb }));
+    const card = el("div", { class: "card" }, head, el("p", { text: blurb }));
     const row = el("div", { class: "row" });
     if (b && b.status === "built" && b.files && b.files[0]) row.append(el("a", { class: "btn", href: b.files[0].url, text: "Download" }));
     else row.append(el("span", { class: "tag", text: b ? "not built yet" : "on request" }));
@@ -319,6 +374,7 @@ async function init() {
   const real = B.commit && B.commit !== "demo-sample";
   $("commit-line").textContent = real ? `Built from commit ${B.commit.slice(0, 10)}.` : "";
   window.addEventListener("portal:agent", render);
+  wireRange();
   readHash();
   renderGrid();
   renderCards();

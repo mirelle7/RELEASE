@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Checks matrix.yaml, portal.py and site/app.js agree. Run: python3 scripts/test_portal.py"""
 import json
+import os
+import re
 import shutil
 import subprocess
 import sys
@@ -11,6 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import portal  # noqa: E402
 
 ROOT = portal.ROOT
+# The game's source tree, for checking the switches against it (skipped when it is not around).
+GAME_SRC = Path(os.environ.get("GAME_SRC", ROOT.parent))
 M = portal.load_matrix()
 
 
@@ -96,17 +100,105 @@ class Expansion(unittest.TestCase):
         self.assertFalse([b for b in portal.expand(M) if b["game"] == "universal" and b["tier"] == 2])
         self.assertEqual(M["games"][0]["id"], "universal")  # first = the default selection
 
-    @unittest.skipUnless((ROOT.parent / "CMakePresets.json").exists(), "needs the GeneralsGameCode checkout")
+    @unittest.skipUnless((GAME_SRC / "CMakePresets.json").exists(), "needs the GeneralsGameCode checkout (set GAME_SRC)")
     def test_every_tier1_preset_exists_in_cmakepresets(self):
-        presets = {p["name"] for p in json.loads((ROOT.parent / "CMakePresets.json").read_text())["configurePresets"]}
+        presets = {p["name"] for p in json.loads((GAME_SRC / "CMakePresets.json").read_text())["configurePresets"]}
         for b in portal.expand(M):
             self.assertIn(b["preset"], presets, b["id"])
 
-    @unittest.skipUnless((ROOT.parent / "cmake").exists(), "needs the GeneralsGameCode checkout")
+    @unittest.skipUnless((GAME_SRC / "cmake").exists(), "needs the GeneralsGameCode checkout (set GAME_SRC)")
     def test_every_switch_cmake_var_exists_in_cmake(self):
-        text = "".join(p.read_text() for p in (ROOT.parent / "cmake").glob("config-*.cmake"))
+        text = "".join(p.read_text() for p in (GAME_SRC / "cmake").glob("config-*.cmake"))
         for s in M["switches"]:
-            self.assertIn(s["cmake"], text, s["id"])
+            if "cmake" in s:
+                self.assertIn(s["cmake"], text, s["id"])
+
+
+def source_flags():
+    """Every `#ifndef X / #define X (N)` flag in the game's headers: {name: value}."""
+    pat = re.compile(r"^[ \t]*#ifndef[ \t]+(\w+)[ \t]*\n[ \t]*#define[ \t]+\1[ \t]+\(?(\w+)\)?", re.M)
+    out = {}
+    for p in GAME_SRC.rglob("*"):
+        if p.suffix in (".h", ".hpp", ".inl") and not any(x in p.parts for x in ("Dependencies", "ThirdParty", ".git", "build")):
+            for m in pat.finditer(p.read_text(encoding="latin-1")):
+                out.setdefault(m.group(1), m.group(2))
+    return out
+
+
+@unittest.skipUnless((GAME_SRC / "cmake").exists(), "needs the GeneralsGameCode checkout (set GAME_SRC)")
+class EveryFlagIsExposed(unittest.TestCase):
+    """The switch list must cover the source: if a flag is too much, remove it from the source."""
+
+    def test_every_define_switch_matches_the_source(self):
+        flags = source_flags()
+        for s in M["switches"]:
+            if "define" in s:
+                self.assertIn(s["define"], flags, f"{s['id']}: {s['define']} is not a guarded flag in the source")
+                self.assertEqual(s["default"], "ON" if flags[s["define"]] == "1" else "OFF", f"{s['id']}: source value differs")
+
+    def test_every_behaviour_flag_in_the_source_is_a_switch(self):
+        have = {s["define"] for s in M["switches"] if "define" in s}
+        behaviour = re.compile(r"^(PRESERVE|RETAIL_COMPATIBLE|ENABLE|ALLOW|USE|PRIORITIZE|TELL|WW3D_ENABLE)_")
+        # IG_DEBUG_STACKTRACE is tested with defined(), so it cannot be turned off with =0; debug_stacktrace covers it.
+        missing = sorted(n for n, v in source_flags().items() if behaviour.match(n) and v in ("0", "1") and n not in have)
+        self.assertEqual(missing, [], "flags in the source with no switch")
+
+    def test_every_cmake_option_is_a_switch_or_an_axis(self):
+        text = "".join(p.read_text() for p in (GAME_SRC / "cmake").glob("config-*.cmake"))
+        options = set(re.findall(r"^\s*(?:option\(|set\()(RTS_\w+)", text, re.M))
+        covered = {s["cmake"] for s in M["switches"] if "cmake" in s}
+        # axes of the matrix, not switches: the games, and the profile/debug configurations
+        axes = {"RTS_BUILD_ZEROHOUR", "RTS_BUILD_GENERALS", "RTS_BUILD_OPTION_PROFILE", "RTS_BUILD_OPTION_DEBUG"}
+        # free-text option, not a flag
+        text_options = {"RTS_BUILD_OUTPUT_SUFFIX"}
+        self.assertEqual(sorted(options - covered - axes - text_options), [])
+        self.assertEqual(sorted(covered - options), [], "switch names that are not CMake options")
+
+
+class Flags(unittest.TestCase):
+    def test_labels_are_keyed_by_the_strings_ON_and_OFF(self):
+        # a bare ON/OFF key in YAML is read as a boolean, which silently loses the labels
+        for s in M["switches"]:
+            if "labels" in s:
+                self.assertEqual(set(s["labels"]), {"ON", "OFF"}, s["id"])
+
+    def test_code_flags_travel_in_rts_flags_with_quoted_display(self):
+        r = portal.resolve(M, sel(bug_tunnel_heal_stacking="OFF", feat_use_buffered_io="OFF"))
+        self.assertTrue(r["valid"], r["errors"])
+        flags = next(a for a in r["cmake_args"] if a.startswith("-DRTS_FLAGS="))
+        self.assertEqual(flags, "-DRTS_FLAGS=/W3;/DPRESERVE_TUNNEL_HEAL_STACKING=0;/DUSE_BUFFERED_IO=0")
+        self.assertIn('-DRTS_FLAGS="/W3;/DPRESERVE_TUNNEL_HEAL_STACKING=0;/DUSE_BUFFERED_IO=0"', r["command"])
+
+    def test_no_rts_flags_when_no_code_flag_changed(self):
+        r = portal.resolve(M, sel(debug_cheats="ON"))
+        self.assertFalse(any(a.startswith("-DRTS_FLAGS=") for a in r["cmake_args"]))
+
+    def test_detail_retail_switches_need_master_on_auto(self):
+        self.assertTrue(portal.resolve(M, sel(compat_networking="OFF"))["valid"])
+        r = portal.resolve(M, sel(retail_compat="ON", compat_networking="OFF"))
+        self.assertFalse(r["valid"])
+
+    def test_crc_compat_follows_the_detail_switches(self):
+        self.assertTrue(portal.resolve(M, sel())["retail_crc"])
+        self.assertFalse(portal.resolve(M, sel(compat_crc="OFF"))["retail_crc"])
+        self.assertFalse(portal.resolve(M, sel(compat_aigroup="OFF"))["retail_crc"])
+        self.assertTrue(portal.resolve(M, sel(retail_compat="ON"))["retail_crc"])  # detail switches are not available then
+
+    def test_per_game_build_options_follow_the_game(self):
+        self.assertTrue(portal.resolve(M, sel(game="zh", zh_docs="ON"))["valid"])
+        self.assertFalse(portal.resolve(M, sel(game="generals", zh_docs="ON"))["valid"])
+        self.assertTrue(portal.resolve(M, sel(game="universal", zh_docs="ON", generals_docs="ON"))["valid"])
+
+    def test_vc6_only_and_debug_only_flags(self):
+        self.assertTrue(portal.resolve(M, sel(vc6_full_debug="ON"))["valid"])
+        self.assertFalse(portal.resolve(M, sel(compiler="msvc", vc6_full_debug="ON"))["valid"])
+        self.assertFalse(portal.resolve(M, sel(feat_tell_computer_identity_in_lan_lobby="OFF"))["valid"])
+        self.assertTrue(portal.resolve(M, sel(config="debug", feat_tell_computer_identity_in_lan_lobby="OFF"))["valid"])
+        self.assertFalse(portal.resolve(M, sel(game="zh", feat_use_obsolete_generals_code="OFF"))["valid"])
+
+    def test_every_variant_still_valid_and_flag_ids_stay_short(self):
+        for b in portal.expand(M):
+            self.assertLess(len(b["id"]), 60)
 
 
 @unittest.skipUnless(shutil.which("node"), "node not installed")
@@ -115,7 +207,10 @@ class JsParity(unittest.TestCase):
         vectors = [sel(), sel(compiler="msvc", config="debug"), sel(debug_cheats="ON"),
                    sel(game="generals", gamememory="OFF"), sel(compiler="msvc", config="debug", asan="ON", gamememory="OFF"),
                    sel(debug_stacktrace="ON", debug_logging="OFF"), sel(compiler="msvc", ffmpeg="ON"),
-                   sel(retail_compat="OFF", debug_logging="ON", debug_multi_instance="ON"), sel(compiler="msvc", config="releaselog")]
+                   sel(retail_compat="OFF", debug_logging="ON", debug_multi_instance="ON"), sel(compiler="msvc", config="releaselog"),
+                   sel(bug_tunnel_heal_stacking="OFF", feat_use_buffered_io="OFF"), sel(game="universal", zh_docs="ON", generals_docs="ON"),
+                   sel(game="generals", zh_docs="ON"), sel(compat_crc="OFF"), sel(retail_compat="ON", compat_networking="OFF"),
+                   sel(vc6_full_debug="ON"), sel(compiler="msvc", config="debug", feat_tell_computer_identity_in_lan_lobby="OFF", bug_perpetual_horde_bonus="OFF")]
         py = [portal.resolve(M, v) for v in vectors]
         script = (
             "const a=require(%r);const m=JSON.parse(require('fs').readFileSync(%r));"

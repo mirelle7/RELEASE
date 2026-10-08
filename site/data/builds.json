@@ -17,7 +17,7 @@
    "command": "cmake --preset win32-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
    "name": "Debug (MSVC)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -39,7 +39,7 @@
    "command": "cmake --preset win32-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
    "name": "Profile (MSVC)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -62,7 +62,7 @@
    "command": "cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
    "name": "Release (MSVC)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -94,7 +94,7 @@
    "command": "cmake --preset vc6-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
    "name": "Debug (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "planned"
   },
@@ -114,7 +114,7 @@
    "command": "cmake --preset vc6-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
    "name": "Profile (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "planned"
   },
@@ -134,7 +134,7 @@
    "command": "cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
    "name": "Release (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
@@ -164,7 +164,7 @@
    "command": "cmake --preset vc6-releaselog -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
    "name": "Release + logging (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
@@ -194,7 +194,7 @@
    "command": "cmake --preset vc6-weekly -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
    "name": "Weekly (VC6 full debug info) (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "planned"
   },
@@ -214,7 +214,7 @@
    "command": "cmake --preset win32-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Debug (MSVC)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -236,7 +236,7 @@
    "command": "cmake --preset win32-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Profile (MSVC)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -258,13 +258,12 @@
    "command": "cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Release (MSVC)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "universal-msvc-release.zip",
@@ -272,7 +271,8 @@
      "size": 358,
      "sha256": "e9e31ed70be7dbeea361b44c7b185e8521b8fc2248a0d6da3a463236acd9cb7d"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "universal-vc6-debug",
@@ -290,7 +290,7 @@
    "command": "cmake --preset vc6-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Debug (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "planned"
   },
@@ -310,7 +310,7 @@
    "command": "cmake --preset vc6-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Profile (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "planned"
   },
@@ -330,11 +330,10 @@
    "command": "cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Release (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "universal-vc6-release.zip",
@@ -342,7 +341,8 @@
      "size": 355,
      "sha256": "2fbe9dd64ea60d1f50fc200d304b836e84066890ac8cc995b3d0981066d01ec0"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "universal-vc6-releaselog",
@@ -360,7 +360,7 @@
    "command": "cmake --preset vc6-releaselog -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Release + logging (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "planned"
   },
@@ -380,7 +380,7 @@
    "command": "cmake --preset vc6-weekly -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Weekly (VC6 full debug info) (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "planned"
   },
@@ -400,7 +400,7 @@
    "command": "cmake --preset win32-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Debug (MSVC)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -432,7 +432,7 @@
    "command": "cmake --preset win32-profile -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Profile (MSVC)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -454,7 +454,7 @@
    "command": "cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Release (MSVC)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -486,7 +486,7 @@
    "command": "cmake --preset vc6-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Debug (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
@@ -516,7 +516,7 @@
    "command": "cmake --preset vc6-profile -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Profile (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
@@ -546,7 +546,7 @@
    "command": "cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Release (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
@@ -576,7 +576,7 @@
    "command": "cmake --preset vc6-releaselog -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Release + logging (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "planned"
   },
@@ -596,7 +596,7 @@
    "command": "cmake --preset vc6-weekly -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Weekly (VC6 full debug info) (VC6)",
-   "blurb": "CI preset, default switches.",
+   "blurb": "The CI preset, built as is.",
    "warnings": [],
    "status": "planned"
   },
@@ -796,6 +796,41 @@
    "status": "planned"
   },
   {
+   "id": "generals-msvc-release-591e331d",
+   "game": "generals",
+   "compiler": "msvc",
+   "config": "release",
+   "switches": {
+    "bug_building_resumption_delay": "ON",
+    "bug_multi_crate_pickup": "ON",
+    "bug_no_xp_from_flame_kills": "ON",
+    "bug_no_xp_from_poison_kills": "ON",
+    "bug_occupant_detection_via_drag_selection": "ON",
+    "bug_premature_battle_bus_death": "ON",
+    "bug_structure_stealth_during_repair": "ON",
+    "bug_unreliable_firestorms": "ON",
+    "bug_sniping_empty_stinger_sites": "ON",
+    "bug_retail_nuke_missile_outer_radius_search": "ON",
+    "bug_retail_nuke_missile_outer_radius_damage": "ON"
+   },
+   "retail_crc": false,
+   "preset": "win32",
+   "ci_game": "Generals",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=OFF",
+    "-DRTS_FLAGS=/W3;/DPRESERVE_BUILDING_RESUMPTION_DELAY=1;/DPRESERVE_MULTI_CRATE_PICKUP=1;/DPRESERVE_NO_XP_FROM_FLAME_KILLS=1;/DPRESERVE_NO_XP_FROM_POISON_KILLS=1;/DPRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION=1;/DPRESERVE_PREMATURE_BATTLE_BUS_DEATH=1;/DPRESERVE_STRUCTURE_STEALTH_DURING_REPAIR=1;/DPRESERVE_UNRELIABLE_FIRESTORMS=1;/DPRESERVE_SNIPING_EMPTY_STINGER_SITES=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE=1"
+   ],
+   "command": "cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_FLAGS=\"/W3;/DPRESERVE_BUILDING_RESUMPTION_DELAY=1;/DPRESERVE_MULTI_CRATE_PICKUP=1;/DPRESERVE_NO_XP_FROM_FLAME_KILLS=1;/DPRESERVE_NO_XP_FROM_POISON_KILLS=1;/DPRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION=1;/DPRESERVE_PREMATURE_BATTLE_BUS_DEATH=1;/DPRESERVE_STRUCTURE_STEALTH_DURING_REPAIR=1;/DPRESERVE_UNRELIABLE_FIRESTORMS=1;/DPRESERVE_SNIPING_EMPTY_STINGER_SITES=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE=1\"",
+   "tier": 2,
+   "name": "Every retail bug kept",
+   "blurb": "All retail bug switches ON: the original behaviour, quirks included.",
+   "warnings": [
+    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
    "id": "generals-msvc-release-699b33f0",
    "game": "generals",
    "compiler": "msvc",
@@ -912,7 +947,39 @@
    "command": "cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON",
    "tier": 2,
    "name": "Retail forced on",
-   "blurb": "Retail compatibility ON explicitly (the default behaviour, kept as a reference build).",
+   "blurb": "Retail compatibility ON explicitly (what the source does anyway, kept as a reference build).",
+   "warnings": [
+    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "generals-msvc-release-ebbe3ba8",
+   "game": "generals",
+   "compiler": "msvc",
+   "config": "release",
+   "switches": {
+    "bug_chinook_passenger_dumping": "OFF",
+    "bug_hardcoded_black_lotus_cash_hack": "OFF",
+    "bug_no_xp_from_ocl_kills": "OFF",
+    "bug_perpetual_horde_bonus": "OFF",
+    "bug_radar_warning_suppression": "OFF",
+    "bug_tunnel_heal_stacking": "OFF",
+    "bug_retail_scripted_camera": "OFF",
+    "bug_retail_particles": "OFF"
+   },
+   "retail_crc": false,
+   "preset": "win32",
+   "ci_game": "Generals",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=OFF",
+    "-DRTS_FLAGS=/W3;/DPRESERVE_CHINOOK_PASSENGER_DUMPING=0;/DPRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK=0;/DPRESERVE_NO_XP_FROM_OCL_KILLS=0;/DPRESERVE_PERPETUAL_HORDE_BONUS=0;/DPRESERVE_RADAR_WARNING_SUPPRESSION=0;/DPRESERVE_TUNNEL_HEAL_STACKING=0;/DPRESERVE_RETAIL_SCRIPTED_CAMERA=0;/DPRESERVE_RETAIL_PARTICLES=0"
+   ],
+   "command": "cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_FLAGS=\"/W3;/DPRESERVE_CHINOOK_PASSENGER_DUMPING=0;/DPRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK=0;/DPRESERVE_NO_XP_FROM_OCL_KILLS=0;/DPRESERVE_PERPETUAL_HORDE_BONUS=0;/DPRESERVE_RADAR_WARNING_SUPPRESSION=0;/DPRESERVE_TUNNEL_HEAL_STACKING=0;/DPRESERVE_RETAIL_SCRIPTED_CAMERA=0;/DPRESERVE_RETAIL_PARTICLES=0\"",
+   "tier": 2,
+   "name": "Every retail bug fixed",
+   "blurb": "All retail bug switches OFF: the fixed behaviour. Will not stay in sync with retail players.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -1046,6 +1113,39 @@
    "status": "planned"
   },
   {
+   "id": "generals-vc6-release-171c0dd5",
+   "game": "generals",
+   "compiler": "vc6",
+   "config": "release",
+   "switches": {
+    "bug_building_resumption_delay": "ON",
+    "bug_multi_crate_pickup": "ON",
+    "bug_no_xp_from_flame_kills": "ON",
+    "bug_no_xp_from_poison_kills": "ON",
+    "bug_occupant_detection_via_drag_selection": "ON",
+    "bug_premature_battle_bus_death": "ON",
+    "bug_structure_stealth_during_repair": "ON",
+    "bug_unreliable_firestorms": "ON",
+    "bug_sniping_empty_stinger_sites": "ON",
+    "bug_retail_nuke_missile_outer_radius_search": "ON",
+    "bug_retail_nuke_missile_outer_radius_damage": "ON"
+   },
+   "retail_crc": true,
+   "preset": "vc6",
+   "ci_game": "Generals",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=OFF",
+    "-DRTS_FLAGS=/W3;/DPRESERVE_BUILDING_RESUMPTION_DELAY=1;/DPRESERVE_MULTI_CRATE_PICKUP=1;/DPRESERVE_NO_XP_FROM_FLAME_KILLS=1;/DPRESERVE_NO_XP_FROM_POISON_KILLS=1;/DPRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION=1;/DPRESERVE_PREMATURE_BATTLE_BUS_DEATH=1;/DPRESERVE_STRUCTURE_STEALTH_DURING_REPAIR=1;/DPRESERVE_UNRELIABLE_FIRESTORMS=1;/DPRESERVE_SNIPING_EMPTY_STINGER_SITES=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE=1"
+   ],
+   "command": "cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_FLAGS=\"/W3;/DPRESERVE_BUILDING_RESUMPTION_DELAY=1;/DPRESERVE_MULTI_CRATE_PICKUP=1;/DPRESERVE_NO_XP_FROM_FLAME_KILLS=1;/DPRESERVE_NO_XP_FROM_POISON_KILLS=1;/DPRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION=1;/DPRESERVE_PREMATURE_BATTLE_BUS_DEATH=1;/DPRESERVE_STRUCTURE_STEALTH_DURING_REPAIR=1;/DPRESERVE_UNRELIABLE_FIRESTORMS=1;/DPRESERVE_SNIPING_EMPTY_STINGER_SITES=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE=1\"",
+   "tier": 2,
+   "name": "Every retail bug kept",
+   "blurb": "All retail bug switches ON: the original behaviour, quirks included.",
+   "warnings": [],
+   "status": "planned"
+  },
+  {
    "id": "generals-vc6-release-35c459c1",
    "game": "generals",
    "compiler": "vc6",
@@ -1100,6 +1200,36 @@
    "status": "planned"
   },
   {
+   "id": "generals-vc6-release-9345fa05",
+   "game": "generals",
+   "compiler": "vc6",
+   "config": "release",
+   "switches": {
+    "bug_chinook_passenger_dumping": "OFF",
+    "bug_hardcoded_black_lotus_cash_hack": "OFF",
+    "bug_no_xp_from_ocl_kills": "OFF",
+    "bug_perpetual_horde_bonus": "OFF",
+    "bug_radar_warning_suppression": "OFF",
+    "bug_tunnel_heal_stacking": "OFF",
+    "bug_retail_scripted_camera": "OFF",
+    "bug_retail_particles": "OFF"
+   },
+   "retail_crc": true,
+   "preset": "vc6",
+   "ci_game": "Generals",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=OFF",
+    "-DRTS_FLAGS=/W3;/DPRESERVE_CHINOOK_PASSENGER_DUMPING=0;/DPRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK=0;/DPRESERVE_NO_XP_FROM_OCL_KILLS=0;/DPRESERVE_PERPETUAL_HORDE_BONUS=0;/DPRESERVE_RADAR_WARNING_SUPPRESSION=0;/DPRESERVE_TUNNEL_HEAL_STACKING=0;/DPRESERVE_RETAIL_SCRIPTED_CAMERA=0;/DPRESERVE_RETAIL_PARTICLES=0"
+   ],
+   "command": "cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_FLAGS=\"/W3;/DPRESERVE_CHINOOK_PASSENGER_DUMPING=0;/DPRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK=0;/DPRESERVE_NO_XP_FROM_OCL_KILLS=0;/DPRESERVE_PERPETUAL_HORDE_BONUS=0;/DPRESERVE_RADAR_WARNING_SUPPRESSION=0;/DPRESERVE_TUNNEL_HEAL_STACKING=0;/DPRESERVE_RETAIL_SCRIPTED_CAMERA=0;/DPRESERVE_RETAIL_PARTICLES=0\"",
+   "tier": 2,
+   "name": "Every retail bug fixed",
+   "blurb": "All retail bug switches OFF: the fixed behaviour. Will not stay in sync with retail players.",
+   "warnings": [],
+   "status": "planned"
+  },
+  {
    "id": "generals-vc6-release-c44ed1d6",
    "game": "generals",
    "compiler": "vc6",
@@ -1141,7 +1271,7 @@
    "command": "cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON",
    "tier": 2,
    "name": "Retail forced on",
-   "blurb": "Retail compatibility ON explicitly (the default behaviour, kept as a reference build).",
+   "blurb": "Retail compatibility ON explicitly (what the source does anyway, kept as a reference build).",
    "warnings": [],
    "status": "planned"
   },
@@ -1375,7 +1505,7 @@
    "command": "cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON",
    "tier": 2,
    "name": "Retail forced on",
-   "blurb": "Retail compatibility ON explicitly (the default behaviour, kept as a reference build).",
+   "blurb": "Retail compatibility ON explicitly (what the source does anyway, kept as a reference build).",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -1458,6 +1588,73 @@
    "tier": 2,
    "name": "FFmpeg",
    "blurb": "Video decoding through FFmpeg (vcpkg).",
+   "warnings": [
+    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "zh-msvc-release-c1816001",
+   "game": "zh",
+   "compiler": "msvc",
+   "config": "release",
+   "switches": {
+    "bug_chinook_passenger_dumping": "OFF",
+    "bug_hardcoded_black_lotus_cash_hack": "OFF",
+    "bug_no_xp_from_ocl_kills": "OFF",
+    "bug_perpetual_horde_bonus": "OFF",
+    "bug_radar_warning_suppression": "OFF",
+    "bug_tunnel_heal_stacking": "OFF",
+    "bug_retail_scripted_camera": "OFF",
+    "bug_retail_particles": "OFF"
+   },
+   "retail_crc": false,
+   "preset": "win32",
+   "ci_game": "GeneralsMD",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=OFF",
+    "-DRTS_BUILD_ZEROHOUR=ON",
+    "-DRTS_FLAGS=/W3;/DPRESERVE_CHINOOK_PASSENGER_DUMPING=0;/DPRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK=0;/DPRESERVE_NO_XP_FROM_OCL_KILLS=0;/DPRESERVE_PERPETUAL_HORDE_BONUS=0;/DPRESERVE_RADAR_WARNING_SUPPRESSION=0;/DPRESERVE_TUNNEL_HEAL_STACKING=0;/DPRESERVE_RETAIL_SCRIPTED_CAMERA=0;/DPRESERVE_RETAIL_PARTICLES=0"
+   ],
+   "command": "cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_FLAGS=\"/W3;/DPRESERVE_CHINOOK_PASSENGER_DUMPING=0;/DPRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK=0;/DPRESERVE_NO_XP_FROM_OCL_KILLS=0;/DPRESERVE_PERPETUAL_HORDE_BONUS=0;/DPRESERVE_RADAR_WARNING_SUPPRESSION=0;/DPRESERVE_TUNNEL_HEAL_STACKING=0;/DPRESERVE_RETAIL_SCRIPTED_CAMERA=0;/DPRESERVE_RETAIL_PARTICLES=0\"",
+   "tier": 2,
+   "name": "Every retail bug fixed",
+   "blurb": "All retail bug switches OFF: the fixed behaviour. Will not stay in sync with retail players.",
+   "warnings": [
+    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "zh-msvc-release-f0c468b8",
+   "game": "zh",
+   "compiler": "msvc",
+   "config": "release",
+   "switches": {
+    "bug_building_resumption_delay": "ON",
+    "bug_multi_crate_pickup": "ON",
+    "bug_no_xp_from_flame_kills": "ON",
+    "bug_no_xp_from_poison_kills": "ON",
+    "bug_occupant_detection_via_drag_selection": "ON",
+    "bug_premature_battle_bus_death": "ON",
+    "bug_structure_stealth_during_repair": "ON",
+    "bug_unreliable_firestorms": "ON",
+    "bug_sniping_empty_stinger_sites": "ON",
+    "bug_retail_nuke_missile_outer_radius_search": "ON",
+    "bug_retail_nuke_missile_outer_radius_damage": "ON"
+   },
+   "retail_crc": false,
+   "preset": "win32",
+   "ci_game": "GeneralsMD",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=OFF",
+    "-DRTS_BUILD_ZEROHOUR=ON",
+    "-DRTS_FLAGS=/W3;/DPRESERVE_BUILDING_RESUMPTION_DELAY=1;/DPRESERVE_MULTI_CRATE_PICKUP=1;/DPRESERVE_NO_XP_FROM_FLAME_KILLS=1;/DPRESERVE_NO_XP_FROM_POISON_KILLS=1;/DPRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION=1;/DPRESERVE_PREMATURE_BATTLE_BUS_DEATH=1;/DPRESERVE_STRUCTURE_STEALTH_DURING_REPAIR=1;/DPRESERVE_UNRELIABLE_FIRESTORMS=1;/DPRESERVE_SNIPING_EMPTY_STINGER_SITES=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE=1"
+   ],
+   "command": "cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_FLAGS=\"/W3;/DPRESERVE_BUILDING_RESUMPTION_DELAY=1;/DPRESERVE_MULTI_CRATE_PICKUP=1;/DPRESERVE_NO_XP_FROM_FLAME_KILLS=1;/DPRESERVE_NO_XP_FROM_POISON_KILLS=1;/DPRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION=1;/DPRESERVE_PREMATURE_BATTLE_BUS_DEATH=1;/DPRESERVE_STRUCTURE_STEALTH_DURING_REPAIR=1;/DPRESERVE_UNRELIABLE_FIRESTORMS=1;/DPRESERVE_SNIPING_EMPTY_STINGER_SITES=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE=1\"",
+   "tier": 2,
+   "name": "Every retail bug kept",
+   "blurb": "All retail bug switches ON: the original behaviour, quirks included.",
    "warnings": [
     "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
    ],
@@ -1578,6 +1775,46 @@
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
+   "id": "zh-vc6-release-4d38fade",
+   "game": "zh",
+   "compiler": "vc6",
+   "config": "release",
+   "switches": {
+    "bug_chinook_passenger_dumping": "OFF",
+    "bug_hardcoded_black_lotus_cash_hack": "OFF",
+    "bug_no_xp_from_ocl_kills": "OFF",
+    "bug_perpetual_horde_bonus": "OFF",
+    "bug_radar_warning_suppression": "OFF",
+    "bug_tunnel_heal_stacking": "OFF",
+    "bug_retail_scripted_camera": "OFF",
+    "bug_retail_particles": "OFF"
+   },
+   "retail_crc": true,
+   "preset": "vc6",
+   "ci_game": "GeneralsMD",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=OFF",
+    "-DRTS_BUILD_ZEROHOUR=ON",
+    "-DRTS_FLAGS=/W3;/DPRESERVE_CHINOOK_PASSENGER_DUMPING=0;/DPRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK=0;/DPRESERVE_NO_XP_FROM_OCL_KILLS=0;/DPRESERVE_PERPETUAL_HORDE_BONUS=0;/DPRESERVE_RADAR_WARNING_SUPPRESSION=0;/DPRESERVE_TUNNEL_HEAL_STACKING=0;/DPRESERVE_RETAIL_SCRIPTED_CAMERA=0;/DPRESERVE_RETAIL_PARTICLES=0"
+   ],
+   "command": "cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_FLAGS=\"/W3;/DPRESERVE_CHINOOK_PASSENGER_DUMPING=0;/DPRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK=0;/DPRESERVE_NO_XP_FROM_OCL_KILLS=0;/DPRESERVE_PERPETUAL_HORDE_BONUS=0;/DPRESERVE_RADAR_WARNING_SUPPRESSION=0;/DPRESERVE_TUNNEL_HEAL_STACKING=0;/DPRESERVE_RETAIL_SCRIPTED_CAMERA=0;/DPRESERVE_RETAIL_PARTICLES=0\"",
+   "tier": 2,
+   "name": "Every retail bug fixed",
+   "blurb": "All retail bug switches OFF: the fixed behaviour. Will not stay in sync with retail players.",
+   "warnings": [],
+   "status": "built",
+   "commit": "demo-sample",
+   "files": [
+    {
+     "name": "zh-vc6-release-4d38fade.zip",
+     "url": "builds/zh-vc6-release-4d38fade/zh-vc6-release-4d38fade.zip",
+     "size": 668,
+     "sha256": "4bd94858accba50d389d7be07a588ccddc53cba04575c0617225a4ec1ef49ae3"
+    }
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
+  },
+  {
    "id": "zh-vc6-release-749b5023",
    "game": "zh",
    "compiler": "vc6",
@@ -1629,7 +1866,7 @@
    "command": "cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON",
    "tier": 2,
    "name": "Retail forced on",
-   "blurb": "Retail compatibility ON explicitly (the default behaviour, kept as a reference build).",
+   "blurb": "Retail compatibility ON explicitly (what the source does anyway, kept as a reference build).",
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
@@ -1672,6 +1909,49 @@
      "url": "builds/zh-vc6-release-a3bbb31f/zh-vc6-release-a3bbb31f.zip",
      "size": 388,
      "sha256": "79e45419d8f5f2fdc7167a3da3a1903166dd2bbb3459cd2927ab55d8c007d8d4"
+    }
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
+  },
+  {
+   "id": "zh-vc6-release-ab71425b",
+   "game": "zh",
+   "compiler": "vc6",
+   "config": "release",
+   "switches": {
+    "bug_building_resumption_delay": "ON",
+    "bug_multi_crate_pickup": "ON",
+    "bug_no_xp_from_flame_kills": "ON",
+    "bug_no_xp_from_poison_kills": "ON",
+    "bug_occupant_detection_via_drag_selection": "ON",
+    "bug_premature_battle_bus_death": "ON",
+    "bug_structure_stealth_during_repair": "ON",
+    "bug_unreliable_firestorms": "ON",
+    "bug_sniping_empty_stinger_sites": "ON",
+    "bug_retail_nuke_missile_outer_radius_search": "ON",
+    "bug_retail_nuke_missile_outer_radius_damage": "ON"
+   },
+   "retail_crc": true,
+   "preset": "vc6",
+   "ci_game": "GeneralsMD",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=OFF",
+    "-DRTS_BUILD_ZEROHOUR=ON",
+    "-DRTS_FLAGS=/W3;/DPRESERVE_BUILDING_RESUMPTION_DELAY=1;/DPRESERVE_MULTI_CRATE_PICKUP=1;/DPRESERVE_NO_XP_FROM_FLAME_KILLS=1;/DPRESERVE_NO_XP_FROM_POISON_KILLS=1;/DPRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION=1;/DPRESERVE_PREMATURE_BATTLE_BUS_DEATH=1;/DPRESERVE_STRUCTURE_STEALTH_DURING_REPAIR=1;/DPRESERVE_UNRELIABLE_FIRESTORMS=1;/DPRESERVE_SNIPING_EMPTY_STINGER_SITES=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE=1"
+   ],
+   "command": "cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_FLAGS=\"/W3;/DPRESERVE_BUILDING_RESUMPTION_DELAY=1;/DPRESERVE_MULTI_CRATE_PICKUP=1;/DPRESERVE_NO_XP_FROM_FLAME_KILLS=1;/DPRESERVE_NO_XP_FROM_POISON_KILLS=1;/DPRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION=1;/DPRESERVE_PREMATURE_BATTLE_BUS_DEATH=1;/DPRESERVE_STRUCTURE_STEALTH_DURING_REPAIR=1;/DPRESERVE_UNRELIABLE_FIRESTORMS=1;/DPRESERVE_SNIPING_EMPTY_STINGER_SITES=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH=1;/DPRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE=1\"",
+   "tier": 2,
+   "name": "Every retail bug kept",
+   "blurb": "All retail bug switches ON: the original behaviour, quirks included.",
+   "warnings": [],
+   "status": "built",
+   "commit": "demo-sample",
+   "files": [
+    {
+     "name": "zh-vc6-release-ab71425b.zip",
+     "url": "builds/zh-vc6-release-ab71425b/zh-vc6-release-ab71425b.zip",
+     "size": 838,
+     "sha256": "e5e4a8b8acde41e2f303845b11a01ba92fe31af3fc8bea97eccf80de6edc00fc"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
