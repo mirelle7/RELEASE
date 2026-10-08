@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generals Build Portal (Demo)</title>
+<meta name="description" content="Every build of GeneralsGameCode: both games, both compilers, every major switch.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%232f5d3a%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo-bar" role="note"><strong>DEMO</strong> Sample data and placeholder downloads. Nothing here is a real build of the game.</div>
+<header class="top">
+  <div class="wrap">
+    <h1>Generals Build Portal <span class="demo-tag">demo</span></h1>
+    <nav>
+      <a href="#quick">Quick download</a>
+      <a href="#configure">Configurator</a>
+      <a href="#matrix">Matrix</a>
+      <a href="#variants">Variants</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <p>Builds of <em>C&amp;C Generals</em> and <em>Zero Hour</em> from source, in both supported compilers and with the major CMake switches. The game's own data files are <strong>not</strong> included; you need your own copy of the game.</p>
+    <p class="meta" id="commit-line"></p>
+  </section>
+
+  <section id="quick">
+    <h2>Quick download</h2>
+    <p class="hint">The common cases. <strong>VC6</strong> builds are the only ones that stay CRC-compatible with retail.</p>
+    <div class="cards" id="quick-cards"></div>
+  </section>
+
+  <section id="configure">
+    <h2>Configurator</h2>
+    <div class="cfg">
+      <div class="cfg-form">
+        <fieldset><legend>Game</legend><div class="seg" id="seg-game" role="radiogroup"></div></fieldset>
+        <fieldset><legend>Compiler</legend><div class="seg" id="seg-compiler" role="radiogroup"></div><p class="hint" id="compiler-note"></p></fieldset>
+        <fieldset><legend>Configuration</legend><div class="seg" id="seg-config" role="radiogroup"></div></fieldset>
+        <details id="advanced">
+          <summary>Advanced switches <span class="count" id="adv-count"></span></summary>
+          <div id="switch-groups"></div>
+        </details>
+        <button type="button" class="ghost" id="reset">Reset to defaults</button>
+      </div>
+
+      <aside class="cfg-result" aria-live="polite">
+        <div class="status" id="status"></div>
+        <h3 id="res-id"></h3>
+        <ul class="msgs" id="res-msgs"></ul>
+        <div id="res-actions"></div>
+        <label class="cmd-label">Reproduce locally</label>
+        <pre class="cmd" id="res-cmd"></pre>
+        <button type="button" class="ghost" id="copy-cmd">Copy command</button>
+        <dl class="kv" id="res-kv"></dl>
+      </aside>
+    </div>
+  </section>
+
+  <section id="matrix">
+    <h2>Matrix</h2>
+    <p class="hint">Reference builds with default switches. Click a cell to load it in the configurator.</p>
+    <div class="table-scroll"><table class="grid" id="grid"></table></div>
+  </section>
+
+  <section id="variants">
+    <h2>Curated variants</h2>
+    <p class="hint">Pre-selected switch combinations that are built on a schedule.</p>
+    <div class="cards" id="variant-cards"></div>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p>Unofficial community builds. Command &amp; Conquer, Generals and Zero Hour are trademarks of Electronic Arts Inc. No game data is distributed here. Builds with debug cheats or debug features are for testing only, not multiplayer.</p>
+</footer>
+<script src="data/portal-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+# Single source of truth for the build portal.
+# Read by scripts/portal.py (CI matrix + site data) and, via the generated
+# site/data/schema.json, by the configurator in site/.
+#
+# Every switch value is a string: "ON" / "OFF" (bool) or "DEFAULT" / "ON" / "OFF" (tristate).
+# A switch left at its default is omitted from the build id, so ids stay stable
+# when new switches are added.
+
+# GitHub repository the portal builds from; used for log links and build requests.
+repo: mirelle7/RELEASE
+
+games:
+  - { id: generals, name: "Generals",  cmake: { RTS_BUILD_GENERALS: "ON",  RTS_BUILD_ZEROHOUR: "OFF" }, ci_name: Generals }
+  - { id: zh,       name: "Zero Hour", cmake: { RTS_BUILD_GENERALS: "OFF", RTS_BUILD_ZEROHOUR: "ON"  }, ci_name: GeneralsMD }
+
+compilers:
+  - id: vc6
+    name: "Visual C++ 6 SP6"
+    note: "The only compiler that is CRC-compatible with retail Generals 1.08 / Zero Hour 1.04."
+    retail_crc: true
+  - id: msvc
+    name: "Modern MSVC (VS2022)"
+    note: "Not CRC-compatible with retail. Cannot play online against retail clients."
+    retail_crc: false
+
+# Which CMake preset each (compiler, config) pair maps to. Missing pair = not buildable.
+configs:
+  - id: release
+    name: "Release"
+    presets: { vc6: vc6, msvc: win32 }
+  - id: profile
+    name: "Profile"
+    presets: { vc6: vc6-profile, msvc: win32-profile }
+  - id: debug
+    name: "Debug"
+    presets: { vc6: vc6-debug, msvc: win32-debug }
+  - id: releaselog
+    name: "Release + logging"
+    presets: { vc6: vc6-releaselog }
+  - id: weekly
+    name: "Weekly (VC6 full debug info)"
+    presets: { vc6: vc6-weekly }
+
+# When a preset exists in a vcpkg flavour, FFmpeg selects it.
+vcpkg_presets: { win32: win32-vcpkg, win32-profile: win32-vcpkg-profile, win32-debug: win32-vcpkg-debug }
+
+# Condition grammar (all keys in one object must hold):
+#   compiler: [ids]   config: [ids]   switch: id + in: [values] | not_in: [values]
+groups:
+  - id: retail
+    name: "Retail compatibility"
+  - id: debug
+    name: "Debug features"
+  - id: memory
+    name: "Memory"
+  - id: extras
+    name: "Extras"
+
+switches:
+  # --- Retail compatibility -------------------------------------------------
+  - id: retail_compat
+    cmake: RTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME
+    group: retail
+    type: tristate
+    default: DEFAULT
+    help: "OFF enables retail-incompatible fixes (CRC, data, save and network changes). DEFAULT follows GameDefines.h."
+
+  # --- Debug features -------------------------------------------------------
+  - id: debug_logging
+    cmake: RTS_DEBUG_LOGGING
+    group: debug
+    type: tristate
+    default: DEFAULT
+    help: "Debug logging. DEFAULT = on for debug builds."
+  - id: debug_crashing
+    cmake: RTS_DEBUG_CRASHING
+    group: debug
+    type: tristate
+    default: DEFAULT
+    help: "Debug assert dialogs."
+  - id: debug_stacktrace
+    cmake: RTS_DEBUG_STACKTRACE
+    group: debug
+    type: tristate
+    default: DEFAULT
+    help: "Stack tracing. Implies debug logging."
+  - id: debug_profile
+    cmake: RTS_DEBUG_PROFILE
+    group: debug
+    type: tristate
+    default: DEFAULT
+    help: "Debug profiling."
+  - id: debug_cheats
+    cmake: RTS_DEBUG_CHEATS
+    group: debug
+    type: bool
+    default: "OFF"
+    warn: "Cheats in a release build. Do not use for multiplayer."
+    help: "Debug cheats in release builds."
+  - id: debug_multi_instance
+    cmake: RTS_DEBUG_MULTI_INSTANCE
+    group: debug
+    type: bool
+    default: "OFF"
+    help: "Allow multiple client instances."
+  - id: debug_log_in_crc_log
+    cmake: RTS_DEBUG_INCLUDE_DEBUG_LOG_IN_CRC_LOG
+    group: debug
+    type: bool
+    default: "OFF"
+    help: "Include the normal debug log in the CRC log."
+  - id: tracy
+    cmake: RTS_BUILD_OPTION_PROFILE_TRACY
+    group: debug
+    type: bool
+    default: "OFF"
+    when: [{ config: [profile], compiler: [msvc] }]
+    why: "Tracy needs a Profile build with modern MSVC."
+    help: "Tracy profiler integration."
+  - id: asan
+    cmake: RTS_BUILD_OPTION_ASAN
+    group: debug
+    type: bool
+    default: "OFF"
+    when: [{ compiler: [msvc] }]
+    why: "Address Sanitizer is not available for VC6."
+    help: "Address Sanitizer. Forces the game memory allocator off."
+
+  # --- Memory ---------------------------------------------------------------
+  - id: gamememory
+    cmake: RTS_GAMEMEMORY_ENABLE
+    group: memory
+    type: bool
+    default: "ON"
+    help: "Original game memory pool and dynamic memory allocator."
+  - id: mp_override_malloc
+    cmake: RTS_MEMORYPOOL_OVERRIDE_MALLOC
+    group: memory
+    type: bool
+    default: "OFF"
+    when: [{ switch: gamememory, in: ["ON"] }]
+    why: "Needs the game memory allocator."
+    help: "Route malloc through the dynamic memory allocator."
+  - id: mp_dlink
+    cmake: RTS_MEMORYPOOL_MPSB_DLINK
+    group: memory
+    type: bool
+    default: "ON"
+    when: [{ switch: gamememory, in: ["ON"] }]
+    why: "Needs the game memory allocator."
+    help: "Backlink on pool blocks: faster frees, more memory."
+  - id: mp_debug
+    cmake: RTS_MEMORYPOOL_DEBUG
+    group: memory
+    type: bool
+    default: "ON"
+    when: [{ switch: gamememory, in: ["ON"] }]
+    why: "Needs the game memory allocator."
+    help: "Memory pool debug support."
+  - id: mp_debug_custom_new
+    cmake: RTS_MEMORYPOOL_DEBUG_CUSTOM_NEW
+    group: memory
+    type: bool
+    default: "ON"
+    when: [{ switch: mp_debug, in: ["ON"] }]
+    why: "Needs memory pool debug."
+    help: "Custom operator new for the memory pool."
+  - id: mp_debug_boundingwall
+    cmake: RTS_MEMORYPOOL_DEBUG_BOUNDINGWALL
+    group: memory
+    type: bool
+    default: "ON"
+    when: [{ switch: mp_debug, in: ["ON"] }]
+    why: "Needs memory pool debug."
+    help: "Bounding-wall checks to find memory trampling."
+  - id: mp_debug_checkpointing
+    cmake: RTS_MEMORYPOOL_DEBUG_CHECKPOINTING
+    group: memory
+    type: bool
+    default: "OFF"
+    when: [{ switch: mp_debug, in: ["ON"] }]
+    why: "Needs memory pool debug."
+    help: "Record allocation history checkpoints."
+  - id: mp_debug_stacktrace
+    cmake: RTS_MEMORYPOOL_DEBUG_STACKTRACE
+    group: memory
+    type: bool
+    default: "OFF"
+    when: [{ switch: mp_debug, in: ["ON"] }]
+    why: "Needs memory pool debug."
+    warn: "Slows the game down significantly."
+    help: "Stack trace per allocation."
+  - id: mp_debug_intense_verify
+    cmake: RTS_MEMORYPOOL_DEBUG_INTENSE_VERIFY
+    group: memory
+    type: bool
+    default: "OFF"
+    when: [{ switch: mp_debug, in: ["ON"] }]
+    why: "Needs memory pool debug."
+    warn: "Very slow."
+    help: "Verify the pool after nearly every operation."
+  - id: mp_debug_block_ownership
+    cmake: RTS_MEMORYPOOL_DEBUG_CHECK_BLOCK_OWNERSHIP
+    group: memory
+    type: bool
+    default: "OFF"
+    when: [{ switch: mp_debug, in: ["ON"] }]
+    why: "Needs memory pool debug."
+    warn: "Very slow."
+    help: "Check each block belongs to the pool it is freed to."
+  - id: mp_debug_dma_bookkeeping
+    cmake: RTS_MEMORYPOOL_DEBUG_INTENSE_DMA_BOOKKEEPING
+    group: memory
+    type: bool
+    default: "OFF"
+    when: [{ switch: mp_debug, in: ["ON"] }]
+    why: "Needs memory pool debug."
+    help: "Print memory pool usage statistics."
+  - id: crashdump
+    cmake: RTS_CRASHDUMP_ENABLE
+    group: memory
+    type: bool
+    default: "ON"
+    help: "Write crash dumps on unhandled exceptions."
+
+  # --- Extras ---------------------------------------------------------------
+  - id: ffmpeg
+    cmake: RTS_BUILD_OPTION_FFMPEG
+    group: extras
+    type: bool
+    default: "OFF"
+    when: [{ compiler: [msvc] }]
+    why: "FFmpeg comes from vcpkg, which needs modern MSVC."
+    help: "Build with FFmpeg support (uses the vcpkg preset)."
+  - id: tools
+    cmake: RTS_BUILD_CORE_TOOLS
+    group: extras
+    type: bool
+    default: "ON"
+    help: "Build the mod tools."
+  - id: extras
+    cmake: RTS_BUILD_CORE_EXTRAS
+    group: extras
+    type: bool
+    default: "OFF"
+    help: "Build extra tools and tests."
+
+# Selections that are never buildable even though each switch is individually enabled.
+rules:
+  - if:      { switch: debug_stacktrace, in: ["ON"] }
+    require: { switch: debug_logging, not_in: ["OFF"] }
+    message: "Stack tracing implies debug logging, so logging cannot be OFF."
+  - if:      { switch: asan, in: ["ON"] }
+    require: { switch: gamememory, in: ["OFF"] }
+    message: "ASAN needs the game memory allocator off (it overrides new/delete)."
+  - if:      { config: [weekly] }
+    require: { compiler: [vc6] }
+    message: "The weekly config is VC6 only."
+
+# Named builds that are built ahead of time.
+#   tier 1: the CI presets with default switches, always built, both games
+#   tier 2: curated variants, built on a schedule
+tier1:
+  - { compiler: vc6,  config: release }
+  - { compiler: vc6,  config: profile }
+  - { compiler: vc6,  config: debug }
+  - { compiler: vc6,  config: releaselog }
+  - { compiler: vc6,  config: weekly }
+  - { compiler: msvc, config: release }
+  - { compiler: msvc, config: profile }
+  - { compiler: msvc, config: debug }
+
+tier2:
+  - id: retail-off
+    name: "Retail fixes enabled"
+    blurb: "Retail compatibility OFF: gameplay and network fixes that break retail CRC."
+    where: [{ compiler: [vc6, msvc], config: [release] }]
+    switches: { retail_compat: "OFF" }
+  - id: retail-on
+    name: "Retail forced on"
+    blurb: "Retail compatibility ON explicitly (the default behaviour, kept as a reference build)."
+    where: [{ compiler: [vc6, msvc], config: [release] }]
+    switches: { retail_compat: "ON" }
+  - id: no-gamememory
+    name: "No game memory allocator"
+    blurb: "Uses the CRT heap; handy for third-party memory tools."
+    where: [{ compiler: [vc6, msvc], config: [release, debug] }]
+    switches: { gamememory: "OFF" }
+  - id: memory-paranoid
+    name: "Memory pool paranoia"
+    blurb: "Every memory pool checker on. Very slow; for hunting corruption."
+    where: [{ compiler: [vc6, msvc], config: [debug] }]
+    switches: { mp_debug_checkpointing: "ON", mp_debug_stacktrace: "ON", mp_debug_intense_verify: "ON", mp_debug_block_ownership: "ON", mp_debug_dma_bookkeeping: "ON" }
+  - id: full-logging
+    name: "Release with full diagnostics"
+    blurb: "Logging, crash dialogs, stack traces and profiling in a release build."
+    where: [{ compiler: [vc6, msvc], config: [release] }]
+    switches: { debug_logging: "ON", debug_crashing: "ON", debug_stacktrace: "ON", debug_profile: "ON" }
+  - id: cheats
+    name: "Cheats enabled"
+    blurb: "Debug cheats in a release build. Single player only."
+    where: [{ compiler: [vc6, msvc], config: [release] }]
+    switches: { debug_cheats: "ON" }
+  - id: multi-instance
+    name: "Multi-instance"
+    blurb: "Run several clients on one machine for network testing."
+    where: [{ compiler: [vc6, msvc], config: [release, debug] }]
+    switches: { debug_multi_instance: "ON" }
+  - id: asan
+    name: "Address Sanitizer"
+    blurb: "Debug build with ASAN. Game memory allocator is turned off."
+    where: [{ compiler: [msvc], config: [debug] }]
+    switches: { asan: "ON", gamememory: "OFF" }
+  - id: tracy
+    name: "Tracy profiler"
+    blurb: "Profile build wired to the Tracy profiler."
+    where: [{ compiler: [msvc], config: [profile] }]
+    switches: { tracy: "ON" }
+  - id: ffmpeg
+    name: "FFmpeg"
+    blurb: "Video decoding through FFmpeg (vcpkg)."
+    where: [{ compiler: [msvc], config: [release] }]
+    switches: { ffmpeg: "ON" }
