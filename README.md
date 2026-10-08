@@ -18,6 +18,12 @@ No install needed to just look at it. Either:
 * open `site/index.html` in a browser (works straight from disk), or
 * `python3 serve.py` and visit http://localhost:8000
 
+## One file
+
+`portal.html` is the whole site in a single self-contained file (styles, script, data and placeholder downloads inlined, 80 KB).
+Email it, double-click it, or upload it to any host. Rebuild it with `python3 scripts/bundle.py` after `generate` / `make_demo.py`.
+Note GitHub itself shows `.html` files as source, not as a page.
+
 ## Use it from the internet (Vercel, Netlify, any static host)
 
 It is plain static files, no build step. On Vercel: **Add New > Project**, import this repo, accept the defaults

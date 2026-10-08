@@ -281,7 +281,7 @@ function render() {
 
 async function init() {
   try {
-    if (location.protocol === "file:" && window.PORTAL_DATA) throw new Error("file://");
+    if ((window.PORTAL_EMBEDDED || location.protocol === "file:") && window.PORTAL_DATA) throw new Error("file://");
     [M, B] = await Promise.all(["data/schema.json", "data/builds.json"].map((u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u); return r.json(); })));
   } catch (e) {
     // Opened from disk (file://): fetch is blocked, use the copy embedded by data/portal-data.js.
