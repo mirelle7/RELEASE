@@ -119,33 +119,22 @@ summary { cursor: pointer; font-weight: 600; }
 .demo-bar strong { letter-spacing: .08em; margin-right: 8px; }
 .demo-tag { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; background: #f0c75e; color: #2a2100; border-radius: 4px; padding: 1px 6px; vertical-align: middle; }
 
-/* triangulator + desktop panels */
+/* desktop panel */
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
 .fields { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: end; margin-bottom: 10px; }
-.fields label, label.block { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
-label.block { margin-bottom: 10px; }
-.opt { font-size: 12px; opacity: .8; }
-input[type="text"], input[type="password"], input:not([type]), textarea { font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-width: 0; }
-textarea { width: 100%; font: 12.5px/1.4 ui-monospace, Menlo, Consolas, monospace; resize: vertical; }
-.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-label.inline { flex-direction: row; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.fields label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+input[type="text"], input[type="password"], input:not([type]) { font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-width: 0; }
 .agent-status { font-size: 14px; margin: 0 0 8px; }
 .agent-status.ok { color: var(--ok); } .agent-status.bad { color: var(--bad); }
 #agent-queue .qrow { display: flex; gap: 8px; align-items: center; padding: 4px 0; font-size: 14px; }
 #agent-queue code { word-break: break-all; }
 .tag.info { color: var(--info); border-color: currentColor; }
-.tri-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
-.tri-head { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-weight: 600; }
-.tri-head a { color: var(--ink); }
-.chips { display: inline-flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
-.chip { font-size: 12px; font-weight: 400; padding: 1px 8px; border-radius: 999px; border: 1px dashed var(--line); color: var(--muted); }
-.chip.on { border-style: solid; color: var(--ink); background: color-mix(in srgb, var(--accent) 18%, transparent); }
-.tri-titles { font-size: 14px; color: var(--muted); margin-top: 4px; }
-.tri-files { font-size: 12.5px; color: var(--muted); margin-top: 4px; word-break: break-all; }
-.tri-groups { font-size: 14px; }
 code { background: var(--code); border-radius: 4px; padding: 1px 5px; font-size: 13px; }
 
 [hidden] { display: none !important; }
+
+.steps { margin: 0 0 14px; padding-left: 20px; font-size: 14px; } .steps li { margin: 4px 0; }
+#agent-queue .qrow button { padding: 2px 10px; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -158,7 +147,6 @@ code { background: var(--code); border-radius: 4px; padding: 1px 5px; font-size:
       <a href="#configure">Configurator</a>
       <a href="#matrix">Matrix</a>
       <a href="#variants">Variants</a>
-      <a href="#triangulator">Triangulator</a>
       <a href="#desktop">My PC</a>
     </nav>
   </div>
@@ -215,31 +203,15 @@ code { background: var(--code); border-radius: 4px; padding: 1px 5px; font-size:
     <div class="cards" id="variant-cards"></div>
   </section>
 
-  <section id="triangulator">
-    <h2>PR triangulator</h2>
-    <p class="hint">Finds duplicate, conflicting and related pull requests by comparing what each change says, which files it touches and which lines. Runs entirely in your browser.</p>
-    <div class="panel">
-      <div class="fields">
-        <label>Repository <input id="tri-repo" placeholder="owner/name" autocomplete="off" spellcheck="false"></label>
-        <label>GitHub token <span class="opt">(optional)</span> <input id="tri-token" type="password" autocomplete="off"></label>
-        <button type="button" class="btn alt" id="tri-fetch">Fetch open PRs</button>
-      </div>
-      <label class="block">or paste PR data (JSON)
-        <textarea id="tri-json" rows="5" spellcheck="false" placeholder='[{"number": 1, "title": "...", "body": "...", "files": [{"path": "a/b.cpp", "patch": "@@ -1,3 +1,4 @@ ..."}]}]'></textarea>
-      </label>
-      <div class="row">
-        <button type="button" class="btn" id="tri-run">Analyze</button>
-        <button type="button" class="ghost" id="tri-sample">Try the sample</button>
-        <label class="inline"><input type="checkbox" id="tri-weak"> show weak matches</label>
-      </div>
-    </div>
-    <p id="tri-msg" class="hint" role="status"></p>
-    <div id="tri-out"></div>
-  </section>
 
   <section id="desktop">
     <h2>Build on my PC</h2>
-    <p class="hint">Connect this page to the build agent running on your own computer, then queue builds straight from the configurator. On your PC run <code>python tools/agent.py serve --src C:\path\to\GeneralsGameCode</code> and open the link it prints.</p>
+    <p class="hint">Run the builds on your own computer, with your own compiler. Nothing to install: it is one small program.</p>
+    <ol class="steps">
+      <li>Download the agent: <a href="downloads/build-agent-windows-x64.exe" download>Windows 64-bit</a> or <a href="downloads/build-agent-windows-x86.exe" download>32-bit</a>.</li>
+      <li>Open a developer command prompt (the one that has your compiler and CMake set up), then run the agent from it. The first time, it asks for the folder your game code is in.</li>
+      <li>It opens this page already connected. Pick a configuration above and press <strong>Build on my PC</strong>.</li>
+    </ol>
     <div class="panel">
       <div class="fields">
         <label>Agent address <input id="agent-url" value="http://127.0.0.1:8787" autocomplete="off" spellcheck="false"></label>
@@ -255,251 +227,9 @@ code { background: var(--code); border-radius: 4px; padding: 1px 5px; font-size:
 
 <script>window.PORTAL_EMBEDDED=true;window.PORTAL_DATA={"schema":{"repo":"","games":[{"id":"generals","name":"Generals","cmake":{"RTS_BUILD_GENERALS":"ON","RTS_BUILD_ZEROHOUR":"OFF"},"ci_name":"Generals"},{"id":"zh","name":"Zero Hour","cmake":{"RTS_BUILD_GENERALS":"OFF","RTS_BUILD_ZEROHOUR":"ON"},"ci_name":"GeneralsMD"}],"compilers":[{"id":"vc6","name":"Visual C++ 6 SP6","note":"The only compiler that is CRC-compatible with retail Generals 1.08 / Zero Hour 1.04.","retail_crc":true},{"id":"msvc","name":"Modern MSVC (VS2022)","note":"Not CRC-compatible with retail. Cannot play online against retail clients.","retail_crc":false}],"configs":[{"id":"release","name":"Release","presets":{"vc6":"vc6","msvc":"win32"}},{"id":"profile","name":"Profile","presets":{"vc6":"vc6-profile","msvc":"win32-profile"}},{"id":"debug","name":"Debug","presets":{"vc6":"vc6-debug","msvc":"win32-debug"}},{"id":"releaselog","name":"Release + logging","presets":{"vc6":"vc6-releaselog"}},{"id":"weekly","name":"Weekly (VC6 full debug info)","presets":{"vc6":"vc6-weekly"}}],"vcpkg_presets":{"win32":"win32-vcpkg","win32-profile":"win32-vcpkg-profile","win32-debug":"win32-vcpkg-debug"},"groups":[{"id":"retail","name":"Retail compatibility"},{"id":"debug","name":"Debug features"},{"id":"memory","name":"Memory"},{"id":"extras","name":"Extras"}],"switches":[{"id":"retail_compat","cmake":"RTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME","group":"retail","type":"tristate","default":"DEFAULT","help":"OFF enables retail-incompatible fixes (CRC, data, save and network changes). DEFAULT follows GameDefines.h."},{"id":"debug_logging","cmake":"RTS_DEBUG_LOGGING","group":"debug","type":"tristate","default":"DEFAULT","help":"Debug logging. DEFAULT = on for debug builds."},{"id":"debug_crashing","cmake":"RTS_DEBUG_CRASHING","group":"debug","type":"tristate","default":"DEFAULT","help":"Debug assert dialogs."},{"id":"debug_stacktrace","cmake":"RTS_DEBUG_STACKTRACE","group":"debug","type":"tristate","default":"DEFAULT","help":"Stack tracing. Implies debug logging."},{"id":"debug_profile","cmake":"RTS_DEBUG_PROFILE","group":"debug","type":"tristate","default":"DEFAULT","help":"Debug profiling."},{"id":"debug_cheats","cmake":"RTS_DEBUG_CHEATS","group":"debug","type":"bool","default":"OFF","warn":"Cheats in a release build. Do not use for multiplayer.","help":"Debug cheats in release builds."},{"id":"debug_multi_instance","cmake":"RTS_DEBUG_MULTI_INSTANCE","group":"debug","type":"bool","default":"OFF","help":"Allow multiple client instances."},{"id":"debug_log_in_crc_log","cmake":"RTS_DEBUG_INCLUDE_DEBUG_LOG_IN_CRC_LOG","group":"debug","type":"bool","default":"OFF","help":"Include the normal debug log in the CRC log."},{"id":"tracy","cmake":"RTS_BUILD_OPTION_PROFILE_TRACY","group":"debug","type":"bool","default":"OFF","when":[{"config":["profile"],"compiler":["msvc"]}],"why":"Tracy needs a Profile build with modern MSVC.","help":"Tracy profiler integration."},{"id":"asan","cmake":"RTS_BUILD_OPTION_ASAN","group":"debug","type":"bool","default":"OFF","when":[{"compiler":["msvc"]}],"why":"Address Sanitizer is not available for VC6.","help":"Address Sanitizer. Forces the game memory allocator off."},{"id":"gamememory","cmake":"RTS_GAMEMEMORY_ENABLE","group":"memory","type":"bool","default":"ON","help":"Original game memory pool and dynamic memory allocator."},{"id":"mp_override_malloc","cmake":"RTS_MEMORYPOOL_OVERRIDE_MALLOC","group":"memory","type":"bool","default":"OFF","when":[{"switch":"gamememory","in":["ON"]}],"why":"Needs the game memory allocator.","help":"Route malloc through the dynamic memory allocator."},{"id":"mp_dlink","cmake":"RTS_MEMORYPOOL_MPSB_DLINK","group":"memory","type":"bool","default":"ON","when":[{"switch":"gamememory","in":["ON"]}],"why":"Needs the game memory allocator.","help":"Backlink on pool blocks: faster frees, more memory."},{"id":"mp_debug","cmake":"RTS_MEMORYPOOL_DEBUG","group":"memory","type":"bool","default":"ON","when":[{"switch":"gamememory","in":["ON"]}],"why":"Needs the game memory allocator.","help":"Memory pool debug support."},{"id":"mp_debug_custom_new","cmake":"RTS_MEMORYPOOL_DEBUG_CUSTOM_NEW","group":"memory","type":"bool","default":"ON","when":[{"switch":"mp_debug","in":["ON"]}],"why":"Needs memory pool debug.","help":"Custom operator new for the memory pool."},{"id":"mp_debug_boundingwall","cmake":"RTS_MEMORYPOOL_DEBUG_BOUNDINGWALL","group":"memory","type":"bool","default":"ON","when":[{"switch":"mp_debug","in":["ON"]}],"why":"Needs memory pool debug.","help":"Bounding-wall checks to find memory trampling."},{"id":"mp_debug_checkpointing","cmake":"RTS_MEMORYPOOL_DEBUG_CHECKPOINTING","group":"memory","type":"bool","default":"OFF","when":[{"switch":"mp_debug","in":["ON"]}],"why":"Needs memory pool debug.","help":"Record allocation history checkpoints."},{"id":"mp_debug_stacktrace","cmake":"RTS_MEMORYPOOL_DEBUG_STACKTRACE","group":"memory","type":"bool","default":"OFF","when":[{"switch":"mp_debug","in":["ON"]}],"why":"Needs memory pool debug.","warn":"Slows the game down significantly.","help":"Stack trace per allocation."},{"id":"mp_debug_intense_verify","cmake":"RTS_MEMORYPOOL_DEBUG_INTENSE_VERIFY","group":"memory","type":"bool","default":"OFF","when":[{"switch":"mp_debug","in":["ON"]}],"why":"Needs memory pool debug.","warn":"Very slow.","help":"Verify the pool after nearly every operation."},{"id":"mp_debug_block_ownership","cmake":"RTS_MEMORYPOOL_DEBUG_CHECK_BLOCK_OWNERSHIP","group":"memory","type":"bool","default":"OFF","when":[{"switch":"mp_debug","in":["ON"]}],"why":"Needs memory pool debug.","warn":"Very slow.","help":"Check each block belongs to the pool it is freed to."},{"id":"mp_debug_dma_bookkeeping","cmake":"RTS_MEMORYPOOL_DEBUG_INTENSE_DMA_BOOKKEEPING","group":"memory","type":"bool","default":"OFF","when":[{"switch":"mp_debug","in":["ON"]}],"why":"Needs memory pool debug.","help":"Print memory pool usage statistics."},{"id":"crashdump","cmake":"RTS_CRASHDUMP_ENABLE","group":"memory","type":"bool","default":"ON","help":"Write crash dumps on unhandled exceptions."},{"id":"ffmpeg","cmake":"RTS_BUILD_OPTION_FFMPEG","group":"extras","type":"bool","default":"OFF","when":[{"compiler":["msvc"]}],"why":"FFmpeg comes from vcpkg, which needs modern MSVC.","help":"Build with FFmpeg support (uses the vcpkg preset)."},{"id":"tools","cmake":"RTS_BUILD_CORE_TOOLS","group":"extras","type":"bool","default":"ON","help":"Build the mod tools."},{"id":"extras","cmake":"RTS_BUILD_CORE_EXTRAS","group":"extras","type":"bool","default":"OFF","help":"Build extra tools and tests."}],"rules":[{"if":{"switch":"debug_stacktrace","in":["ON"]},"require":{"switch":"debug_logging","not_in":["OFF"]},"message":"Stack tracing implies debug logging, so logging cannot be OFF."},{"if":{"switch":"asan","in":["ON"]},"require":{"switch":"gamememory","in":["OFF"]},"message":"ASAN needs the game memory allocator off (it overrides new/delete)."},{"if":{"config":["weekly"]},"require":{"compiler":["vc6"]},"message":"The weekly config is VC6 only."}],"tier1":[{"compiler":"vc6","config":"release"},{"compiler":"vc6","config":"profile"},{"compiler":"vc6","config":"debug"},{"compiler":"vc6","config":"releaselog"},{"compiler":"vc6","config":"weekly"},{"compiler":"msvc","config":"release"},{"compiler":"msvc","config":"profile"},{"compiler":"msvc","config":"debug"}],"tier2":[{"id":"retail-off","name":"Retail fixes enabled","blurb":"Retail compatibility OFF: gameplay and network fixes that break retail CRC.","where":[{"compiler":["vc6","msvc"],"config":["release"]}],"switches":{"retail_compat":"OFF"}},{"id":"retail-on","name":"Retail forced on","blurb":"Retail compatibility ON explicitly (the default behaviour, kept as a reference build).","where":[{"compiler":["vc6","msvc"],"config":["release"]}],"switches":{"retail_compat":"ON"}},{"id":"no-gamememory","name":"No game memory allocator","blurb":"Uses the CRT heap; handy for third-party memory tools.","where":[{"compiler":["vc6","msvc"],"config":["release","debug"]}],"switches":{"gamememory":"OFF"}},{"id":"memory-paranoid","name":"Memory pool paranoia","blurb":"Every memory pool checker on. Very slow; for hunting corruption.","where":[{"compiler":["vc6","msvc"],"config":["debug"]}],"switches":{"mp_debug_checkpointing":"ON","mp_debug_stacktrace":"ON","mp_debug_intense_verify":"ON","mp_debug_block_ownership":"ON","mp_debug_dma_bookkeeping":"ON"}},{"id":"full-logging","name":"Release with full diagnostics","blurb":"Logging, crash dialogs, stack traces and profiling in a release build.","where":[{"compiler":["vc6","msvc"],"config":["release"]}],"switches":{"debug_logging":"ON","debug_crashing":"ON","debug_stacktrace":"ON","debug_profile":"ON"}},{"id":"cheats","name":"Cheats enabled","blurb":"Debug cheats in a release build. Single player only.","where":[{"compiler":["vc6","msvc"],"config":["release"]}],"switches":{"debug_cheats":"ON"}},{"id":"multi-instance","name":"Multi-instance","blurb":"Run several clients on one machine for network testing.","where":[{"compiler":["vc6","msvc"],"config":["release","debug"]}],"switches":{"debug_multi_instance":"ON"}},{"id":"asan","name":"Address Sanitizer","blurb":"Debug build with ASAN. Game memory allocator is turned off.","where":[{"compiler":["msvc"],"config":["debug"]}],"switches":{"asan":"ON","gamememory":"OFF"}},{"id":"tracy","name":"Tracy profiler","blurb":"Profile build wired to the Tracy profiler.","where":[{"compiler":["msvc"],"config":["profile"]}],"switches":{"tracy":"ON"}},{"id":"ffmpeg","name":"FFmpeg","blurb":"Video decoding through FFmpeg (vcpkg).","where":[{"compiler":["msvc"],"config":["release"]}],"switches":{"ffmpeg":"ON"}}]},"builds":{"commit":"demo-sample","builds":[{"id":"generals-msvc-debug","game":"generals","compiler":"msvc","config":"debug","switches":{},"retail_crc":false,"preset":"win32-debug","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF"],"command":"cmake --preset win32-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF","tier":1,"name":"Debug (MSVC)","blurb":"CI preset, default switches.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-profile","game":"generals","compiler":"msvc","config":"profile","switches":{},"retail_crc":false,"preset":"win32-profile","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF"],"command":"cmake --preset win32-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF","tier":1,"name":"Profile (MSVC)","blurb":"CI preset, default switches.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"failed","built_at":"2026-10-08 03:00 UTC (sample)"},{"id":"generals-msvc-release","game":"generals","compiler":"msvc","config":"release","switches":{},"retail_crc":false,"preset":"win32","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF","tier":1,"name":"Release (MSVC)","blurb":"CI preset, default switches.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"generals-msvc-release.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF09tCPpuQAAAOYAAAAPAAAAREVNTy1SRUFETUUudHh0VYy7bsIwGIV3P8V5ATO0WyWGtDGlUoQrAwsL+uP8IVYdG/kCffymFUuls5zvXD675k1tddcqgzEm9NX5ARcOnMhnOeeblYk9U2YhDpPLWEQYeI4r/HlKdnI3ho2hkAsZIYK/2dZCveeVaJCY/OM4jii/o6U8uktNVFwMuMe6ZD3jmuJQLQ+4uzK9CAHYmb4YUl4TZy4LD89PkK057M+vx4+uPb+rnTJNt1/r3T9+UkZv9dGs9WYjfgBQSwECFAMUAAAACACNC0hdPbQj6bkAAADmAAAADwAAAAAAAAAAAAAAgAEAAAAAREVNTy1SRUFETUUudHh0UEsFBgAAAAABAAEAPQAAAOYAAAAAAA==","size":313,"sha256":"efa1a46def96ec70424bb81feffe770c3f149b5f571e70945e5545592367741e"}]},{"id":"generals-vc6-debug","game":"generals","compiler":"vc6","config":"debug","switches":{},"retail_crc":true,"preset":"vc6-debug","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF"],"command":"cmake --preset vc6-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF","tier":1,"name":"Debug (VC6)","blurb":"CI preset, default switches.","warnings":[],"status":"planned"},{"id":"generals-vc6-profile","game":"generals","compiler":"vc6","config":"profile","switches":{},"retail_crc":true,"preset":"vc6-profile","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF"],"command":"cmake --preset vc6-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF","tier":1,"name":"Profile (VC6)","blurb":"CI preset, default switches.","warnings":[],"status":"planned"},{"id":"generals-vc6-release","game":"generals","compiler":"vc6","config":"release","switches":{},"retail_crc":true,"preset":"vc6","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF","tier":1,"name":"Release (VC6)","blurb":"CI preset, default switches.","warnings":[],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"generals-vc6-release.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF0ATndUtAAAAOMAAAAPAAAAREVNTy1SRUFETUUudHh0VU67bsIwFN39FecHzNihEkNoTEGKcGVgYUE3zg2xMDbyA/r5TVGXSmc5T52vrvlQG921ymCMCX11fsCFAyfyWT7sm0zsmTILcZhcxgzCwLe4wItTspN7MGwMhVzICBH8zbYW6j0vRIPE5P9244jyW5rDo7vURMXFgGess9cz7ikO1fKApyvTuxCAvdGVIeU9ceaC+Q5kaw778+q47drzp9op03T7pd7900/K6I0+mqVer8UPUEsBAhQDFAAAAAgAjQtIXQBOd1S0AAAA4wAAAA8AAAAAAAAAAAAAAIABAAAAAERFTU8tUkVBRE1FLnR4dFBLBQYAAAAAAQABAD0AAADhAAAAAAA=","size":308,"sha256":"51c3838072aa085c008a4f469f54d70dd37e4f571a52ee1156b25e2ab1d3954f"}]},{"id":"generals-vc6-releaselog","game":"generals","compiler":"vc6","config":"releaselog","switches":{},"retail_crc":true,"preset":"vc6-releaselog","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF"],"command":"cmake --preset vc6-releaselog -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF","tier":1,"name":"Release + logging (VC6)","blurb":"CI preset, default switches.","warnings":[],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"generals-vc6-releaselog.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF1rNIUqtwAAAPEAAAAPAAAAREVNTy1SRUFETUUudHh0VU67bsIwFN39FecHzNihEkPamFIpwpWBpQtynJvEqvFFfkA/vyliQTrLeep8dc272uquVQYjJ/TVhwETRUo2ZHl1LzJRIJsp8CTEYfYZCywGOvMKd26Tm/2V4DgW62NGZNAvuVpsH2glGiSy4THNI8p/aQmPfqrJFs8RN66L1xMuiYfqaMDNl/lVCMCd7Q9BykuiTAXPjyBbc9if3o6fXXv6UDtlmm6/1rsn/VsZvdVHs9abjfgDUEsBAhQDFAAAAAgAjQtIXWs0hSq3AAAA8QAAAA8AAAAAAAAAAAAAAIABAAAAAERFTU8tUkVBRE1FLnR4dFBLBQYAAAAAAQABAD0AAADkAAAAAAA=","size":311,"sha256":"5f8b852cd71717e5b7ec9ed42303453a65e6e7a14acb090eb2990dc103145e23"}]},{"id":"generals-vc6-weekly","game":"generals","compiler":"vc6","config":"weekly","switches":{},"retail_crc":true,"preset":"vc6-weekly","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF"],"command":"cmake --preset vc6-weekly -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF","tier":1,"name":"Weekly (VC6 full debug info) (VC6)","blurb":"CI preset, default switches.","warnings":[],"status":"planned"},{"id":"zh-msvc-debug","game":"zh","compiler":"msvc","config":"debug","switches":{},"retail_crc":false,"preset":"win32-debug","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON"],"command":"cmake --preset win32-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON","tier":1,"name":"Debug (MSVC)","blurb":"CI preset, default switches.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-msvc-debug.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF2ZFR7JtQAAAOQAAAAPAAAAREVNTy1SRUFETUUudHh0VU47jsIwFOx9irmAKaBbiSJLzIIU4ZWBhgY59guxSGzk2LDa0xM+DdI089X8VsVCrGRVCoUmRNTZdRb/Le+Hq+GW6nxibNe6ASM0LPVhgifX0bTuSjDBJ+38AB9Af2Ry0nVHE1Ygku7eg6FBepTGcONOOerkgsct5NGrCZcYbDZkcXOp/WIMML0+Ezi/RBoojbqfTV93wEu12x6/9+uqPP6IjVBFtZ3L5fLDOAglV3Kv5nLD7lBLAQIUAxQAAAAIAI0LSF2ZFR7JtQAAAOQAAAAPAAAAAAAAAAAAAACAAQAAAABERU1PLVJFQURNRS50eHRQSwUGAAAAAAEAAQA9AAAA4gAAAAAA","size":309,"sha256":"0119c7009287080cc289ed0a1971e3a0740d2c2822e646c1676a96ea4efde9bf"}]},{"id":"zh-msvc-profile","game":"zh","compiler":"msvc","config":"profile","switches":{},"retail_crc":false,"preset":"win32-profile","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON"],"command":"cmake --preset win32-profile -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON","tier":1,"name":"Profile (MSVC)","blurb":"CI preset, default switches.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-release","game":"zh","compiler":"msvc","config":"release","switches":{},"retail_crc":false,"preset":"win32","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON","tier":1,"name":"Release (MSVC)","blurb":"CI preset, default switches.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-msvc-release.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF29Qa3WtgAAAOAAAAAPAAAAREVNTy1SRUFETUUudHh0VYy9bsIwHMR3P8W9gBlgq8QQiCmVIlwZWLogx/mnsZrYkT8C4ulJEQvSLXe/u/uuiq3Yy6oUCq0PqLPtG9w7PsTJ8EA96UiMnTobMUujocEv8PQ6mM5OBONd0tZFOA+6kclJ1z0tWIFAun9d+hbpfzSXW/ubg07WO1x9nllNGINvsqEGV5u6D8YAM+g/AudjoEhpzt1qCV6q0/GyOX9V5eVTHIQqquNa7nZv4EcouZdntZYH9gBQSwECFAMUAAAACACNC0hdvUGt1rYAAADgAAAADwAAAAAAAAAAAAAAgAEAAAAAREVNTy1SRUFETUUudHh0UEsFBgAAAAABAAEAPQAAAOMAAAAAAA==","size":310,"sha256":"d41d601c77f5170973bbaba56306eef90819bac305720865c19d079163597169"}]},{"id":"zh-vc6-debug","game":"zh","compiler":"vc6","config":"debug","switches":{},"retail_crc":true,"preset":"vc6-debug","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON"],"command":"cmake --preset vc6-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON","tier":1,"name":"Debug (VC6)","blurb":"CI preset, default switches.","warnings":[],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-vc6-debug.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF0A1wtLsQAAAOEAAAAPAAAAREVNTy1SRUFETUUudHh0VY69CsIwHMT3PMW9QBwdBIdq4wcUI1EXF0mTf9tgbSRNVHx6q4gg3HL87o7bFtlcrGSRC4XKB5TJtRbPht/MmFsqU83YvnE9BmlYuvgRPl4H07gbwfguatf16DzoQSZFXbY0YhkC6fa75yvEd2kIV65OQUfnO9x9GlhJuAZvkyGLu4vNhDHAXPSZwPk1UE8RvzPgudrvTrPDushPS7ERKit2U7lY/IGjUHIlD2oqN+wFUEsBAhQDFAAAAAgAjQtIXQDXC0uxAAAA4QAAAA8AAAAAAAAAAAAAAIABAAAAAERFTU8tUkVBRE1FLnR4dFBLBQYAAAAAAQABAD0AAADeAAAAAAA=","size":305,"sha256":"953057afa384d3fc5a7a166e06ee72a59cfd9667430325afce56285f1c8ccc55"}]},{"id":"zh-vc6-profile","game":"zh","compiler":"vc6","config":"profile","switches":{},"retail_crc":true,"preset":"vc6-profile","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON"],"command":"cmake --preset vc6-profile -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON","tier":1,"name":"Profile (VC6)","blurb":"CI preset, default switches.","warnings":[],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-vc6-profile.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF23edcxsAAAAOUAAAAPAAAAREVNTy1SRUFETUUudHh0VU69CsIwGNzzFPcC7eggOFQbf6A0EnVxkTT9aoNtI2mi4tMbxUHhluN+t0W24GtR5FyisQ5VMF2NZ5vc9CS5OtuYjhjbt2ZEhEJNvU3x4crp1twI2g5emWHEYEEP0sGrqqOUZXCkum+jbeDfoWhuzDk45Y0dcLchahUhLtVBU4278e2UMUD36kJI4gcayePnDpJc7nen+WFT5KcVL7nMit1MLJd/wpFLsRYHORMlewFQSwECFAMUAAAACACNC0hdt3nXMbAAAADlAAAADwAAAAAAAAAAAAAAgAEAAAAAREVNTy1SRUFETUUudHh0UEsFBgAAAAABAAEAPQAAAN0AAAAAAA==","size":304,"sha256":"91455ca7f56c39281336ce89a9aa4c534a5229d48c5a22e257e292ca267cc29f"}]},{"id":"zh-vc6-release","game":"zh","compiler":"vc6","config":"release","switches":{},"retail_crc":true,"preset":"vc6","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON","tier":1,"name":"Release (VC6)","blurb":"CI preset, default switches.","warnings":[],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-vc6-release.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF1X4zamsgAAAN0AAAAPAAAAREVNTy1SRUFETUUudHh0VY69CsIwHMT3PMW9QBwdBIdq4wcUI6kuLpKm/9pg25Q0qeLTW8VFuOX43R13zJK12MksFQqV8yiibUq8aj6aOffUkB6IsVNtB0zSKKl1M3y99qa2I8G4LmjbDegc6EkmBl00NGMJPOnmt+gqhE9pClf2Fr0O1nV4uDixgtB7V0ZDJR421AvGANPqO4Hz3tNAAdMd8FSd8uvqvM/S61YchEqyfCk3mz9wEUru5Fkt5YG9AVBLAQIUAxQAAAAIAI0LSF1X4zamsgAAAN0AAAAPAAAAAAAAAAAAAACAAQAAAABERU1PLVJFQURNRS50eHRQSwUGAAAAAAEAAQA9AAAA3wAAAAAA","size":306,"sha256":"11b83e0b6c95f81a8c0600f41e62986f51a62e616eac1af59878b553a919894e"}]},{"id":"zh-vc6-releaselog","game":"zh","compiler":"vc6","config":"releaselog","switches":{},"retail_crc":true,"preset":"vc6-releaselog","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON"],"command":"cmake --preset vc6-releaselog -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON","tier":1,"name":"Release + logging (VC6)","blurb":"CI preset, default switches.","warnings":[],"status":"planned"},{"id":"zh-vc6-weekly","game":"zh","compiler":"vc6","config":"weekly","switches":{},"retail_crc":true,"preset":"vc6-weekly","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON"],"command":"cmake --preset vc6-weekly -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON","tier":1,"name":"Weekly (VC6 full debug info) (VC6)","blurb":"CI preset, default switches.","warnings":[],"status":"planned"},{"id":"generals-msvc-debug-211f1905","game":"generals","compiler":"msvc","config":"debug","switches":{"mp_debug_checkpointing":"ON","mp_debug_stacktrace":"ON","mp_debug_intense_verify":"ON","mp_debug_block_ownership":"ON","mp_debug_dma_bookkeeping":"ON"},"retail_crc":false,"preset":"win32-debug","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_MEMORYPOOL_DEBUG_CHECKPOINTING=ON","-DRTS_MEMORYPOOL_DEBUG_STACKTRACE=ON","-DRTS_MEMORYPOOL_DEBUG_INTENSE_VERIFY=ON","-DRTS_MEMORYPOOL_DEBUG_CHECK_BLOCK_OWNERSHIP=ON","-DRTS_MEMORYPOOL_DEBUG_INTENSE_DMA_BOOKKEEPING=ON"],"command":"cmake --preset win32-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_MEMORYPOOL_DEBUG_CHECKPOINTING=ON -DRTS_MEMORYPOOL_DEBUG_STACKTRACE=ON -DRTS_MEMORYPOOL_DEBUG_INTENSE_VERIFY=ON -DRTS_MEMORYPOOL_DEBUG_CHECK_BLOCK_OWNERSHIP=ON -DRTS_MEMORYPOOL_DEBUG_INTENSE_DMA_BOOKKEEPING=ON","tier":2,"name":"Memory pool paranoia","blurb":"Every memory pool checker on. Very slow; for hunting corruption.","warnings":["mp_debug_stacktrace: Slows the game down significantly.","mp_debug_intense_verify: Very slow.","mp_debug_block_ownership: Very slow.","Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-debug-3df3fa9e","game":"generals","compiler":"msvc","config":"debug","switches":{"gamememory":"OFF"},"retail_crc":false,"preset":"win32-debug","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_GAMEMEMORY_ENABLE=OFF"],"command":"cmake --preset win32-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_GAMEMEMORY_ENABLE=OFF","tier":2,"name":"No game memory allocator","blurb":"Uses the CRT heap; handy for third-party memory tools.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-debug-a08328c3","game":"generals","compiler":"msvc","config":"debug","switches":{"asan":"ON","gamememory":"OFF"},"retail_crc":false,"preset":"win32-debug","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_BUILD_OPTION_ASAN=ON","-DRTS_GAMEMEMORY_ENABLE=OFF"],"command":"cmake --preset win32-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_BUILD_OPTION_ASAN=ON -DRTS_GAMEMEMORY_ENABLE=OFF","tier":2,"name":"Address Sanitizer","blurb":"Debug build with ASAN. Game memory allocator is turned off.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-debug-b9ce4605","game":"generals","compiler":"msvc","config":"debug","switches":{"debug_multi_instance":"ON"},"retail_crc":false,"preset":"win32-debug","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_DEBUG_MULTI_INSTANCE=ON"],"command":"cmake --preset win32-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_DEBUG_MULTI_INSTANCE=ON","tier":2,"name":"Multi-instance","blurb":"Run several clients on one machine for network testing.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-profile-39fcd033","game":"generals","compiler":"msvc","config":"profile","switches":{"tracy":"ON"},"retail_crc":false,"preset":"win32-profile","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_BUILD_OPTION_PROFILE_TRACY=ON"],"command":"cmake --preset win32-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_BUILD_OPTION_PROFILE_TRACY=ON","tier":2,"name":"Tracy profiler","blurb":"Profile build wired to the Tracy profiler.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-release-1317c282","game":"generals","compiler":"msvc","config":"release","switches":{"debug_logging":"ON","debug_crashing":"ON","debug_stacktrace":"ON","debug_profile":"ON"},"retail_crc":false,"preset":"win32","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_DEBUG_LOGGING=ON","-DRTS_DEBUG_CRASHING=ON","-DRTS_DEBUG_STACKTRACE=ON","-DRTS_DEBUG_PROFILE=ON"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_DEBUG_LOGGING=ON -DRTS_DEBUG_CRASHING=ON -DRTS_DEBUG_STACKTRACE=ON -DRTS_DEBUG_PROFILE=ON","tier":2,"name":"Release with full diagnostics","blurb":"Logging, crash dialogs, stack traces and profiling in a release build.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-release-39d2bc55","game":"generals","compiler":"msvc","config":"release","switches":{"debug_cheats":"ON"},"retail_crc":false,"preset":"win32","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_DEBUG_CHEATS=ON"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_DEBUG_CHEATS=ON","tier":2,"name":"Cheats enabled","blurb":"Debug cheats in a release build. Single player only.","warnings":["debug_cheats: Cheats in a release build. Do not use for multiplayer.","Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-release-699b33f0","game":"generals","compiler":"msvc","config":"release","switches":{"ffmpeg":"ON"},"retail_crc":false,"preset":"win32-vcpkg","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_BUILD_OPTION_FFMPEG=ON"],"command":"cmake --preset win32-vcpkg -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_BUILD_OPTION_FFMPEG=ON","tier":2,"name":"FFmpeg","blurb":"Video decoding through FFmpeg (vcpkg).","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-release-a3e39e81","game":"generals","compiler":"msvc","config":"release","switches":{"retail_compat":"OFF"},"retail_crc":false,"preset":"win32","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=OFF"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=OFF","tier":2,"name":"Retail fixes enabled","blurb":"Retail compatibility OFF: gameplay and network fixes that break retail CRC.","warnings":[],"status":"planned"},{"id":"generals-msvc-release-b86bb9d4","game":"generals","compiler":"msvc","config":"release","switches":{"gamememory":"OFF"},"retail_crc":false,"preset":"win32","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_GAMEMEMORY_ENABLE=OFF"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_GAMEMEMORY_ENABLE=OFF","tier":2,"name":"No game memory allocator","blurb":"Uses the CRT heap; handy for third-party memory tools.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-release-d14c1b4d","game":"generals","compiler":"msvc","config":"release","switches":{"debug_multi_instance":"ON"},"retail_crc":false,"preset":"win32","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_DEBUG_MULTI_INSTANCE=ON"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_DEBUG_MULTI_INSTANCE=ON","tier":2,"name":"Multi-instance","blurb":"Run several clients on one machine for network testing.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-msvc-release-e45c4ccc","game":"generals","compiler":"msvc","config":"release","switches":{"retail_compat":"ON"},"retail_crc":false,"preset":"win32","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON","tier":2,"name":"Retail forced on","blurb":"Retail compatibility ON explicitly (the default behaviour, kept as a reference build).","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"generals-vc6-debug-047a342c","game":"generals","compiler":"vc6","config":"debug","switches":{"mp_debug_checkpointing":"ON","mp_debug_stacktrace":"ON","mp_debug_intense_verify":"ON","mp_debug_block_ownership":"ON","mp_debug_dma_bookkeeping":"ON"},"retail_crc":true,"preset":"vc6-debug","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_MEMORYPOOL_DEBUG_CHECKPOINTING=ON","-DRTS_MEMORYPOOL_DEBUG_STACKTRACE=ON","-DRTS_MEMORYPOOL_DEBUG_INTENSE_VERIFY=ON","-DRTS_MEMORYPOOL_DEBUG_CHECK_BLOCK_OWNERSHIP=ON","-DRTS_MEMORYPOOL_DEBUG_INTENSE_DMA_BOOKKEEPING=ON"],"command":"cmake --preset vc6-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_MEMORYPOOL_DEBUG_CHECKPOINTING=ON -DRTS_MEMORYPOOL_DEBUG_STACKTRACE=ON -DRTS_MEMORYPOOL_DEBUG_INTENSE_VERIFY=ON -DRTS_MEMORYPOOL_DEBUG_CHECK_BLOCK_OWNERSHIP=ON -DRTS_MEMORYPOOL_DEBUG_INTENSE_DMA_BOOKKEEPING=ON","tier":2,"name":"Memory pool paranoia","blurb":"Every memory pool checker on. Very slow; for hunting corruption.","warnings":["mp_debug_stacktrace: Slows the game down significantly.","mp_debug_intense_verify: Very slow.","mp_debug_block_ownership: Very slow."],"status":"planned"},{"id":"generals-vc6-debug-0e4e4c60","game":"generals","compiler":"vc6","config":"debug","switches":{"debug_multi_instance":"ON"},"retail_crc":true,"preset":"vc6-debug","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_DEBUG_MULTI_INSTANCE=ON"],"command":"cmake --preset vc6-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_DEBUG_MULTI_INSTANCE=ON","tier":2,"name":"Multi-instance","blurb":"Run several clients on one machine for network testing.","warnings":[],"status":"planned"},{"id":"generals-vc6-debug-a3812bbc","game":"generals","compiler":"vc6","config":"debug","switches":{"gamememory":"OFF"},"retail_crc":true,"preset":"vc6-debug","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_GAMEMEMORY_ENABLE=OFF"],"command":"cmake --preset vc6-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_GAMEMEMORY_ENABLE=OFF","tier":2,"name":"No game memory allocator","blurb":"Uses the CRT heap; handy for third-party memory tools.","warnings":[],"status":"planned"},{"id":"generals-vc6-release-0e1049ec","game":"generals","compiler":"vc6","config":"release","switches":{"retail_compat":"OFF"},"retail_crc":false,"preset":"vc6","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=OFF"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=OFF","tier":2,"name":"Retail fixes enabled","blurb":"Retail compatibility OFF: gameplay and network fixes that break retail CRC.","warnings":[],"status":"planned"},{"id":"generals-vc6-release-0f9ff475","game":"generals","compiler":"vc6","config":"release","switches":{"gamememory":"OFF"},"retail_crc":true,"preset":"vc6","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_GAMEMEMORY_ENABLE=OFF"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_GAMEMEMORY_ENABLE=OFF","tier":2,"name":"No game memory allocator","blurb":"Uses the CRT heap; handy for third-party memory tools.","warnings":[],"status":"planned"},{"id":"generals-vc6-release-35c459c1","game":"generals","compiler":"vc6","config":"release","switches":{"debug_cheats":"ON"},"retail_crc":true,"preset":"vc6","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_DEBUG_CHEATS=ON"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_DEBUG_CHEATS=ON","tier":2,"name":"Cheats enabled","blurb":"Debug cheats in a release build. Single player only.","warnings":["debug_cheats: Cheats in a release build. Do not use for multiplayer."],"status":"planned"},{"id":"generals-vc6-release-5987df33","game":"generals","compiler":"vc6","config":"release","switches":{"debug_logging":"ON","debug_crashing":"ON","debug_stacktrace":"ON","debug_profile":"ON"},"retail_crc":true,"preset":"vc6","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_DEBUG_LOGGING=ON","-DRTS_DEBUG_CRASHING=ON","-DRTS_DEBUG_STACKTRACE=ON","-DRTS_DEBUG_PROFILE=ON"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_DEBUG_LOGGING=ON -DRTS_DEBUG_CRASHING=ON -DRTS_DEBUG_STACKTRACE=ON -DRTS_DEBUG_PROFILE=ON","tier":2,"name":"Release with full diagnostics","blurb":"Logging, crash dialogs, stack traces and profiling in a release build.","warnings":[],"status":"planned"},{"id":"generals-vc6-release-c44ed1d6","game":"generals","compiler":"vc6","config":"release","switches":{"debug_multi_instance":"ON"},"retail_crc":true,"preset":"vc6","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_DEBUG_MULTI_INSTANCE=ON"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_DEBUG_MULTI_INSTANCE=ON","tier":2,"name":"Multi-instance","blurb":"Run several clients on one machine for network testing.","warnings":[],"status":"planned"},{"id":"generals-vc6-release-ebd83208","game":"generals","compiler":"vc6","config":"release","switches":{"retail_compat":"ON"},"retail_crc":true,"preset":"vc6","ci_game":"Generals","cmake_args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=OFF","-DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON","tier":2,"name":"Retail forced on","blurb":"Retail compatibility ON explicitly (the default behaviour, kept as a reference build).","warnings":[],"status":"planned"},{"id":"zh-msvc-debug-117bc796","game":"zh","compiler":"msvc","config":"debug","switches":{"gamememory":"OFF"},"retail_crc":false,"preset":"win32-debug","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_GAMEMEMORY_ENABLE=OFF"],"command":"cmake --preset win32-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_GAMEMEMORY_ENABLE=OFF","tier":2,"name":"No game memory allocator","blurb":"Uses the CRT heap; handy for third-party memory tools.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-debug-2778347b","game":"zh","compiler":"msvc","config":"debug","switches":{"mp_debug_checkpointing":"ON","mp_debug_stacktrace":"ON","mp_debug_intense_verify":"ON","mp_debug_block_ownership":"ON","mp_debug_dma_bookkeeping":"ON"},"retail_crc":false,"preset":"win32-debug","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_MEMORYPOOL_DEBUG_CHECKPOINTING=ON","-DRTS_MEMORYPOOL_DEBUG_STACKTRACE=ON","-DRTS_MEMORYPOOL_DEBUG_INTENSE_VERIFY=ON","-DRTS_MEMORYPOOL_DEBUG_CHECK_BLOCK_OWNERSHIP=ON","-DRTS_MEMORYPOOL_DEBUG_INTENSE_DMA_BOOKKEEPING=ON"],"command":"cmake --preset win32-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_MEMORYPOOL_DEBUG_CHECKPOINTING=ON -DRTS_MEMORYPOOL_DEBUG_STACKTRACE=ON -DRTS_MEMORYPOOL_DEBUG_INTENSE_VERIFY=ON -DRTS_MEMORYPOOL_DEBUG_CHECK_BLOCK_OWNERSHIP=ON -DRTS_MEMORYPOOL_DEBUG_INTENSE_DMA_BOOKKEEPING=ON","tier":2,"name":"Memory pool paranoia","blurb":"Every memory pool checker on. Very slow; for hunting corruption.","warnings":["mp_debug_stacktrace: Slows the game down significantly.","mp_debug_intense_verify: Very slow.","mp_debug_block_ownership: Very slow.","Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-debug-2f221234","game":"zh","compiler":"msvc","config":"debug","switches":{"asan":"ON","gamememory":"OFF"},"retail_crc":false,"preset":"win32-debug","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_BUILD_OPTION_ASAN=ON","-DRTS_GAMEMEMORY_ENABLE=OFF"],"command":"cmake --preset win32-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_BUILD_OPTION_ASAN=ON -DRTS_GAMEMEMORY_ENABLE=OFF","tier":2,"name":"Address Sanitizer","blurb":"Debug build with ASAN. Game memory allocator is turned off.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-debug-94cd1cf2","game":"zh","compiler":"msvc","config":"debug","switches":{"debug_multi_instance":"ON"},"retail_crc":false,"preset":"win32-debug","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_DEBUG_MULTI_INSTANCE=ON"],"command":"cmake --preset win32-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_DEBUG_MULTI_INSTANCE=ON","tier":2,"name":"Multi-instance","blurb":"Run several clients on one machine for network testing.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-profile-7496ef04","game":"zh","compiler":"msvc","config":"profile","switches":{"tracy":"ON"},"retail_crc":false,"preset":"win32-profile","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_BUILD_OPTION_PROFILE_TRACY=ON"],"command":"cmake --preset win32-profile -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_BUILD_OPTION_PROFILE_TRACY=ON","tier":2,"name":"Tracy profiler","blurb":"Profile build wired to the Tracy profiler.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-release-05974e4c","game":"zh","compiler":"msvc","config":"release","switches":{"retail_compat":"OFF"},"retail_crc":false,"preset":"win32","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=OFF"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=OFF","tier":2,"name":"Retail fixes enabled","blurb":"Retail compatibility OFF: gameplay and network fixes that break retail CRC.","warnings":[],"status":"planned"},{"id":"zh-msvc-release-511af770","game":"zh","compiler":"msvc","config":"release","switches":{"gamememory":"OFF"},"retail_crc":false,"preset":"win32","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_GAMEMEMORY_ENABLE=OFF"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_GAMEMEMORY_ENABLE=OFF","tier":2,"name":"No game memory allocator","blurb":"Uses the CRT heap; handy for third-party memory tools.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-release-63fcdf47","game":"zh","compiler":"msvc","config":"release","switches":{"debug_multi_instance":"ON"},"retail_crc":false,"preset":"win32","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_DEBUG_MULTI_INSTANCE=ON"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_DEBUG_MULTI_INSTANCE=ON","tier":2,"name":"Multi-instance","blurb":"Run several clients on one machine for network testing.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-release-6994e7d5","game":"zh","compiler":"msvc","config":"release","switches":{"retail_compat":"ON"},"retail_crc":false,"preset":"win32","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON","tier":2,"name":"Retail forced on","blurb":"Retail compatibility ON explicitly (the default behaviour, kept as a reference build).","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-release-72325070","game":"zh","compiler":"msvc","config":"release","switches":{"debug_cheats":"ON"},"retail_crc":false,"preset":"win32","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_DEBUG_CHEATS=ON"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_DEBUG_CHEATS=ON","tier":2,"name":"Cheats enabled","blurb":"Debug cheats in a release build. Single player only.","warnings":["debug_cheats: Cheats in a release build. Do not use for multiplayer.","Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-release-9d47ec96","game":"zh","compiler":"msvc","config":"release","switches":{"debug_logging":"ON","debug_crashing":"ON","debug_stacktrace":"ON","debug_profile":"ON"},"retail_crc":false,"preset":"win32","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_DEBUG_LOGGING=ON","-DRTS_DEBUG_CRASHING=ON","-DRTS_DEBUG_STACKTRACE=ON","-DRTS_DEBUG_PROFILE=ON"],"command":"cmake --preset win32 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_DEBUG_LOGGING=ON -DRTS_DEBUG_CRASHING=ON -DRTS_DEBUG_STACKTRACE=ON -DRTS_DEBUG_PROFILE=ON","tier":2,"name":"Release with full diagnostics","blurb":"Logging, crash dialogs, stack traces and profiling in a release build.","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-msvc-release-a2af145a","game":"zh","compiler":"msvc","config":"release","switches":{"ffmpeg":"ON"},"retail_crc":false,"preset":"win32-vcpkg","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_BUILD_OPTION_FFMPEG=ON"],"command":"cmake --preset win32-vcpkg -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_BUILD_OPTION_FFMPEG=ON","tier":2,"name":"FFmpeg","blurb":"Video decoding through FFmpeg (vcpkg).","warnings":["Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."],"status":"planned"},{"id":"zh-vc6-debug-3e4ef0d0","game":"zh","compiler":"vc6","config":"debug","switches":{"debug_multi_instance":"ON"},"retail_crc":true,"preset":"vc6-debug","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_DEBUG_MULTI_INSTANCE=ON"],"command":"cmake --preset vc6-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_DEBUG_MULTI_INSTANCE=ON","tier":2,"name":"Multi-instance","blurb":"Run several clients on one machine for network testing.","warnings":[],"status":"planned"},{"id":"zh-vc6-debug-8d3ea9ac","game":"zh","compiler":"vc6","config":"debug","switches":{"mp_debug_checkpointing":"ON","mp_debug_stacktrace":"ON","mp_debug_intense_verify":"ON","mp_debug_block_ownership":"ON","mp_debug_dma_bookkeeping":"ON"},"retail_crc":true,"preset":"vc6-debug","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_MEMORYPOOL_DEBUG_CHECKPOINTING=ON","-DRTS_MEMORYPOOL_DEBUG_STACKTRACE=ON","-DRTS_MEMORYPOOL_DEBUG_INTENSE_VERIFY=ON","-DRTS_MEMORYPOOL_DEBUG_CHECK_BLOCK_OWNERSHIP=ON","-DRTS_MEMORYPOOL_DEBUG_INTENSE_DMA_BOOKKEEPING=ON"],"command":"cmake --preset vc6-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_MEMORYPOOL_DEBUG_CHECKPOINTING=ON -DRTS_MEMORYPOOL_DEBUG_STACKTRACE=ON -DRTS_MEMORYPOOL_DEBUG_INTENSE_VERIFY=ON -DRTS_MEMORYPOOL_DEBUG_CHECK_BLOCK_OWNERSHIP=ON -DRTS_MEMORYPOOL_DEBUG_INTENSE_DMA_BOOKKEEPING=ON","tier":2,"name":"Memory pool paranoia","blurb":"Every memory pool checker on. Very slow; for hunting corruption.","warnings":["mp_debug_stacktrace: Slows the game down significantly.","mp_debug_intense_verify: Very slow.","mp_debug_block_ownership: Very slow."],"status":"planned"},{"id":"zh-vc6-debug-a11c7e1b","game":"zh","compiler":"vc6","config":"debug","switches":{"gamememory":"OFF"},"retail_crc":true,"preset":"vc6-debug","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_GAMEMEMORY_ENABLE=OFF"],"command":"cmake --preset vc6-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_GAMEMEMORY_ENABLE=OFF","tier":2,"name":"No game memory allocator","blurb":"Uses the CRT heap; handy for third-party memory tools.","warnings":[],"status":"planned"},{"id":"zh-vc6-release-04c31765","game":"zh","compiler":"vc6","config":"release","switches":{"retail_compat":"OFF"},"retail_crc":false,"preset":"vc6","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=OFF"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=OFF","tier":2,"name":"Retail fixes enabled","blurb":"Retail compatibility OFF: gameplay and network fixes that break retail CRC.","warnings":[],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-vc6-release-04c31765.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF3/Xord1gAAABQBAAAPAAAAREVNTy1SRUFETUUudHh0VU7dasIwGL3PU3wvENnY5mDgRbRRC7Epsd54E9L0qw3WRtJEx55+dexGODfnl1MKtuJbKTKuoPUB6uT6Bn46erNzGrBHMyJ9ebdvr5/zD0Kqzo0wwUCDFz+DP26C7dwNwfohGjeMMHjAb7QpmrrHGWEQ0PT/076F+ChN4dadUjDR+QHuPk1ejXANvkkWG7i72H0RAmAv5oxA6TXgiBGmX0AzVe318pCLTG94wRUT+4Vcr5+MI1dyKw9qIYsnXZZVLguteMVyoVdyV7IqXwquN2zHHyvkF1BLAQIUAxQAAAAIAI0LSF3/Xord1gAAABQBAAAPAAAAAAAAAAAAAACAAQAAAABERU1PLVJFQURNRS50eHRQSwUGAAAAAAEAAQA9AAAAAwEAAAAA","size":342,"sha256":"030a4b0947c5df0619fd2bf9c6b72bf4a0376bfaf68bc2c0216f0cb598b232a4"}]},{"id":"zh-vc6-release-749b5023","game":"zh","compiler":"vc6","config":"release","switches":{"gamememory":"OFF"},"retail_crc":true,"preset":"vc6","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_GAMEMEMORY_ENABLE=OFF"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_GAMEMEMORY_ENABLE=OFF","tier":2,"name":"No game memory allocator","blurb":"Uses the CRT heap; handy for third-party memory tools.","warnings":[],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-vc6-release-749b5023.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF2NTHIwzwAAAAIBAAAPAAAAREVNTy1SRUFETUUudHh0VY7NTsMwEITvfop5AVeIX4HUg0vcFsnEyG0PcIkcZ0Ms0rhy7Bbx9KSoFzR72fl2VvOmxLNca1VIgzZE1Nn3DX46fnT3PFJPdiT+cPtY311d3zC27fyIaSwa2ocZ/nYbXeePBBeGZP0wYgigb3I52bqnGROIZPvL69AinUPTces/c7TJhwGnkCdWEw4xNNlRg5NP3RNjgNvbLwLnh0gjJUy9wAuz3VSL3YsqqpUspRFqM9fL5T/wIY1e652Z6/Lir8SrnKTNeyVLsVDynGG/UEsBAhQDFAAAAAgAjQtIXY1McjDPAAAAAgEAAA8AAAAAAAAAAAAAAIABAAAAAERFTU8tUkVBRE1FLnR4dFBLBQYAAAAAAQABAD0AAAD8AAAAAAA=","size":335,"sha256":"c71aad18cd9debbfa79da16afa6a3ac4162a094b0edb125c2c7760a3776c1e0f"}]},{"id":"zh-vc6-release-a22db4ae","game":"zh","compiler":"vc6","config":"release","switches":{"retail_compat":"ON"},"retail_crc":true,"preset":"vc6","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME=ON","tier":2,"name":"Retail forced on","blurb":"Retail compatibility ON explicitly (the default behaviour, kept as a reference build).","warnings":[],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-vc6-release-a22db4ae.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF25bnKp1AAAABMBAAAPAAAAREVNTy1SRUFETUUudHh0VU67bsMgFN35ivsDZIiqDpUykJgkloixCFm6WBiua1THRBiSql9fWnWJdJbz1GkF2/GjFBVXMIQIffaTg++R3u0rjTihWZCa9dr1LwYJ0aNfoMCAw2tYwR830Y7+jmDDnIyfF5gD4BfanEw/4YowiGim/+kwQPotlfDgP3I0yYcZHiEXr0e4xeCyRQcPn8Y3QgDs1XwiUHqLuGCC8gtopfS5215qUXUH3nDFxHkj9/sn450reZQXtZHNky5bXcumU1yzWnQ7eWqZrreCdwd24iVMfgBQSwECFAMUAAAACACNC0hduW5yqdQAAAATAQAADwAAAAAAAAAAAAAAgAEAAAAAREVNTy1SRUFETUUudHh0UEsFBgAAAAABAAEAPQAAAAEBAAAAAA==","size":340,"sha256":"eae7896022d3d00285f87a84a6dc7f98401572e9e45e02f12731be79ad361358"}]},{"id":"zh-vc6-release-a3bbb31f","game":"zh","compiler":"vc6","config":"release","switches":{"debug_multi_instance":"ON"},"retail_crc":true,"preset":"vc6","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_DEBUG_MULTI_INSTANCE=ON"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_DEBUG_MULTI_INSTANCE=ON","tier":2,"name":"Multi-instance","blurb":"Run several clients on one machine for network testing.","warnings":[],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-vc6-release-a3bbb31f.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF2pK/mu0QAAAAQBAAAPAAAAREVNTy1SRUFETUUudHh0VY7BasMwEETv+or9AQVKoIdCDk6sJAbVKrJ96cWs5HUt6lhBlpLSr69acinMZebNLvMmi4M4K1kKDaMPYJKbB/ie+M0+80Az4Uoct8aY7dPIWDu5FbIQBrr4Dfx5DHZyNwLrl4huWWHxQF9kU0Qz04YVEAjnx2s/Qvw9yuXRfaSA0fkF7j5lZgiuwQ/J0gB3F6cXxgDsBT8JOL8GWilC3gW81G3T77tKlv1J1EIXstmp4/EfeBdanVWnd6p+5KXYd6f+tZNt1Vd10xb1QWTKfgBQSwECFAMUAAAACACNC0hdqSv5rtEAAAAEAQAADwAAAAAAAAAAAAAAgAEAAAAAREVNTy1SRUFETUUudHh0UEsFBgAAAAABAAEAPQAAAP4AAAAAAA==","size":337,"sha256":"bbbb0a1846aa0c041f1d4467680a2b0e2ef71b5bdba3e2d7e9e49cf38aedf3c6"}]},{"id":"zh-vc6-release-bbb03501","game":"zh","compiler":"vc6","config":"release","switches":{"debug_cheats":"ON"},"retail_crc":true,"preset":"vc6","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_DEBUG_CHEATS=ON"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_DEBUG_CHEATS=ON","tier":2,"name":"Cheats enabled","blurb":"Debug cheats in a release build. Single player only.","warnings":["debug_cheats: Cheats in a release build. Do not use for multiplayer."],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-vc6-release-bbb03501.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF3qq3iryAAAAPwAAAAPAAAAREVNTy1SRUFETUUudHh0VU69asMwGNz1FPcCCimlHQIZnFiJA8Yqir10MZL8uRZ1rCBLSenT1y1ZCrfcL/dWZntRyDIXCr0PMMmNHb4HfrOvPNBIeiZujFk/v6yfGKsHN2OBRkcXv8If18EO7kawforaTTMmD/oim6I2I61YhkB6fEz7HvG3tIR795GCjs5PuPu0eIZwDb5LljrcXRw2jAH2oj8JnF8DzRSx/ALPVX1ud82pzNujqITKyvNWHg7/jHehZCEbtZXVQ8/Frjm2+0Jk9RKv2A9QSwECFAMUAAAACACNC0hd6qt4q8gAAAD8AAAADwAAAAAAAAAAAAAAgAEAAAAAREVNTy1SRUFETUUudHh0UEsFBgAAAAABAAEAPQAAAPUAAAAAAA==","size":328,"sha256":"2d0737e23165a160ec6a76a22c80f0030fe715e9ba441d4cfc288e6e431f125a"}]},{"id":"zh-vc6-release-e63ee7ae","game":"zh","compiler":"vc6","config":"release","switches":{"debug_logging":"ON","debug_crashing":"ON","debug_stacktrace":"ON","debug_profile":"ON"},"retail_crc":true,"preset":"vc6","ci_game":"GeneralsMD","cmake_args":["-DRTS_BUILD_GENERALS=OFF","-DRTS_BUILD_ZEROHOUR=ON","-DRTS_DEBUG_LOGGING=ON","-DRTS_DEBUG_CRASHING=ON","-DRTS_DEBUG_STACKTRACE=ON","-DRTS_DEBUG_PROFILE=ON"],"command":"cmake --preset vc6 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON -DRTS_DEBUG_LOGGING=ON -DRTS_DEBUG_CRASHING=ON -DRTS_DEBUG_STACKTRACE=ON -DRTS_DEBUG_PROFILE=ON","tier":2,"name":"Release with full diagnostics","blurb":"Logging, crash dialogs, stack traces and profiling in a release build.","warnings":[],"status":"built","commit":"demo-sample","built_at":"2026-10-08 03:00 UTC (sample)","files":[{"name":"zh-vc6-release-e63ee7ae.zip","url":"data:application/zip;base64,UEsDBBQAAAAIAI0LSF0cVnig4QAAAEYBAAAPAAAAREVNTy1SRUFETUUudHh0bZDBioMwEIbveYp5gfRS6EKhB6sxSoMpUS97kRjHNaw1JcZ22adfu/SyZWEu830zw/CfRRSzTIqEKeidh3axYwffA72ZHfU4op6R4m6L+KaRkGqwM6ylocOL28Bvr70Z7A3BuCloO80wOcAvNEvQ7YgbEoFHPT5Pux7CY2kd7u3H4nWwboK7W1bXIly96xaDHdxtGPaEAJiL/kSg9OpxxgDrX0ATVZXNsc5F0nBWMBWJ8iDT9I94Z0pmslYHWTx5wo41b4TkPC/4K45VVGb/8LKK4lOl1pRezVnJNBcPTH4AUEsBAhQDFAAAAAgAjQtIXRxWeKDhAAAARgEAAA8AAAAAAAAAAAAAAIABAAAAAERFTU8tUkVBRE1FLnR4dFBLBQYAAAAAAQABAD0AAAAOAQAAAAA=","size":353,"sha256":"39a7fa8097fcc456df488b76a97469836c58454d86373e5e508bd2abad69dfdc"}]}]}};</script>
 <script>
-/* Sample pull requests for the triangulator panel (also used by the tests and `triangulate.py --sample`). */
-window.SAMPLE_PRS = [
- {
-  "number": 101,
-  "title": "Fix use-after-free in AIGroup::removeAll",
-  "body": "AIGroup::removeAll frees the group while iterating; crash when units die during removal.",
-  "files": [
-   {
-    "path": "GeneralsMD/Code/GameEngine/Source/GameLogic/AI/AIGroup.cpp",
-    "patch": "@@ -410,6 +410,9 @@ void AIGroup::removeAll()\n   for (auto it = m_list.begin(); it != m_list.end(); )\n+    // copy before erase to avoid use after free\n+    AIObject *obj = *it;\n+    it = m_list.erase(it);\n-    delete *it;\n"
-   }
-  ]
- },
- {
-  "number": 102,
-  "title": "Prevent AIGroup removeAll use after free crash",
-  "body": "Crash when units die while removeAll is iterating the group list. Erase before delete.",
-  "files": [
-   {
-    "path": "GeneralsMD/Code/GameEngine/Source/GameLogic/AI/AIGroup.cpp",
-    "patch": "@@ -412,5 +412,8 @@ void AIGroup::removeAll()\n+    AIObject *obj = *it;\n+    it = m_list.erase(it); // erase before delete, use after free\n"
-   }
-  ]
- },
- {
-  "number": 103,
-  "title": "Rework pathfinding node allocation",
-  "body": "Allocate pathfinder cells from a pool instead of new/delete.",
-  "files": [
-   {
-    "path": "GeneralsMD/Code/GameEngine/Source/GameLogic/AI/AIGroup.cpp",
-    "patch": "@@ -405,10 +405,14 @@ void AIGroup::removeAll()\n+    PathNode *node = s_nodePool.acquire();\n+    s_nodePool.release(node);\n"
-   },
-   {
-    "path": "GeneralsMD/Code/GameEngine/Source/GameLogic/AI/Pathfinder.cpp",
-    "patch": "@@ -50,3 +50,6 @@\n+  s_nodePool.init(4096);\n"
-   }
-  ]
- },
- {
-  "number": 104,
-  "title": "Add retail compatibility switch for networking",
-  "body": "Guard the new packet format behind RETAIL_COMPATIBLE_NETWORKING.",
-  "files": [
-   {
-    "path": "Core/GameEngine/Include/Common/GameDefines.h",
-    "patch": "@@ -129,3 +129,6 @@\n+#define RETAIL_COMPATIBLE_NETWORKING (1)\n"
-   },
-   {
-    "path": "Core/GameEngine/Source/GameNetwork/Connection.cpp",
-    "patch": "@@ -88,4 +88,8 @@\n+  if (RETAIL_COMPATIBLE_NETWORKING) sendLegacyPacket();\n"
-   }
-  ]
- },
- {
-  "number": 105,
-  "title": "Add logging to AIGroup member changes",
-  "body": "Log when a unit joins or leaves an AI group.",
-  "files": [
-   {
-    "path": "GeneralsMD/Code/GameEngine/Source/GameLogic/AI/AIGroupLog.cpp",
-    "patch": "@@ -1,1 +1,20 @@\n+void logGroupChange(AIGroup *group) { DEBUG_LOG((\"AIGroup member changed\")); }\n"
-   }
-  ]
- },
- {
-  "number": 106,
-  "title": "Fix typo in README",
-  "body": "Spelling.",
-  "files": [
-   {
-    "path": "README.md",
-    "patch": "@@ -3,1 +3,1 @@\n-teh\n+the\n"
-   }
-  ]
- },
- {
-  "number": 107,
-  "title": "Fix AIGroup::removeAll crash when the group is already empty",
-  "body": "removeAll dereferences the list head after the group was emptied; guard against an empty group crash.",
-  "files": [
-   {
-    "path": "GeneralsMD/Code/GameEngine/Source/GameLogic/AI/AIGroup.cpp",
-    "patch": "@@ -900,4 +900,7 @@ void AIGroup::removeAll()\n+  if (m_list.empty()) return; // empty group guard\n"
-   }
-  ]
- }
-];
-</script>
-<script>
 "use strict";
-/* PR triangulator, browser edition. Mirror of tools/triangulate.py: keep the two in step;
- * tools/test_tools.py runs both over the same fixture and compares the results.
- * Text similarity is TF-IDF (lexical), not neural embeddings. */
-(function (root) {
-  const STOP = new Set(("a an and are as at be by for from has have in is it its of on or that the this to was were will with " +
-    "we you i not no but if then so do does did can could should would pr pull request fix fixes fixed add adds added " +
-    "update updates change changes use uses using when which what why how also into than").split(" "));
-  const TEXT_T = 0.30, FILES_T = 0.20;
-
-  function splitWords(s) {
-    s = s.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2");
-    return (s.toLowerCase().match(/[a-z0-9]+/g) || []).filter((w) => w.length > 1 && !STOP.has(w));
-  }
-  const addedLines = (patch) => (patch || "").split("\n").filter((l) => l.startsWith("+") && !l.startsWith("+++")).map((l) => l.slice(1)).join("\n");
-
-  function changedRanges(patch) {
-    const out = [], re = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/gm;
-    let m;
-    while ((m = re.exec(patch || ""))) {
-      const start = +m[1], n = m[2] !== undefined ? +m[2] : 1;
-      out.push([start, start + Math.max(n, 1) - 1]);
-    }
-    return out;
-  }
-
-  function tokens(pr) {
-    let words = [];
-    const title = splitWords(pr.title || "");
-    for (let i = 0; i < 3; i++) words = words.concat(title);
-    words = words.concat(splitWords(pr.body || ""));
-    for (const f of pr.files || []) words = words.concat(splitWords(f.path), splitWords(addedLines(f.patch)));
-    return words;
-  }
-
-  function tfidfVectors(prs) {
-    const docs = prs.map((p) => { const c = new Map(); for (const w of tokens(p)) c.set(w, (c.get(w) || 0) + 1); return c; });
-    const df = new Map();
-    for (const d of docs) for (const w of d.keys()) df.set(w, (df.get(w) || 0) + 1);
-    const n = docs.length;
-    return docs.map((d) => {
-      const v = new Map();
-      for (const [w, c] of d) v.set(w, (1 + Math.log(c)) * (Math.log((1 + n) / (1 + df.get(w))) + 1));
-      let norm = 0;
-      for (const x of v.values()) norm += x * x;
-      norm = Math.sqrt(norm) || 1;
-      for (const [w, x] of v) v.set(w, x / norm);
-      return v;
-    });
-  }
-
-  function cosine(a, b) {
-    if (a.size > b.size) [a, b] = [b, a];
-    let s = 0;
-    for (const [w, x] of a) s += x * (b.get(w) || 0);
-    return s;
-  }
-
-  function fileScore(a, b) {
-    const pa = new Set(a.files.map((f) => f.path)), pb = new Set(b.files.map((f) => f.path));
-    if (!pa.size || !pb.size) return [0, []];
-    const shared = [...pa].filter((p) => pb.has(p)).sort();
-    const union = new Set([...pa, ...pb]);
-    const jac = shared.length / union.size;
-    const dir = (p) => p.slice(0, Math.max(p.lastIndexOf("/"), 0)) || p;
-    const da = new Set([...pa].map(dir)), db = new Set([...pb].map(dir));
-    const dshared = [...da].filter((d) => db.has(d)).length, dunion = new Set([...da, ...db]).size;
-    return [Math.max(jac, 0.5 * (dshared / dunion)), shared];
-  }
-
-  function lineOverlap(a, b, shared) {
-    const fa = new Map(a.files.map((f) => [f.path, changedRanges(f.patch)]));
-    const fb = new Map(b.files.map((f) => [f.path, changedRanges(f.patch)]));
-    const hits = [];
-    for (const path of shared) {
-      const ra = fa.get(path) || [], rb = fb.get(path) || [];
-      if (!ra.length || !rb.length) continue; // no patch data: cannot tell
-      if (ra.some(([s1, e1]) => rb.some(([s2, e2]) => s1 <= e2 && s2 <= e1))) hits.push(path);
-    }
-    return hits;
-  }
-
-  function classify(text, files, lineHits) {
-    const sig = { text: text >= TEXT_T, files: files >= FILES_T, lines: lineHits.length > 0 };
-    const n = +sig.text + +sig.files + +sig.lines;
-    let label;
-    if (n === 3) label = text >= 0.5 ? "duplicate" : "conflict";
-    else if (n === 2) label = sig.files && sig.lines ? "conflict" : "related";
-    else if (n === 1) label = "weak";
-    else label = "none";
-    return [label, sig];
-  }
-
-  const round3 = (x) => Math.round(x * 1000) / 1000;
-
-  function groups(prs, edges) {
-    const parent = new Map(prs.map((p) => [p.number, p.number]));
-    const find = (x) => { while (parent.get(x) !== x) { parent.set(x, parent.get(parent.get(x))); x = parent.get(x); } return x; };
-    for (const e of edges) if (e.label !== "weak") parent.set(find(e.a), find(e.b));
-    const out = new Map();
-    for (const n of parent.keys()) { const r = find(n); if (!out.has(r)) out.set(r, []); out.get(r).push(n); }
-    return [...out.values()].filter((g) => g.length > 1).map((g) => g.sort((x, y) => x - y)).sort((x, y) => x[0] - y[0]);
-  }
-
-  function triangulate(input) {
-    const prs = input.map((p) => ({ ...p, files: p.files || [] })).sort((a, b) => a.number - b.number);
-    const vecs = tfidfVectors(prs);
-    const edges = [];
-    for (let i = 0; i < prs.length; i++) for (let j = i + 1; j < prs.length; j++) {
-      const a = prs[i], b = prs[j];
-      const text = cosine(vecs[i], vecs[j]);
-      const [files, shared] = fileScore(a, b);
-      const hits = lineOverlap(a, b, shared);
-      const [label, signals] = classify(text, files, hits);
-      if (label === "none") continue;
-      edges.push({ a: a.number, b: b.number, label, signals, text: round3(text), files: round3(files), shared_files: shared, overlapping_files: hits, _t: text, _f: files });
-    }
-    const order = { duplicate: 0, conflict: 1, related: 2, weak: 3 };
-    edges.sort((x, y) => order[x.label] - order[y.label] || (y._t + y._f) - (x._t + x._f) || x.a - y.a || x.b - y.b);
-    edges.forEach((e) => { delete e._t; delete e._f; });
-    return { prs: Object.fromEntries(prs.map((p) => [p.number, p.title || ""])), edges, groups: groups(prs, edges) };
-  }
-
-  /* GitHub REST, straight from the browser (the API allows CORS). Public repos work without a token, at 60 requests/hour. */
-  async function fetchGitHub(repo, { token, limit = 30, apiUrl = "https://api.github.com", fetchImpl = root.fetch } = {}) {
-    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error("Enter the repo as owner/name");
-    const get = async (path) => {
-      const headers = { Accept: "application/vnd.github+json" };
-      if (token) headers.Authorization = "Bearer " + token;
-      const r = await fetchImpl(apiUrl + path, { headers });
-      if (r.status === 403 || r.status === 429) throw new Error("GitHub rate limit reached. Add a token, or try again later.");
-      if (r.status === 404) throw new Error("Repository not found (or private: add a token).");
-      if (!r.ok) throw new Error("GitHub returned " + r.status);
-      return r.json();
-    };
-    const list = await get(`/repos/${repo}/pulls?state=open&per_page=${Math.min(limit, 100)}`);
-    const out = [];
-    for (const pr of list) {
-      const files = await get(`/repos/${repo}/pulls/${pr.number}/files?per_page=100`);
-      out.push({ number: pr.number, title: pr.title, body: pr.body || "", files: files.map((f) => ({ path: f.filename, patch: f.patch || "" })) });
-    }
-    return out;
-  }
-
-  const api = { triangulate, fetchGitHub, splitWords, changedRanges, lineOverlap };
-  root.Triangulator = api;
-  if (typeof module !== "undefined") module.exports = api;
-})(typeof window !== "undefined" ? window : globalThis);
-</script>
-<script>
-"use strict";
-/* Two panels that live on the page:
- *   - PR triangulator: paste PR data or fetch open PRs from GitHub, then see duplicates / conflicts / related PRs.
- *   - Desktop agent: connect to tools/agent.py running on your own PC and queue builds from the configurator.
- * Exposes window.PortalAgent for app.js. */
+/* "Build on my PC": connects the page to the build agent (a small program the user runs on their own computer).
+ * Exposes window.PortalAgent for app.js and fires a "portal:agent" event whenever its state changes. */
 (function () {
   const $ = (id) => document.getElementById(id);
   const el = (tag, props = {}, ...kids) => {
@@ -518,26 +248,24 @@ window.SAMPLE_PRS = [
     set(k, v) { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } },
   };
 
-  /* ------------------------------------------------------------------ desktop agent */
-  // `agent.py serve` prints a link ending in #agent-token=...; take the token and remove it from the address bar.
+  // The agent opens the page with #agent-token=...; take the token and remove it from the address bar.
   let hashToken = null;
   const m = /(?:^#|[&#])agent-token=([\w-]+)/.exec(location.hash);
   if (m) { hashToken = m[1]; history.replaceState(null, "", location.pathname + location.search); }
 
-  const Agent = { connected: false, url: null, token: null, current: null, queue: [], recent: [], timer: null, fails: 0 };
+  const Agent = { connected: false, url: null, token: null, current: null, queue: [], results: [], timer: null, fails: 0 };
   window.PortalAgent = Agent;
   const changed = () => window.dispatchEvent(new CustomEvent("portal:agent"));
+  const say = (msg, cls = "") => { const s = $("agent-status"); s.textContent = msg; s.className = "agent-status " + cls; };
 
   async function call(path, opts = {}) {
     const headers = { "X-Agent-Token": Agent.token || "" };
     if (opts.body) headers["Content-Type"] = "application/json";
     const r = await fetch(Agent.url + path, { ...opts, headers });
     let body = null;
-    try { body = await r.json(); } catch (e) { /* no body */ }
-    return { status: r.status, body };
+    try { body = await r.clone().json(); } catch (e) { /* not JSON */ }
+    return { status: r.status, body, response: r };
   }
-
-  function say(msg, cls = "") { const s = $("agent-status"); s.textContent = msg; s.className = "agent-status " + cls; }
 
   async function connect(url, token) {
     url = url.replace(/\/+$/, "");
@@ -547,9 +275,9 @@ window.SAMPLE_PRS = [
       const ping = await call("/api/ping");
       if (!ping.body || ping.body.agent !== "portal-build-agent") throw new Error("not an agent");
       const st = await call("/api/status");
-      if (st.status === 401) { say("The agent is there, but the token is wrong. Copy it from the agent's window.", "bad"); return false; }
+      if (st.status === 401) { say("The agent is running, but the token is wrong. Use the link it opened, or copy the token from its window.", "bad"); return false; }
       if (st.status !== 200) throw new Error("status " + st.status);
-      Agent.connected = true; Agent.fails = 0;
+      Object.assign(Agent, { connected: true, fails: 0 });
       store.set("agent-url", url); store.set("agent-token", token);
       apply(st.body);
       say("Connected" + (st.body.dry_run ? " (dry run: nothing will really be built)" : ""), "ok");
@@ -559,17 +287,16 @@ window.SAMPLE_PRS = [
       return true;
     } catch (e) {
       Agent.connected = false;
-      const hosted = location.protocol === "https:" && !/^https:/.test(url);
       say("Could not reach an agent at " + url + ". Is it running? " +
         (location.origin !== url ? `If this page is hosted elsewhere, start the agent with --allow-origin ${location.origin}. ` : "") +
-        (hosted ? "Some browsers (Safari) block a secure page from talking to a local address; open the link the agent printed instead." : ""), "bad");
+        (location.protocol === "https:" ? "Some browsers (Safari) will not let a secure page talk to a local program; use the link the agent opens instead." : ""), "bad");
       return false;
     }
   }
 
   function disconnect() {
     clearInterval(Agent.timer);
-    Object.assign(Agent, { connected: false, current: null, queue: [], recent: [] });
+    Object.assign(Agent, { connected: false, current: null, queue: [], results: [] });
     store.set("agent-token", null);
     $("agent-connect").hidden = false; $("agent-disconnect").hidden = true;
     say("Disconnected.");
@@ -577,10 +304,8 @@ window.SAMPLE_PRS = [
   }
 
   function apply(s) {
-    const finished = s.recent.length && (!Agent.recent.length || s.recent[0].at !== Agent.recent[0].at || s.recent[0].id !== Agent.recent[0].id);
-    Object.assign(Agent, { current: s.current, queue: s.queue, recent: s.recent });
+    Object.assign(Agent, { current: s.current || null, queue: s.queue || [], results: s.results || [] });
     renderQueue();
-    if (finished && window.portalReload) window.portalReload();
   }
 
   async function poll() {
@@ -588,94 +313,50 @@ window.SAMPLE_PRS = [
       const st = await call("/api/status");
       if (st.status !== 200) throw new Error("status " + st.status);
       Agent.fails = 0;
-      const before = Agent.current + "|" + Agent.queue.join();
+      const before = JSON.stringify([Agent.current, Agent.queue, Agent.results.map((r) => r.id + r.at_unix)]);
       apply(st.body);
-      if (before !== Agent.current + "|" + Agent.queue.join()) changed();
+      if (before !== JSON.stringify([Agent.current, Agent.queue, Agent.results.map((r) => r.id + r.at_unix)])) changed();
     } catch (e) {
       if (++Agent.fails >= 3) { disconnect(); say("Lost contact with the agent.", "bad"); }
     }
   }
 
+  /* job = { id, preset, game, args }: an already-resolved build. The agent re-checks every field. */
   Agent.queueBuild = async function (job) {
     const r = await call("/api/queue", { method: "POST", body: JSON.stringify(job) });
     if (r.status === 202) say(`Queued ${r.body.id} on your PC.`, "ok");
-    else if (r.status === 200) say(`${r.body.id} is already queued.`, "");
+    else if (r.status === 200) say(`${r.body.id} is already queued.`);
     else say("The agent refused that build: " + ((r.body && r.body.error) || r.status), "bad");
     poll();
+  };
+
+  Agent.resultFor = (id) => Agent.results.find((r) => r.id === id);
+
+  Agent.download = async function (id) {
+    const r = await call("/api/download/" + encodeURIComponent(id));
+    if (r.status !== 200) { say("Download failed (" + r.status + ").", "bad"); return; }
+    const blob = await r.response.blob();
+    const a = el("a", { href: URL.createObjectURL(blob), download: id + ".zip" });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
   };
 
   function renderQueue() {
     const box = $("agent-queue");
     box.replaceChildren();
     if (!Agent.connected) return;
-    const row = (label, id, cls) => box.append(el("div", { class: "qrow " + cls }, el("span", { class: "tag " + cls, text: label }), el("code", { text: id })));
+    const row = (label, id, cls, extra) => box.append(el("div", { class: "qrow" }, el("span", { class: "tag " + cls, text: label }), el("code", { text: id }), ...(extra || [])));
     if (Agent.current) row("building", Agent.current, "info");
     Agent.queue.forEach((id) => row("queued", id, ""));
-    Agent.recent.slice(0, 5).forEach((r) => row(r.ok ? "done" : "failed", r.id, r.ok ? "ok" : "bad"));
-    if (!box.children.length) box.append(el("p", { class: "hint", text: "Nothing queued. Pick a configuration above and press “Build on my PC”." }));
+    Agent.results.slice(0, 8).forEach((r) => {
+      if (r.dry_run) row("dry run", r.id, "");
+      else if (r.ok) row("done", r.id, "ok", [el("button", { type: "button", class: "ghost", text: "Download", onclick: () => Agent.download(r.id) })]);
+      else row("failed", r.id, "bad", [el("span", { class: "hint", text: r.error || "" })]);
+    });
+    if (!box.children.length) box.append(el("p", { class: "hint", text: "Nothing yet. Pick a configuration above and press “Build on my PC”." }));
   }
 
-  /* ------------------------------------------------------------------ triangulator */
-  let lastRepo = null;
-
-  function tri(msg, cls = "") { const n = $("tri-msg"); n.textContent = msg; n.className = "hint " + cls; }
-
-  function renderTriangles(result) {
-    const out = $("tri-out");
-    out.replaceChildren();
-    const showWeak = $("tri-weak").checked;
-    const edges = result.edges.filter((e) => showWeak || e.label !== "weak");
-    const title = (n) => result.prs[n] || "";
-    const prLink = (n) => lastRepo
-      ? el("a", { href: `https://github.com/${lastRepo}/pull/${n}`, target: "_blank", rel: "noopener noreferrer", text: "#" + n })
-      : el("span", { text: "#" + n });
-    if (result.groups.length) {
-      out.append(el("p", { class: "tri-groups" }, el("strong", { text: "Groups of related PRs: " }),
-        ...result.groups.map((g, i) => el("span", { class: "tri-group" }, ...g.flatMap((n, j) => j ? [", ", prLink(n)] : [prLink(n)]), i < result.groups.length - 1 ? "  ·  " : ""))));
-    }
-    if (!edges.length) { out.append(el("p", { class: "hint", text: "No related pull requests found." + (showWeak ? "" : " (Tick “show weak” to include single-signal matches.)") })); return; }
-    for (const e of edges) {
-      const cls = { duplicate: "bad", conflict: "warn", related: "info", weak: "" }[e.label];
-      const chips = [["text", e.text.toFixed(2)], ["files", e.files.toFixed(2)], ["lines", e.overlapping_files.length ? "overlap" : "–"]]
-        .map(([k, v]) => el("span", { class: "chip" + (e.signals[k] ? " on" : ""), text: `${k} ${v}` }));
-      const card = el("div", { class: "tri-card" },
-        el("div", { class: "tri-head" }, el("span", { class: "tag " + cls, text: e.label }), prLink(e.a), " ↔ ", prLink(e.b), el("span", { class: "chips" }, ...chips)),
-        el("div", { class: "tri-titles" }, el("div", { text: title(e.a) }), el("div", { text: title(e.b) })));
-      if (e.overlapping_files.length) card.append(el("div", { class: "tri-files", text: "Same lines touched in: " + e.overlapping_files.join(", ") }));
-      else if (e.shared_files.length) card.append(el("div", { class: "tri-files", text: "Shared files: " + e.shared_files.join(", ") }));
-      out.append(card);
-    }
-  }
-
-  function runTri() {
-    let prs;
-    try { prs = JSON.parse($("tri-json").value); } catch (e) { tri("That is not valid JSON.", "bad"); return; }
-    if (!Array.isArray(prs) || !prs.every((p) => p && Number.isInteger(p.number))) { tri("Expected a list of PRs, each with a number, title and files.", "bad"); return; }
-    if (prs.length < 2) { tri("Need at least two pull requests to compare.", "bad"); return; }
-    const result = window.Triangulator.triangulate(prs);
-    tri(`Compared ${prs.length} pull requests (${prs.length * (prs.length - 1) / 2} pairs).`);
-    renderTriangles(result);
-    $("tri-out")._result = result;
-  }
-
-  async function fetchTri() {
-    const repo = $("tri-repo").value.trim();
-    tri("Fetching open pull requests…");
-    $("tri-fetch").disabled = true;
-    try {
-      const prs = await window.Triangulator.fetchGitHub(repo, { token: $("tri-token").value.trim() || undefined });
-      if (prs.length < 2) { tri(`Only ${prs.length} open pull request(s) in ${repo}; need at least two.`, "bad"); return; }
-      lastRepo = repo;
-      $("tri-json").value = JSON.stringify(prs, null, 1);
-      runTri();
-    } catch (e) {
-      tri(e.message || "Could not fetch pull requests.", "bad");
-    } finally {
-      $("tri-fetch").disabled = false;
-    }
-  }
-
-  // Is this page being served by an agent (opened without the token link)? Only worth asking on a loopback address.
+  // Is this page being served by the agent itself (opened without the token link)? Only worth asking on loopback.
   async function servedByAgent() {
     if (!/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) return false;
     try { const r = await fetch("/api/ping"); return (await r.json()).agent === "portal-build-agent"; } catch (e) { return false; }
@@ -685,12 +366,7 @@ window.SAMPLE_PRS = [
     if (!$("agent-connect")) return;
     $("agent-connect").addEventListener("click", () => connect($("agent-url").value.trim(), $("agent-token").value.trim()));
     $("agent-disconnect").addEventListener("click", disconnect);
-    $("tri-run").addEventListener("click", () => { lastRepo = null; runTri(); });
-    $("tri-fetch").addEventListener("click", fetchTri);
-    $("tri-sample").addEventListener("click", () => { lastRepo = null; $("tri-json").value = JSON.stringify(window.SAMPLE_PRS, null, 1); runTri(); });
-    $("tri-weak").addEventListener("change", () => { const r = $("tri-out")._result; if (r) renderTriangles(r); });
-
-        const saved = store.get("agent-url"), savedToken = store.get("agent-token");
+    const saved = store.get("agent-url"), savedToken = store.get("agent-token");
     // A link with a token comes from the agent itself, so its own address is the agent's address.
     $("agent-url").value = hashToken || (!saved && await servedByAgent()) ? location.origin : saved || "http://127.0.0.1:8787";
     if (hashToken || savedToken) {
@@ -808,6 +484,8 @@ function resolve(m, sel) {
     const args = Object.entries(games[game].cmake).map(([k, v]) => `-D${k}=${v}`);
     for (const [k, v] of Object.entries(switches)) args.push(`-D${swById[k].cmake}=${v}`);
     out.preset = p;
+    out.cmake_args = args;
+    out.ci_game = games[game].ci_name;
     out.command = ["cmake", "--preset", p, ...args].join(" ");
   }
   return out;
@@ -854,6 +532,9 @@ function statusOf(r) {
   const ag = window.PortalAgent;
   if (r.valid && ag && ag.connected && ag.current === r.id) return { cls: "info", text: "Building on your PC…" };
   if (r.valid && ag && ag.connected && ag.queue.includes(r.id)) return { cls: "info", text: "Queued on your PC" };
+  const mine = r.valid && ag && ag.connected && ag.resultFor(r.id);
+  if (mine && mine.ok && mine.file) return { cls: "ok", text: "Built on your PC" };
+  if (mine && !mine.ok) return { cls: "bad", text: "Failed on your PC" };
   if (!r.valid) return { cls: "bad", text: "Not a valid combination" };
   const b = byId[r.id];
   if (b && b.status === "built") return { cls: "ok", text: "Ready to download" };
@@ -882,8 +563,10 @@ function renderResult(r) {
   }
   const ag = window.PortalAgent;
   if (r.valid && ag && ag.connected) {
-    acts.append(el("button", { type: "button", class: "btn", text: "Build on my PC",
-      onclick: () => ag.queueBuild({ selection: { game: r.game, compiler: r.compiler, config: r.config, switches: r.switches } }) }));
+    const done = ag.resultFor(r.id);
+    if (done && done.ok && done.file) acts.append(el("button", { type: "button", class: "btn", text: "Download from my PC", onclick: () => ag.download(r.id) }));
+    acts.append(el("button", { type: "button", class: done && done.ok ? "btn alt" : "btn", text: done ? "Rebuild on my PC" : "Build on my PC",
+      onclick: () => ag.queueBuild({ id: r.id, preset: r.preset, game: r.ci_game, args: r.cmake_args }) }));
   } else if (r.valid) {
     acts.append(el("a", { class: "btn alt", href: "#desktop", text: "Build on my PC…" }));
   }
@@ -1008,13 +691,6 @@ async function init() {
   byId = Object.fromEntries(B.builds.map((b) => [b.id, b]));
   const real = B.commit && B.commit !== "demo-sample";
   $("commit-line").textContent = real ? `Built from commit ${B.commit.slice(0, 10)}.` : "";
-  window.portalReload = async () => {
-    try {
-      B = await fetch("data/builds.json", { cache: "no-store" }).then((r) => r.json());
-      byId = Object.fromEntries(B.builds.map((b) => [b.id, b]));
-      renderGrid(); renderCards(); render();
-    } catch (e) { /* offline or opened from disk: keep what is shown */ }
-  };
   window.addEventListener("portal:agent", render);
   readHash();
   renderGrid();

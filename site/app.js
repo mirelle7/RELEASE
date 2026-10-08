@@ -104,6 +104,8 @@ function resolve(m, sel) {
     const args = Object.entries(games[game].cmake).map(([k, v]) => `-D${k}=${v}`);
     for (const [k, v] of Object.entries(switches)) args.push(`-D${swById[k].cmake}=${v}`);
     out.preset = p;
+    out.cmake_args = args;
+    out.ci_game = games[game].ci_name;
     out.command = ["cmake", "--preset", p, ...args].join(" ");
   }
   return out;
@@ -150,6 +152,9 @@ function statusOf(r) {
   const ag = window.PortalAgent;
   if (r.valid && ag && ag.connected && ag.current === r.id) return { cls: "info", text: "Building on your PC…" };
   if (r.valid && ag && ag.connected && ag.queue.includes(r.id)) return { cls: "info", text: "Queued on your PC" };
+  const mine = r.valid && ag && ag.connected && ag.resultFor(r.id);
+  if (mine && mine.ok && mine.file) return { cls: "ok", text: "Built on your PC" };
+  if (mine && !mine.ok) return { cls: "bad", text: "Failed on your PC" };
   if (!r.valid) return { cls: "bad", text: "Not a valid combination" };
   const b = byId[r.id];
   if (b && b.status === "built") return { cls: "ok", text: "Ready to download" };
@@ -178,8 +183,10 @@ function renderResult(r) {
   }
   const ag = window.PortalAgent;
   if (r.valid && ag && ag.connected) {
-    acts.append(el("button", { type: "button", class: "btn", text: "Build on my PC",
-      onclick: () => ag.queueBuild({ selection: { game: r.game, compiler: r.compiler, config: r.config, switches: r.switches } }) }));
+    const done = ag.resultFor(r.id);
+    if (done && done.ok && done.file) acts.append(el("button", { type: "button", class: "btn", text: "Download from my PC", onclick: () => ag.download(r.id) }));
+    acts.append(el("button", { type: "button", class: done && done.ok ? "btn alt" : "btn", text: done ? "Rebuild on my PC" : "Build on my PC",
+      onclick: () => ag.queueBuild({ id: r.id, preset: r.preset, game: r.ci_game, args: r.cmake_args }) }));
   } else if (r.valid) {
     acts.append(el("a", { class: "btn alt", href: "#desktop", text: "Build on my PC…" }));
   }
@@ -304,13 +311,6 @@ async function init() {
   byId = Object.fromEntries(B.builds.map((b) => [b.id, b]));
   const real = B.commit && B.commit !== "demo-sample";
   $("commit-line").textContent = real ? `Built from commit ${B.commit.slice(0, 10)}.` : "";
-  window.portalReload = async () => {
-    try {
-      B = await fetch("data/builds.json", { cache: "no-store" }).then((r) => r.json());
-      byId = Object.fromEntries(B.builds.map((b) => [b.id, b]));
-      renderGrid(); renderCards(); render();
-    } catch (e) { /* offline or opened from disk: keep what is shown */ }
-  };
   window.addEventListener("portal:agent", render);
   readHash();
   renderGrid();

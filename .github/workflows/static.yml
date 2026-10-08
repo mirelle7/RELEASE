@@ -31,6 +31,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5 # TODO: pin to a commit SHA
+        with:
+          go-version: '1.22'
+      - name: Test the build agent
+        run: cd agent && go test -count=1 ./...
+      - name: Build the build agent for Windows
+        run: sh agent/build.sh
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
