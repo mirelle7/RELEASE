@@ -168,7 +168,7 @@ function renderResult(r) {
   if (b && b.status === "built") {
     for (const f of b.files || []) acts.append(el("a", { class: "btn", href: f.url, text: `Download ${f.name}` }));
     if (b.log_url) acts.append(el("a", { class: "btn alt", href: b.log_url, text: "Build log" }));
-  } else if (r.valid && !b) {
+  } else if (r.valid && !b && M.repo) {
     const title = `Build request: ${r.id}`;
     const body = `Please build this configuration.\n\n- id: \`${r.id}\`\n- command: \`${r.command}\`\n`;
     acts.append(el("a", { class: "btn", href: `https://github.com/${M.repo}/issues/new?labels=build-request&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`, text: "Request this build" }));

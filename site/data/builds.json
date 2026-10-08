@@ -74,7 +74,7 @@
      "name": "generals-msvc-release.zip",
      "url": "builds/generals-msvc-release/generals-msvc-release.zip",
      "size": 313,
-     "sha256": "0b2416c14c8a17df9ea43d4b8d5935b7eecf44d423218cef6575aa645e1bd517"
+     "sha256": "efa1a46def96ec70424bb81feffe770c3f149b5f571e70945e5545592367741e"
     }
    ]
   },
@@ -144,7 +144,7 @@
      "name": "generals-vc6-release.zip",
      "url": "builds/generals-vc6-release/generals-vc6-release.zip",
      "size": 308,
-     "sha256": "b898b78465cb2b5f3cf46d694fd96e287dcacf7c765cdae47c64549b28b11d45"
+     "sha256": "51c3838072aa085c008a4f469f54d70dd37e4f571a52ee1156b25e2ab1d3954f"
     }
    ]
   },
@@ -174,7 +174,7 @@
      "name": "generals-vc6-releaselog.zip",
      "url": "builds/generals-vc6-releaselog/generals-vc6-releaselog.zip",
      "size": 311,
-     "sha256": "12a8d28472d6c3c775f658224717d0250c8a06bdc951bbd4282060187f225aa2"
+     "sha256": "5f8b852cd71717e5b7ec9ed42303453a65e6e7a14acb090eb2990dc103145e23"
     }
    ]
   },
@@ -226,7 +226,7 @@
      "name": "zh-msvc-debug.zip",
      "url": "builds/zh-msvc-debug/zh-msvc-debug.zip",
      "size": 309,
-     "sha256": "44a536c22ea5bea2e26afa48ef1e9e540b15c8f97957eda4e92949c80b613f53"
+     "sha256": "0119c7009287080cc289ed0a1971e3a0740d2c2822e646c1676a96ea4efde9bf"
     }
    ]
   },
@@ -280,7 +280,7 @@
      "name": "zh-msvc-release.zip",
      "url": "builds/zh-msvc-release/zh-msvc-release.zip",
      "size": 310,
-     "sha256": "6ad2ca7ac896d0c744a52b6f64fff4872e5ca48c39e28871996f7ea15d0661bd"
+     "sha256": "d41d601c77f5170973bbaba56306eef90819bac305720865c19d079163597169"
     }
    ]
   },
@@ -310,7 +310,7 @@
      "name": "zh-vc6-debug.zip",
      "url": "builds/zh-vc6-debug/zh-vc6-debug.zip",
      "size": 305,
-     "sha256": "dbd60b35415afc57e8cc8ad0f3a1afc391d1507bcbd3524ba84ceb9b05f5bd65"
+     "sha256": "953057afa384d3fc5a7a166e06ee72a59cfd9667430325afce56285f1c8ccc55"
     }
    ]
   },
@@ -340,7 +340,7 @@
      "name": "zh-vc6-profile.zip",
      "url": "builds/zh-vc6-profile/zh-vc6-profile.zip",
      "size": 304,
-     "sha256": "54d70871072cc44470f137fe898e826b4bea82d819d14164b7632c6f2e2c159f"
+     "sha256": "91455ca7f56c39281336ce89a9aa4c534a5229d48c5a22e257e292ca267cc29f"
     }
    ]
   },
@@ -370,7 +370,7 @@
      "name": "zh-vc6-release.zip",
      "url": "builds/zh-vc6-release/zh-vc6-release.zip",
      "size": 306,
-     "sha256": "7c00127b76f077f02556e41e5b1471e54bb3870c1a2d257317cc55b19b820eea"
+     "sha256": "11b83e0b6c95f81a8c0600f41e62986f51a62e616eac1af59878b553a919894e"
     }
    ]
   },
@@ -1387,7 +1387,7 @@
      "name": "zh-vc6-release-04c31765.zip",
      "url": "builds/zh-vc6-release-04c31765/zh-vc6-release-04c31765.zip",
      "size": 342,
-     "sha256": "17a5bfa01af2cb199506a713aa9d18a044c22d99e758f449b13eb239c946c0db"
+     "sha256": "030a4b0947c5df0619fd2bf9c6b72bf4a0376bfaf68bc2c0216f0cb598b232a4"
     }
    ]
   },
@@ -1420,7 +1420,7 @@
      "name": "zh-vc6-release-749b5023.zip",
      "url": "builds/zh-vc6-release-749b5023/zh-vc6-release-749b5023.zip",
      "size": 335,
-     "sha256": "e773ee097fc00723a88dca86c5746c214f82275d5d857705fcb810760ea02c9e"
+     "sha256": "c71aad18cd9debbfa79da16afa6a3ac4162a094b0edb125c2c7760a3776c1e0f"
     }
    ]
   },
@@ -1453,7 +1453,7 @@
      "name": "zh-vc6-release-a22db4ae.zip",
      "url": "builds/zh-vc6-release-a22db4ae/zh-vc6-release-a22db4ae.zip",
      "size": 340,
-     "sha256": "4aafa7007accf4eb0b60dd715cc231f6e5cd52232b815af872f4d94c77491c94"
+     "sha256": "eae7896022d3d00285f87a84a6dc7f98401572e9e45e02f12731be79ad361358"
     }
    ]
   },
@@ -1486,7 +1486,7 @@
      "name": "zh-vc6-release-a3bbb31f.zip",
      "url": "builds/zh-vc6-release-a3bbb31f/zh-vc6-release-a3bbb31f.zip",
      "size": 337,
-     "sha256": "a0188b3ed63045a2b5425562430a1835d3d194f84f5921afe1cc58677359d014"
+     "sha256": "bbbb0a1846aa0c041f1d4467680a2b0e2ef71b5bdba3e2d7e9e49cf38aedf3c6"
     }
    ]
   },
@@ -1521,7 +1521,7 @@
      "name": "zh-vc6-release-bbb03501.zip",
      "url": "builds/zh-vc6-release-bbb03501/zh-vc6-release-bbb03501.zip",
      "size": 328,
-     "sha256": "48bc8f49bdee3bf286010cbb2d33b7d08fa8b7e2e00b0140fc8c981ce151a833"
+     "sha256": "2d0737e23165a160ec6a76a22c80f0030fe715e9ba441d4cfc288e6e431f125a"
     }
    ]
   },
@@ -1560,7 +1560,7 @@
      "name": "zh-vc6-release-e63ee7ae.zip",
      "url": "builds/zh-vc6-release-e63ee7ae/zh-vc6-release-e63ee7ae.zip",
      "size": 353,
-     "sha256": "1f3a2ed74e960368ce5ae69ade623ee5ba9f7bf0608f0c9b435a77cb99493cb3"
+     "sha256": "39a7fa8097fcc456df488b76a97469836c58454d86373e5e508bd2abad69dfdc"
     }
    ]
   }

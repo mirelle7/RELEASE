@@ -18,10 +18,15 @@ No install needed to just look at it. Either:
 * open `site/index.html` in a browser (works straight from disk), or
 * `python3 serve.py` and visit http://localhost:8000
 
-## Use it from the internet
+## Use it from the internet (Vercel, Netlify, any static host)
 
-Pushing to `main` deploys `site/` to GitHub Pages (Settings > Pages > Source: GitHub Actions). Any static host works
-too: upload the contents of `site/`.
+It is plain static files, no build step. On Vercel: **Add New > Project**, import this repo, accept the defaults
+(`vercel.json` already sets the output directory to `site`), and deploy. Visitors only ever see your Vercel URL.
+Or from a terminal: `npx vercel --prod` in this folder.
+
+### GitHub Pages (optional)
+
+Add a workflow that uploads `site/` with `actions/upload-pages-artifact` and `actions/deploy-pages`, or upload the contents of `site/` to any host.
 
 ## Regenerate
 

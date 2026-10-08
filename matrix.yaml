@@ -6,8 +6,9 @@
 # A switch left at its default is omitted from the build id, so ids stay stable
 # when new switches are added.
 
-# GitHub repository the portal builds from; used for log links and build requests.
-repo: mirelle7/RELEASE
+# Optional "owner/name" of a GitHub repo. If set, unbuilt configurations get a "Request this build" issue link.
+# Leave empty for a public site that should not link to GitHub.
+repo: ""
 
 games:
   - { id: generals, name: "Generals",  cmake: { RTS_BUILD_GENERALS: "ON",  RTS_BUILD_ZEROHOUR: "OFF" }, ci_name: Generals }
