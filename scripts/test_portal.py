@@ -61,6 +61,20 @@ class Rules(unittest.TestCase):
         self.assertEqual(r["preset"], "win32-vcpkg")
 
 
+class CarryOver(unittest.TestCase):
+    def test_generate_keeps_results_and_on_request_builds(self):
+        planned = portal.expand(M)
+        prev = [dict(b) for b in planned]
+        prev[0].update(status="built", commit="abc", files=[{"name": "x.zip"}])
+        adhoc = dict(prev[0], id="zh-vc6-release-deadbeef", tier=3, status="built")
+        merged = portal.carry_over(portal.expand(M), prev + [adhoc])
+        by_id = {b["id"]: b for b in merged}
+        self.assertEqual(by_id[prev[0]["id"]]["status"], "built")
+        self.assertEqual(by_id[prev[0]["id"]]["files"], [{"name": "x.zip"}])
+        self.assertIn("zh-vc6-release-deadbeef", by_id)
+        self.assertEqual(sum(b["status"] == "planned" for b in merged), len(planned) - 1)
+
+
 class Expansion(unittest.TestCase):
     def test_every_planned_build_valid_and_unique(self):
         builds = portal.expand(M)

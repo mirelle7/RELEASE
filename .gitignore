@@ -1,2 +1,4 @@
 ci-matrix.json
 __pycache__/
+queue/
+agent-logs/

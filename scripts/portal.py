@@ -203,13 +203,33 @@ def write_data_js(out):
         "window.PORTAL_DATA=" + json.dumps({"schema": schema, "builds": builds}) + ";\n", encoding="utf-8")
 
 
+STATE_KEYS = ("status", "commit", "files", "log_url", "built_at")
+
+
+def carry_over(builds, previous):
+    """Keep recorded build results across `generate`, and keep on-request (tier 3) builds."""
+    old = {b["id"]: b for b in previous}
+    for b in builds:
+        o = old.get(b["id"])
+        if o:
+            b.update({k: o[k] for k in STATE_KEYS if k in o})
+    known = {b["id"] for b in builds}
+    return builds + [b for b in previous if b["tier"] >= 3 and b["id"] not in known]
+
+
 def cmd_generate(args):
     m = load_matrix()
     builds = expand(m)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
+    prev_path = out / "builds.json"
+    commit = None
+    if prev_path.exists():
+        prev = json.loads(prev_path.read_text(encoding="utf-8"))
+        builds = carry_over(builds, prev["builds"])
+        commit = prev.get("commit")
     (out / "schema.json").write_text(json.dumps(m, indent=1), encoding="utf-8")
-    (out / "builds.json").write_text(json.dumps({"commit": None, "builds": builds}, indent=1), encoding="utf-8")
+    (out / "builds.json").write_text(json.dumps({"commit": commit, "builds": builds}, indent=1), encoding="utf-8")
     write_data_js(out)
     (ROOT / "ci-matrix.json").write_text(json.dumps(ci_matrix(builds)), encoding="utf-8")
     tiers = {t: sum(1 for b in builds if b["tier"] == t) for t in (1, 2)}
