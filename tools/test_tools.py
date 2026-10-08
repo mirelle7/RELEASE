@@ -2,6 +2,8 @@
 """Tests for the triangulator and the build agent. Run: python3 tools/test_tools.py"""
 import http.server
 import json
+import shutil
+import subprocess
 import threading
 import unittest
 from pathlib import Path
@@ -10,8 +12,8 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import triangulate as T  # noqa: E402
 
-FIX = Path(__file__).resolve().parent.parent / "tests" / "fixtures"
-PRS = json.loads((FIX / "prs.json").read_text())
+SAMPLE = Path(__file__).resolve().parent.parent / "site" / "sample-prs.js"
+PRS = T.load_sample()
 
 
 def edge(result, a, b):
@@ -75,6 +77,32 @@ class Triangulator(unittest.TestCase):
     def test_empty_and_single(self):
         self.assertEqual(T.triangulate([])["edges"], [])
         self.assertEqual(T.triangulate([PRS[0]])["groups"], [])
+
+
+@unittest.skipUnless(shutil.which("node"), "node not installed")
+class JsParity(unittest.TestCase):
+    """site/triangulate.js must agree with triangulate.py on the same input."""
+
+    def run_js(self, prs):
+        js = Path(__file__).resolve().parent.parent / "site" / "triangulate.js"
+        script = f"const T=require({str(js)!r});const p=JSON.parse(require('fs').readFileSync(0));console.log(JSON.stringify(T.triangulate(p)))"
+        out = subprocess.run(["node", "-e", script], input=json.dumps(prs), capture_output=True, text=True, check=True).stdout
+        return json.loads(out)
+
+    def test_same_edges_labels_and_groups(self):
+        py = T.triangulate(json.loads(json.dumps(PRS)))
+        js = self.run_js(PRS)
+        self.assertEqual(py["groups"], js["groups"])
+        self.assertEqual([(e["a"], e["b"], e["label"]) for e in py["edges"]], [(e["a"], e["b"], e["label"]) for e in js["edges"]])
+        for p, j in zip(py["edges"], js["edges"]):
+            self.assertAlmostEqual(p["text"], j["text"], delta=0.002)
+            self.assertAlmostEqual(p["files"], j["files"], delta=0.002)
+            self.assertEqual(p["signals"], j["signals"])
+            self.assertEqual(p["overlapping_files"], j["overlapping_files"])
+
+    def test_empty_and_single(self):
+        self.assertEqual(self.run_js([])["edges"], [])
+        self.assertEqual(self.run_js([PRS[0]])["groups"], [])
 
 
 class FakeGitHub(http.server.BaseHTTPRequestHandler):
@@ -216,6 +244,140 @@ class Agent(unittest.TestCase):
                          {"switches": {"debug_cheats": "ON"}, "game": "zh", "compiler": "vc6", "config": "release"})
         with self.assertRaises(SystemExit):
             A.parse_selection(["bogus=1"])
+
+
+import http.client  # noqa: E402
+import time  # noqa: E402
+
+
+class AgentServer(unittest.TestCase):
+    """The page <-> desktop API. Real HTTP on loopback with a fake cmake runner."""
+
+    ALLOWED = "https://demo.example"
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+        self.site, self.src = self.tmp / "site", self.tmp / "src"
+        (self.site / "data").mkdir(parents=True)
+        m = portal.load_matrix()
+        (self.site / "data" / "builds.json").write_text(json.dumps({"commit": None, "builds": portal.expand(m)}))
+        (self.site / "data" / "schema.json").write_text(json.dumps(m))
+        (self.site / "hello.txt").write_text("hi")
+        self.gate = threading.Event()
+        self.gate.set()
+        self.started = []
+
+        def runner(cmd, cwd, log):
+            if cmd[1] == "--build":
+                self.started.append(cmd[3])
+                self.gate.wait(5)
+                d = self.src / "build" / cmd[3] / "GeneralsMD"
+                d.mkdir(parents=True, exist_ok=True)
+                (d / "g.exe").write_bytes(b"MZ")
+            return 0
+
+        self.httpd, self.token = A.make_server(self.site, self.src, 0, "secret-token", (self.ALLOWED,), False, self.tmp / "logs", runner)
+        self.port = self.httpd.server_address[1]
+        threading.Thread(target=self.httpd.serve_forever, daemon=True).start()
+        self.addCleanup(self.httpd.shutdown)
+
+    def call(self, method, path, body=None, token="secret-token", host=None, origin=None, raw=None):
+        c = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+        headers = {"Host": host or f"127.0.0.1:{self.port}"}
+        if token is not None:
+            headers["X-Agent-Token"] = token
+        if origin:
+            headers["Origin"] = origin
+        data = raw if raw is not None else (json.dumps(body) if body is not None else None)
+        if data is not None:
+            headers["Content-Type"] = "application/json"
+        c.request(method, path, data, headers)
+        r = c.getresponse()
+        payload = r.read()
+        try:
+            payload = json.loads(payload)
+        except ValueError:
+            pass
+        return r.status, dict(r.getheaders()), payload
+
+    def wait_for(self, pred, secs=5):
+        end = time.time() + secs
+        while time.time() < end:
+            if pred():
+                return True
+            time.sleep(0.05)
+        return False
+
+    def test_ping_is_open_status_needs_token(self):
+        self.assertEqual(self.call("GET", "/api/ping", token=None)[2]["agent"], "portal-build-agent")
+        self.assertEqual(self.call("GET", "/api/status", token=None)[0], 401)
+        self.assertEqual(self.call("GET", "/api/status", token="wrong")[0], 401)
+        self.assertEqual(self.call("GET", "/api/status")[0], 200)
+
+    def test_queue_needs_token(self):
+        self.assertEqual(self.call("POST", "/api/queue", {"id": "zh-vc6-release"}, token=None)[0], 401)
+        self.assertEqual(self.started, [])
+
+    def test_queue_builds_and_publishes(self):
+        code, _, body = self.call("POST", "/api/queue", {"id": "zh-vc6-release"})
+        self.assertEqual((code, body["queued"]), (202, True))
+        self.assertTrue(self.wait_for(lambda: self.call("GET", "/api/status")[2]["recent"]))
+        recent = self.call("GET", "/api/status")[2]["recent"][0]
+        self.assertEqual((recent["id"], recent["ok"]), ("zh-vc6-release", True))
+        doc = json.loads((self.site / "data" / "builds.json").read_text())
+        self.assertEqual(next(b for b in doc["builds"] if b["id"] == "zh-vc6-release")["status"], "built")
+
+    def test_custom_selection_accepted(self):
+        sel = {"game": "zh", "compiler": "msvc", "config": "release", "switches": {"debug_cheats": "ON", "debug_multi_instance": "ON"}}
+        self.assertEqual(self.call("POST", "/api/queue", {"selection": sel})[0], 202)
+
+    def test_invalid_and_hostile_jobs_rejected(self):
+        bad = [{"id": "nope"}, {"id": "zh-vc6-release", "selection": {}}, {},
+               {"selection": {"game": "zh", "compiler": "vc6", "config": "release", "switches": {"asan": "ON"}}},
+               {"selection": {"game": "zh", "compiler": "vc6 & calc", "config": "release"}},
+               {"selection": {"game": "zh", "compiler": "vc6", "config": "release", "switches": {"debug_cheats": "ON; calc"}}},
+               [1, 2], "x"]
+        for job in bad:
+            code, _, body = self.call("POST", "/api/queue", job)
+            self.assertEqual(code, 400, job)
+        self.assertEqual(self.call("POST", "/api/queue", raw="{not json")[0], 400)
+        self.assertEqual(self.call("POST", "/api/queue", raw="x" * (A.MAX_BODY + 1))[0], 400)
+        time.sleep(0.2)
+        self.assertEqual(self.started, [])
+
+    def test_dns_rebinding_host_rejected(self):
+        for path in ("/api/ping", "/hello.txt"):
+            self.assertEqual(self.call("GET", path, host="evil.example")[0], 403)
+        self.assertEqual(self.call("POST", "/api/queue", {"id": "zh-vc6-release"}, host="evil.example")[0], 403)
+
+    def test_cors_only_for_allowed_origins(self):
+        ok = self.call("GET", "/api/ping", origin=self.ALLOWED)[1]
+        self.assertEqual(ok.get("Access-Control-Allow-Origin"), self.ALLOWED)
+        self.assertNotIn("Access-Control-Allow-Origin", self.call("GET", "/api/ping", origin="https://evil.example")[1])
+        code, headers, _ = self.call("OPTIONS", "/api/queue", origin=self.ALLOWED)
+        self.assertEqual(code, 204)
+        self.assertEqual(headers.get("Access-Control-Allow-Private-Network"), "true")
+        self.assertIn("X-Agent-Token", headers.get("Access-Control-Allow-Headers", ""))
+        self.assertEqual(self.call("OPTIONS", "/api/queue", origin="https://evil.example")[0], 403)
+
+    def test_duplicate_request_is_not_queued_twice(self):
+        self.gate.clear()
+        self.assertEqual(self.call("POST", "/api/queue", {"id": "zh-vc6-release"})[2]["queued"], True)
+        self.assertTrue(self.wait_for(lambda: self.started))
+        again = self.call("POST", "/api/queue", {"id": "zh-vc6-release"})[2]
+        self.assertEqual(again["queued"], False)
+        self.assertEqual(self.call("GET", "/api/status")[2]["current"], "zh-vc6-release")
+        self.gate.set()
+        self.assertTrue(self.wait_for(lambda: self.call("GET", "/api/status")[2]["recent"]))
+        self.assertEqual(self.started, ["vc6"])
+
+    def test_serves_the_site_itself(self):
+        code, _, body = self.call("GET", "/hello.txt", token=None)
+        self.assertEqual((code, body), (200, b"hi"))
+
+    def test_binds_loopback_only(self):
+        self.assertEqual(self.httpd.server_address[0], "127.0.0.1")
 
 
 if __name__ == "__main__":

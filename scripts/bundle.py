@@ -27,10 +27,13 @@ def main():
 
     html = (SITE / "index.html").read_text(encoding="utf-8")
     css = (SITE / "style.css").read_text(encoding="utf-8")
-    js = (SITE / "app.js").read_text(encoding="utf-8")
     html = html.replace('<link rel="stylesheet" href="style.css">', f"<style>\n{css}</style>")
     html = html.replace('<script src="data/portal-data.js"></script>', f"<script>{inline_js(payload)}</script>")
-    html = html.replace('<script src="app.js"></script>', f"<script>\n{inline_js(js)}</script>")
+
+    def inline_script(match):
+        return f"<script>\n{inline_js((SITE / match.group(1)).read_text(encoding='utf-8'))}</script>"
+
+    html = re.sub(r'<script src="((?!data:|http)[\w./-]+\.js)"></script>', inline_script, html)
     assert not re.search(r'(src|href)="(?!data:|#|http)[^"]*\.(js|css)"', html), "unresolved asset reference"
     out = ROOT / "portal.html"
     out.write_text(html, encoding="utf-8")

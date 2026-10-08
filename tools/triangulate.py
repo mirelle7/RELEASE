@@ -13,7 +13,7 @@ Each pair of PRs is scored on three independent signals and labelled by how many
   any other 2           -> "related"
   1 signal              -> "weak" (reported only with --all)
 
-Input is a JSON file (see tests/fixtures) or the GitHub REST API:
+Input is a JSON file, the built-in sample (site/sample-prs.js) or the GitHub REST API:
 
   triangulate.py --input prs.json [--pr 123] [--json] [--all]
   triangulate.py --repo owner/name [--token-env GITHUB_TOKEN] [--api-url URL] ...
@@ -166,6 +166,16 @@ def groups(prs, edges, min_label=("duplicate", "conflict", "related")):
 
 # --------------------------------------------------------------------------- input
 
+SAMPLE_JS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site", "sample-prs.js")
+
+
+def load_sample():
+    """The sample PRs the website's triangulator panel uses (site/sample-prs.js)."""
+    with open(SAMPLE_JS, encoding="utf-8") as f:
+        text = f.read()
+    return json.loads(text[text.index("=") + 1:].strip().rstrip(";"))
+
+
 def fetch_github(repo, token, api_url="https://api.github.com", limit=100):
     def get(path):
         req = urllib.request.Request(api_url + path, headers={"Accept": "application/vnd.github+json", "User-Agent": "pr-triangulator"})
@@ -208,6 +218,7 @@ def report(result, only=None, show_all=False):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     src = ap.add_mutually_exclusive_group(required=True)
+    src.add_argument("--sample", action="store_true", help="the built-in sample PRs")
     src.add_argument("--input", help="JSON file: list of {number,title,body,files:[{path,patch}]}")
     src.add_argument("--repo", help="owner/name; reads open PRs through the GitHub API")
     ap.add_argument("--token-env", default="GITHUB_TOKEN", help="env var holding an API token (optional for public repos)")
@@ -217,7 +228,9 @@ def main(argv=None):
     ap.add_argument("--json", action="store_true", help="machine-readable output")
     args = ap.parse_args(argv)
 
-    if args.input:
+    if args.sample:
+        prs = load_sample()
+    elif args.input:
         with open(args.input, encoding="utf-8") as f:
             prs = json.load(f)
     else:

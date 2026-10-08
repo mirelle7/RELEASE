@@ -1,4 +1,5 @@
-[
+/* Sample pull requests for the triangulator panel (also used by the tests and `triangulate.py --sample`). */
+window.SAMPLE_PRS = [
  {
   "number": 101,
   "title": "Fix use-after-free in AIGroup::removeAll",
@@ -84,4 +85,4 @@
    }
   ]
  }
-]
+];

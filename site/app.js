@@ -147,6 +147,9 @@ function seg(container, items, current, onPick, isDisabled) {
 }
 
 function statusOf(r) {
+  const ag = window.PortalAgent;
+  if (r.valid && ag && ag.connected && ag.current === r.id) return { cls: "info", text: "Building on your PC…" };
+  if (r.valid && ag && ag.connected && ag.queue.includes(r.id)) return { cls: "info", text: "Queued on your PC" };
   if (!r.valid) return { cls: "bad", text: "Not a valid combination" };
   const b = byId[r.id];
   if (b && b.status === "built") return { cls: "ok", text: "Ready to download" };
@@ -172,6 +175,13 @@ function renderResult(r) {
     const title = `Build request: ${r.id}`;
     const body = `Please build this configuration.\n\n- id: \`${r.id}\`\n- command: \`${r.command}\`\n`;
     acts.append(el("a", { class: "btn", href: `https://github.com/${M.repo}/issues/new?labels=build-request&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`, text: "Request this build" }));
+  }
+  const ag = window.PortalAgent;
+  if (r.valid && ag && ag.connected) {
+    acts.append(el("button", { type: "button", class: "btn", text: "Build on my PC",
+      onclick: () => ag.queueBuild({ selection: { game: r.game, compiler: r.compiler, config: r.config, switches: r.switches } }) }));
+  } else if (r.valid) {
+    acts.append(el("a", { class: "btn alt", href: "#desktop", text: "Build on my PC…" }));
   }
   $("res-cmd").textContent = r.valid ? r.command : "Fix the problems above to see the build command.";
   $("copy-cmd").disabled = !r.valid;
@@ -292,7 +302,16 @@ async function init() {
     }
   }
   byId = Object.fromEntries(B.builds.map((b) => [b.id, b]));
-  $("commit-line").textContent = B.commit === "demo-sample" ? "Sample data for demonstration." : B.commit ? `Built from commit ${B.commit.slice(0, 10)}.` : "No builds have been published yet. The matrix below shows what is planned.";
+  const real = B.commit && B.commit !== "demo-sample";
+  $("commit-line").textContent = real ? `Built from commit ${B.commit.slice(0, 10)}.` : "";
+  window.portalReload = async () => {
+    try {
+      B = await fetch("data/builds.json", { cache: "no-store" }).then((r) => r.json());
+      byId = Object.fromEntries(B.builds.map((b) => [b.id, b]));
+      renderGrid(); renderCards(); render();
+    } catch (e) { /* offline or opened from disk: keep what is shown */ }
+  };
+  window.addEventListener("portal:agent", render);
   readHash();
   renderGrid();
   renderCards();

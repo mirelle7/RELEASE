@@ -8,9 +8,6 @@ A demo of a website that lists every build of [GeneralsGameCode](https://github.
 (Generals and Zero Hour) across both compilers (VC6 SP6 and modern MSVC) and the major CMake switches,
 with a configurator that tells you whether a combination is valid and gives you the exact `cmake` command.
 
-**Everything here is sample data.** The "downloads" are placeholder zips containing a text file. There are no
-game binaries and no game data in this repo.
-
 ## Use it locally
 
 No install needed to just look at it. Either:
@@ -22,7 +19,6 @@ No install needed to just look at it. Either:
 
 `portal.html` is the whole site in a single self-contained file (styles, script, data and placeholder downloads inlined, 80 KB).
 Email it, double-click it, or upload it to any host. Rebuild it with `python3 scripts/bundle.py` after `generate` / `make_demo.py`.
-Note GitHub itself shows `.html` files as source, not as a page.
 
 ## Use it from the internet (Vercel, Netlify, any static host)
 
@@ -52,44 +48,42 @@ builds are made). `site/app.js` re-implements the resolver from `scripts/portal.
 To turn this into the real portal, point CI at the game repo's build workflow and replace `make_demo.py` with
 `package_builds.py` + `portal.py publish`. The full version lives in `build-portal/` of the game fork.
 
-## Tools
+## What is on the page
 
-### PR triangulator (`tools/triangulate.py`)
+Besides the configurator, matrix and variants, the site has two working panels:
 
-Finds duplicate, conflicting and related pull requests by scoring every pair on three signals: what the change
-*says* (TF-IDF over title, description, path words and added-line identifiers), *which files* it touches, and
-*which lines* of those files. This is lexical similarity, not neural embeddings, so it works offline with no
-dependencies but will miss paraphrases that share no vocabulary.
+* **PR triangulator**: paste PR data (or type `owner/name` to fetch open PRs from GitHub in your browser) and it lists
+  **duplicate**, **conflict** and **related** pull requests. It compares what each change says (TF-IDF over title,
+  description, path words and added-line identifiers; lexical, not neural embeddings), which files it touches, and
+  which lines. "Try the sample" works with no input. The same logic is in `tools/triangulate.py` for the command
+  line (`python3 tools/triangulate.py --sample`); `site/triangulate.js` and the Python version are tested to agree.
+* **Build on my PC**: connects the page to a build agent on your own Windows machine, adds a **Build on my PC**
+  button to the configurator, and shows what is building, queued and done.
 
-```sh
-python3 tools/triangulate.py --input tests/fixtures/prs.json           # sample PRs
-python3 tools/triangulate.py --repo owner/name --pr 123                 # live; set GITHUB_TOKEN for private repos / rate limits
-python3 tools/triangulate.py --repo owner/name --json > triangles.json
-```
+### Connecting the page to your PC
 
-Labels: **duplicate** (text, files and lines all agree), **conflict** (same lines touched for a different purpose),
-**related** (any other two signals). A single signal is "weak" and only shown with `--all`.
-The GitHub fetch is tested against a local mock API, not against live GitHub.
-
-### Local build agent (`tools/agent.py`)
-
-Builds portal configurations on your own Windows PC (where VC6 / VS2022 live) and publishes them into `site/`.
-Start it from a shell where the compiler is set up (VS Developer Command Prompt, or after your VC6 `vcvars32.bat`),
-with CMake and Ninja on PATH.
+On the machine that has VC6 / Visual Studio, in a shell where the compiler is set up (VS Developer Command Prompt, or
+after your VC6 `vcvars32.bat`) with CMake and Ninja on PATH:
 
 ```sh
-python tools/agent.py plan                                   # what has no artifact yet
-python tools/agent.py enqueue --id zh-vc6-release            # or: --select game=zh compiler=vc6 config=release switch=debug_cheats:ON
-python tools/agent.py watch --src C:\src\GeneralsGameCode    # builds whatever is queued; --dry-run to preview
-python tools/agent.py build --src C:\src\GeneralsGameCode --id zh-vc6-release
+python tools/agent.py serve --src C:\src\GeneralsGameCode
 ```
 
-Each build runs `cmake --preset ...` and `cmake --build --preset ...` in your checkout, zips the `.exe/.dll/.pdb`
-files into `site/builds/<id>/`, and records the result in `site/data/builds.json` (the page's status updates on reload).
-Custom combinations are added to the site as "on request" builds. Failures are recorded as failed, with the log in
-`agent-logs/`. Nothing is pushed; commit `site/` yourself, then run `python3 scripts/bundle.py` if you want the single file.
+It prints a link like `http://127.0.0.1:8787/#agent-token=...`. Open it: the page connects by itself, and the agent also
+serves this site, so finished builds appear without a refresh. To use a copy of the page hosted elsewhere, start the
+agent with `--allow-origin https://you.example` and paste the printed token into the page's Token box.
+(A page opened straight from disk, like `portal.html`, can use the triangulator but cannot connect to the agent;
+use the agent's link for that.) Some browsers (Safari) block a secure page from reaching a local address.
 
-Safety: jobs go through the same resolver as the website, so a queue file can only select known switches with allowed
-values, and the agent passes argument lists to CMake, never shell strings.
-The agent has been tested with a fake CMake (no VC6 or MSVC is available where it was written), so the first real
-build on your machine is the real test.
+Each build runs `cmake --preset ...` and `cmake --build --preset ...` in your checkout, zips the `.exe/.dll/.pdb` files
+into `site/builds/<id>/`, and records the result in `site/data/builds.json`. Combinations nobody planned are added as
+"on request" builds. Failures are recorded with a log in `agent-logs/`. Nothing is pushed anywhere; commit `site/`
+yourself, then run `python3 scripts/bundle.py` for the single file.
+
+Other commands: `agent.py plan`, `enqueue`, `build`, `watch` (a folder queue), all with `--dry-run`.
+
+**Safety.** The agent listens on 127.0.0.1 only, requires the token for anything but a "is an agent here?" ping, rejects
+requests whose Host header is not loopback (DNS-rebinding guard), and answers other websites only if you allow their
+origin. A job can only select known switches with allowed values (the same resolver as the page), and CMake is run with an
+argument list, never a shell string. The build queue is held in memory while serving. The agent has been tested with a
+fake CMake, since VC6 and MSVC are not available where it was written, so your first real build is the real test.

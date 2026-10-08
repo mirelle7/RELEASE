@@ -9,6 +9,7 @@ MSVC, or the shell where your VC6 vcvars32.bat has been run), with CMake and Nin
   agent.py enqueue --select game=zh compiler=vc6 config=release switch=debug_cheats:ON
   agent.py build  --src C:\\src\\GeneralsGameCode --id zh-vc6-release   build now
   agent.py watch  --src C:\\src\\GeneralsGameCode                      keep building whatever lands in queue/
+  agent.py serve  --src C:\\src\\GeneralsGameCode                      serve the site and let its pages queue builds here
 
 Everything the agent runs is derived from matrix.yaml through the same resolver the website uses, so a
 queue file can only ever select known switches with allowed values. It never executes text from a
@@ -19,11 +20,17 @@ commit and push the site yourself (or let your host redeploy) once you are happy
 """
 import argparse
 import datetime
+import functools
 import hashlib
+import hmac
+import http.server
 import json
+import queue
+import secrets
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import zipfile
 from pathlib import Path
@@ -238,6 +245,154 @@ def cmd_watch(args):
         time.sleep(args.interval)
 
 
+# --------------------------------------------------------------------------- serve (the page <-> this PC)
+
+API_VERSION = 1
+MAX_BODY = 64 * 1024
+
+
+def make_server(site, src, port=0, token=None, allow_origins=(), dry_run=False, logs=None, runner=run):
+    """HTTP server on 127.0.0.1 that serves the site and exposes a small token-protected build API.
+
+    GET  /api/ping    open: is an agent here?
+    GET  /api/status  token: what is building / queued / finished
+    POST /api/queue   token: {"id": ...} or {"selection": {...}}, validated by the same resolver as the site
+
+    Safety: loopback only; the Host header must be loopback (DNS-rebinding guard); cross-origin calls are only
+    answered for origins passed in allow_origins; everything but /api/ping needs the token; a build is only ever
+    derived from matrix.yaml, never from request text.
+    """
+    token = token or secrets.token_urlsafe(16)
+    m = portal.load_matrix()
+    lock = threading.Lock()
+    state = {"current": None, "pending": [], "recent": []}
+    jobs = queue.Queue()
+
+    def worker():
+        while True:
+            r = jobs.get()
+            with lock:
+                state["current"] = r["id"]
+                state["pending"].remove(r["id"])
+            ok = False
+            try:
+                ok = build_one(m, site, src, r, dry_run, logs, runner)
+            except (Exception, SystemExit) as e:  # keep the agent alive whatever one build does
+                print(f"build {r['id']} aborted: {e}")
+            with lock:
+                state["current"] = None
+                state["recent"].insert(0, {"id": r["id"], "ok": ok, "at": now()})
+                del state["recent"][20:]
+
+    threading.Thread(target=worker, daemon=True).start()
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *a, **kw):
+            super().__init__(*a, directory=str(site), **kw)
+
+        def log_message(self, fmt, *a):
+            pass
+
+        # -- helpers
+        def host_ok(self):
+            port = self.server.server_address[1]
+            return self.headers.get("Host", "") in (f"127.0.0.1:{port}", f"localhost:{port}")
+
+        def origin(self):
+            o = self.headers.get("Origin")
+            own = {f"http://127.0.0.1:{self.server.server_address[1]}", f"http://localhost:{self.server.server_address[1]}"}
+            return o if o and (o in allow_origins or o in own) else None
+
+        def send_json(self, code, obj):
+            data = json.dumps(obj).encode()
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            o = self.origin()
+            if o:
+                self.send_header("Access-Control-Allow-Origin", o)
+                self.send_header("Vary", "Origin")
+            self.end_headers()
+            self.wfile.write(data)
+
+        def authed(self):
+            return hmac.compare_digest(self.headers.get("X-Agent-Token", ""), token)
+
+        # -- verbs
+        def do_OPTIONS(self):
+            o = self.origin()
+            if not self.host_ok() or not o:
+                self.send_error(403)
+                return
+            self.send_response(204)
+            self.send_header("Access-Control-Allow-Origin", o)
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Agent-Token")
+            self.send_header("Access-Control-Allow-Private-Network", "true")
+            self.send_header("Access-Control-Max-Age", "600")
+            self.send_header("Vary", "Origin")
+            self.end_headers()
+
+        def do_GET(self):
+            if not self.host_ok():
+                self.send_error(403, "bad host")
+                return
+            if self.path == "/api/ping":
+                return self.send_json(200, {"agent": "portal-build-agent", "version": API_VERSION})
+            if self.path == "/api/status":
+                if not self.authed():
+                    return self.send_json(401, {"error": "token required"})
+                with lock:
+                    return self.send_json(200, {"busy": state["current"] is not None, "current": state["current"],
+                                                "queue": list(state["pending"]), "recent": list(state["recent"]), "dry_run": dry_run})
+            if self.path.startswith("/api/"):
+                return self.send_json(404, {"error": "unknown endpoint"})
+            super().do_GET()
+
+        def do_POST(self):
+            if not self.host_ok():
+                self.send_error(403, "bad host")
+                return
+            if self.path != "/api/queue":
+                return self.send_json(404, {"error": "unknown endpoint"})
+            if not self.authed():
+                return self.send_json(401, {"error": "token required"})
+            try:
+                n = int(self.headers.get("Content-Length", "0"))
+                if not 0 < n <= MAX_BODY:
+                    raise ValueError("bad body size")
+                job = json.loads(self.rfile.read(n))
+                if not isinstance(job, dict) or not (("id" in job) ^ ("selection" in job)):
+                    raise ValueError('send exactly one of "id" or "selection"')
+                r = resolve_job(m, load_builds(site), job)
+            except (ValueError, KeyError, TypeError, json.JSONDecodeError) as e:
+                return self.send_json(400, {"error": str(e)})
+            with lock:
+                if r["id"] == state["current"] or r["id"] in state["pending"]:
+                    return self.send_json(200, {"queued": False, "id": r["id"], "reason": "already queued"})
+                state["pending"].append(r["id"])
+            jobs.put(r)
+            self.send_json(202, {"queued": True, "id": r["id"], "position": len(state["pending"])})
+
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    return httpd, token
+
+
+def cmd_serve(args):
+    httpd, token = make_server(args.site, args.src, args.port, args.token, tuple(args.allow_origin), args.dry_run, args.logs)
+    port = httpd.server_address[1]
+    print(f"Build agent running. Open  http://127.0.0.1:{port}/#agent-token={token}")
+    print("The page connects automatically from that link. Token (for a page hosted elsewhere): " + token)
+    if args.allow_origin:
+        print("Also answering pages from: " + ", ".join(args.allow_origin))
+    print("Ctrl+C to stop." + ("  (dry run: nothing will be built)" if args.dry_run else ""))
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        pass
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--site", type=Path, default=portal.ROOT / "site", help="site folder (default: ./site)")
@@ -265,6 +420,14 @@ def main(argv=None):
     w.add_argument("--once", action="store_true", help="process the queue once and exit")
     common(w)
     w.set_defaults(fn=cmd_watch)
+
+    s = sub.add_parser("serve")
+    s.add_argument("--port", type=int, default=8787)
+    s.add_argument("--token", help="fixed token (default: random each run)")
+    s.add_argument("--allow-origin", action="append", default=[], metavar="ORIGIN",
+                   help="also answer pages from this origin, e.g. https://you.github.io (repeatable)")
+    common(s)
+    s.set_defaults(fn=cmd_serve)
 
     args = ap.parse_args(argv)
     if args.cmd in ("enqueue", "build") and bool(args.id) == bool(args.select):

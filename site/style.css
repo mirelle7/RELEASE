@@ -109,3 +109,31 @@ summary { cursor: pointer; font-weight: 600; }
 .demo-bar { background: #f0c75e; color: #2a2100; text-align: center; font-size: 13px; padding: 6px 12px; }
 .demo-bar strong { letter-spacing: .08em; margin-right: 8px; }
 .demo-tag { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; background: #f0c75e; color: #2a2100; border-radius: 4px; padding: 1px 6px; vertical-align: middle; }
+
+/* triangulator + desktop panels */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.fields { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: end; margin-bottom: 10px; }
+.fields label, label.block { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+label.block { margin-bottom: 10px; }
+.opt { font-size: 12px; opacity: .8; }
+input[type="text"], input[type="password"], input:not([type]), textarea { font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-width: 0; }
+textarea { width: 100%; font: 12.5px/1.4 ui-monospace, Menlo, Consolas, monospace; resize: vertical; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+label.inline { flex-direction: row; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.agent-status { font-size: 14px; margin: 0 0 8px; }
+.agent-status.ok { color: var(--ok); } .agent-status.bad { color: var(--bad); }
+#agent-queue .qrow { display: flex; gap: 8px; align-items: center; padding: 4px 0; font-size: 14px; }
+#agent-queue code { word-break: break-all; }
+.tag.info { color: var(--info); border-color: currentColor; }
+.tri-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+.tri-head { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-weight: 600; }
+.tri-head a { color: var(--ink); }
+.chips { display: inline-flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+.chip { font-size: 12px; font-weight: 400; padding: 1px 8px; border-radius: 999px; border: 1px dashed var(--line); color: var(--muted); }
+.chip.on { border-style: solid; color: var(--ink); background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.tri-titles { font-size: 14px; color: var(--muted); margin-top: 4px; }
+.tri-files { font-size: 12.5px; color: var(--muted); margin-top: 4px; word-break: break-all; }
+.tri-groups { font-size: 14px; }
+code { background: var(--code); border-radius: 4px; padding: 1px 5px; font-size: 13px; }
+
+[hidden] { display: none !important; }
