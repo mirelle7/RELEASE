@@ -68,15 +68,15 @@
    ],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "generals-msvc-release.zip",
      "url": "builds/generals-msvc-release/generals-msvc-release.zip",
-     "size": 313,
-     "sha256": "efa1a46def96ec70424bb81feffe770c3f149b5f571e70945e5545592367741e"
+     "size": 358,
+     "sha256": "bb4cd9656cc8053b5f5151f79e968d0af938299a95b38af8965365030801c262"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "generals-vc6-debug",
@@ -138,15 +138,15 @@
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "generals-vc6-release.zip",
      "url": "builds/generals-vc6-release/generals-vc6-release.zip",
-     "size": 308,
-     "sha256": "51c3838072aa085c008a4f469f54d70dd37e4f571a52ee1156b25e2ab1d3954f"
+     "size": 355,
+     "sha256": "dd4d0ba8228a1cf08ae626985c428ea7a43f47f7deaa5ffb81ba0ff88d1e02c0"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "generals-vc6-releaselog",
@@ -168,15 +168,15 @@
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "generals-vc6-releaselog.zip",
      "url": "builds/generals-vc6-releaselog/generals-vc6-releaselog.zip",
-     "size": 311,
-     "sha256": "5f8b852cd71717e5b7ec9ed42303453a65e6e7a14acb090eb2990dc103145e23"
+     "size": 369,
+     "sha256": "bdf19e5c17fa7b751a877838f9711415af6e3429ef4244ea03d2fcff101ede25"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "generals-vc6-weekly",
@@ -192,6 +192,192 @@
     "-DRTS_BUILD_ZEROHOUR=OFF"
    ],
    "command": "cmake --preset vc6-weekly -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
+   "tier": 1,
+   "name": "Weekly (VC6 full debug info) (VC6)",
+   "blurb": "CI preset, default switches.",
+   "warnings": [],
+   "status": "planned"
+  },
+  {
+   "id": "universal-msvc-debug",
+   "game": "universal",
+   "compiler": "msvc",
+   "config": "debug",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "win32-debug",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset win32-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Debug (MSVC)",
+   "blurb": "CI preset, default switches.",
+   "warnings": [
+    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "universal-msvc-profile",
+   "game": "universal",
+   "compiler": "msvc",
+   "config": "profile",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "win32-profile",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset win32-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Profile (MSVC)",
+   "blurb": "CI preset, default switches.",
+   "warnings": [
+    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "universal-msvc-release",
+   "game": "universal",
+   "compiler": "msvc",
+   "config": "release",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "win32",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset win32 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Release (MSVC)",
+   "blurb": "CI preset, default switches.",
+   "warnings": [
+    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+   ],
+   "status": "built",
+   "commit": "demo-sample",
+   "built_at": "2026-10-08 03:00 UTC (sample)",
+   "files": [
+    {
+     "name": "universal-msvc-release.zip",
+     "url": "builds/universal-msvc-release/universal-msvc-release.zip",
+     "size": 358,
+     "sha256": "e9e31ed70be7dbeea361b44c7b185e8521b8fc2248a0d6da3a463236acd9cb7d"
+    }
+   ]
+  },
+  {
+   "id": "universal-vc6-debug",
+   "game": "universal",
+   "compiler": "vc6",
+   "config": "debug",
+   "switches": {},
+   "retail_crc": true,
+   "preset": "vc6-debug",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset vc6-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Debug (VC6)",
+   "blurb": "CI preset, default switches.",
+   "warnings": [],
+   "status": "planned"
+  },
+  {
+   "id": "universal-vc6-profile",
+   "game": "universal",
+   "compiler": "vc6",
+   "config": "profile",
+   "switches": {},
+   "retail_crc": true,
+   "preset": "vc6-profile",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset vc6-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Profile (VC6)",
+   "blurb": "CI preset, default switches.",
+   "warnings": [],
+   "status": "planned"
+  },
+  {
+   "id": "universal-vc6-release",
+   "game": "universal",
+   "compiler": "vc6",
+   "config": "release",
+   "switches": {},
+   "retail_crc": true,
+   "preset": "vc6",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset vc6 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Release (VC6)",
+   "blurb": "CI preset, default switches.",
+   "warnings": [],
+   "status": "built",
+   "commit": "demo-sample",
+   "built_at": "2026-10-08 03:00 UTC (sample)",
+   "files": [
+    {
+     "name": "universal-vc6-release.zip",
+     "url": "builds/universal-vc6-release/universal-vc6-release.zip",
+     "size": 355,
+     "sha256": "2fbe9dd64ea60d1f50fc200d304b836e84066890ac8cc995b3d0981066d01ec0"
+    }
+   ]
+  },
+  {
+   "id": "universal-vc6-releaselog",
+   "game": "universal",
+   "compiler": "vc6",
+   "config": "releaselog",
+   "switches": {},
+   "retail_crc": true,
+   "preset": "vc6-releaselog",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset vc6-releaselog -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Release + logging (VC6)",
+   "blurb": "CI preset, default switches.",
+   "warnings": [],
+   "status": "planned"
+  },
+  {
+   "id": "universal-vc6-weekly",
+   "game": "universal",
+   "compiler": "vc6",
+   "config": "weekly",
+   "switches": {},
+   "retail_crc": true,
+   "preset": "vc6-weekly",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset vc6-weekly -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
    "name": "Weekly (VC6 full debug info) (VC6)",
    "blurb": "CI preset, default switches.",
@@ -220,15 +406,15 @@
    ],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-msvc-debug.zip",
      "url": "builds/zh-msvc-debug/zh-msvc-debug.zip",
-     "size": 309,
-     "sha256": "0119c7009287080cc289ed0a1971e3a0740d2c2822e646c1676a96ea4efde9bf"
+     "size": 356,
+     "sha256": "0d62a76ca402deb7ab5d63b37a1c7d118802d8533e49f633a403f7d5982b3ee0"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-msvc-profile",
@@ -274,15 +460,15 @@
    ],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-msvc-release.zip",
      "url": "builds/zh-msvc-release/zh-msvc-release.zip",
-     "size": 310,
-     "sha256": "d41d601c77f5170973bbaba56306eef90819bac305720865c19d079163597169"
+     "size": 352,
+     "sha256": "af49e8754b53d8f3c512477491b27a7dbdd747cd47bdda3f6b49feff4aba7bb8"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-debug",
@@ -304,15 +490,15 @@
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-vc6-debug.zip",
      "url": "builds/zh-vc6-debug/zh-vc6-debug.zip",
-     "size": 305,
-     "sha256": "953057afa384d3fc5a7a166e06ee72a59cfd9667430325afce56285f1c8ccc55"
+     "size": 353,
+     "sha256": "fbc056fe9ca83f684e9fe4cae851de8bdd6144e343996d2c7f04aa30e76106de"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-profile",
@@ -334,15 +520,15 @@
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-vc6-profile.zip",
      "url": "builds/zh-vc6-profile/zh-vc6-profile.zip",
-     "size": 304,
-     "sha256": "91455ca7f56c39281336ce89a9aa4c534a5229d48c5a22e257e292ca267cc29f"
+     "size": 357,
+     "sha256": "bc31988733b4a196b3e9e27f5f2c4140d44fa11d0af48cf0b0224b6ff07009a6"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release",
@@ -364,15 +550,15 @@
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-vc6-release.zip",
      "url": "builds/zh-vc6-release/zh-vc6-release.zip",
-     "size": 306,
-     "sha256": "11b83e0b6c95f81a8c0600f41e62986f51a62e616eac1af59878b553a919894e"
+     "size": 349,
+     "sha256": "a3f42b67bd1c58d786213f8da14a7082b6447409947488502a5eca2201f5e724"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-releaselog",
@@ -1381,15 +1567,15 @@
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-vc6-release-04c31765.zip",
      "url": "builds/zh-vc6-release-04c31765/zh-vc6-release-04c31765.zip",
-     "size": 342,
-     "sha256": "030a4b0947c5df0619fd2bf9c6b72bf4a0376bfaf68bc2c0216f0cb598b232a4"
+     "size": 404,
+     "sha256": "c6ebeb2fa24e5784d84ba199c0013f36aeb737541bc1330560555f694707681a"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-749b5023",
@@ -1414,15 +1600,15 @@
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-vc6-release-749b5023.zip",
      "url": "builds/zh-vc6-release-749b5023/zh-vc6-release-749b5023.zip",
-     "size": 335,
-     "sha256": "c71aad18cd9debbfa79da16afa6a3ac4162a094b0edb125c2c7760a3776c1e0f"
+     "size": 386,
+     "sha256": "dcb8825fe2d228cabe8fdf29d96c234a3dcc39730ead2c5109e1cf7555373a67"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-a22db4ae",
@@ -1447,15 +1633,15 @@
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-vc6-release-a22db4ae.zip",
      "url": "builds/zh-vc6-release-a22db4ae/zh-vc6-release-a22db4ae.zip",
-     "size": 340,
-     "sha256": "eae7896022d3d00285f87a84a6dc7f98401572e9e45e02f12731be79ad361358"
+     "size": 403,
+     "sha256": "eff05a68e6303ba7a16b5f139637d71722e9eae2d8da1f376926971009bd8b9b"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-a3bbb31f",
@@ -1480,15 +1666,15 @@
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-vc6-release-a3bbb31f.zip",
      "url": "builds/zh-vc6-release-a3bbb31f/zh-vc6-release-a3bbb31f.zip",
-     "size": 337,
-     "sha256": "bbbb0a1846aa0c041f1d4467680a2b0e2ef71b5bdba3e2d7e9e49cf38aedf3c6"
+     "size": 388,
+     "sha256": "79e45419d8f5f2fdc7167a3da3a1903166dd2bbb3459cd2927ab55d8c007d8d4"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-bbb03501",
@@ -1515,15 +1701,15 @@
    ],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-vc6-release-bbb03501.zip",
      "url": "builds/zh-vc6-release-bbb03501/zh-vc6-release-bbb03501.zip",
-     "size": 328,
-     "sha256": "2d0737e23165a160ec6a76a22c80f0030fe715e9ba441d4cfc288e6e431f125a"
+     "size": 380,
+     "sha256": "e61e76dd059e6ffcf4aa68fe03c4a2d9de800e8f3e45a1e119f7272a8d2d770c"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-e63ee7ae",
@@ -1554,15 +1740,15 @@
    "warnings": [],
    "status": "built",
    "commit": "demo-sample",
-   "built_at": "2026-10-08 03:00 UTC (sample)",
    "files": [
     {
      "name": "zh-vc6-release-e63ee7ae.zip",
      "url": "builds/zh-vc6-release-e63ee7ae/zh-vc6-release-e63ee7ae.zip",
-     "size": 353,
-     "sha256": "39a7fa8097fcc456df488b76a97469836c58454d86373e5e508bd2abad69dfdc"
+     "size": 454,
+     "sha256": "4e53c9adf8bdeae4c2cd0f20c189af6051148deec4f5690bfb7a012bf9677fe0"
     }
-   ]
+   ],
+   "built_at": "2026-10-08 03:00 UTC (sample)"
   }
  ]
 }

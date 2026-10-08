@@ -10,7 +10,10 @@
 # Leave empty for a public site that should not link to GitHub.
 repo: ""
 
+# `universal` builds both games in one package (CMake builds both by default); it is the default selection.
+# Variants (tier 2) are only made per single game, to keep the planned set small.
 games:
+  - { id: universal, name: "Universal (both games)", cmake: { RTS_BUILD_GENERALS: "ON", RTS_BUILD_ZEROHOUR: "ON" }, ci_name: Universal, tier2: false }
   - { id: generals, name: "Generals",  cmake: { RTS_BUILD_GENERALS: "ON",  RTS_BUILD_ZEROHOUR: "OFF" }, ci_name: Generals }
   - { id: zh,       name: "Zero Hour", cmake: { RTS_BUILD_GENERALS: "OFF", RTS_BUILD_ZEROHOUR: "ON"  }, ci_name: GeneralsMD }
 

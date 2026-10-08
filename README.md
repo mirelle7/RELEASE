@@ -8,6 +8,9 @@ A demo website for [GeneralsGameCode](https://github.com/TheSuperHackers/General
 VC6 SP6 and modern MSVC, the major CMake switches). A configurator tells you whether a combination is valid and gives you
 the exact `cmake` command, and the site can run the build on your own PC.
 
+**Universal** is the default build: both games in one package (the game's CMake builds both by default), VC6, Release,
+retail-compatible. Single-game and other-compiler builds are still there in the configurator.
+
 ## Just look at it
 
 Nothing to install. Open `portal.html` (the whole site in one file) or `site/index.html` in a browser, or visit the hosted

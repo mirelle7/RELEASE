@@ -113,7 +113,7 @@ function resolve(m, sel) {
 
 /* ---------------------------------------------------------------- state */
 let M, B, byId;
-const state = { game: "zh", compiler: "vc6", config: "release", switches: {} };
+const state = { game: "universal", compiler: "vc6", config: "release", switches: {} };
 
 function readHash() {
   const p = new URLSearchParams(location.hash.slice(1).replace(/^configure\?/, ""));
@@ -137,7 +137,8 @@ function loadBuild(b) {
 const gameName = (id) => M.games.find((g) => g.id === id).name;
 const compName = (id) => M.compilers.find((c) => c.id === id).name;
 const cfgName = (id) => M.configs.find((c) => c.id === id).name;
-const shortName = (b) => `${b.game === "zh" ? "ZH" : "Gen"} · ${b.compiler === "vc6" ? "VC6" : "MSVC"} · ${cfgName(b.config)}`;
+const GAME_SHORT = { universal: "Both", zh: "ZH", generals: "Gen" };
+const shortName = (b) => `${GAME_SHORT[b.game]} · ${b.compiler === "vc6" ? "VC6" : "MSVC"} · ${cfgName(b.config)}`;
 
 function seg(container, items, current, onPick, isDisabled) {
   container.replaceChildren(...items.map(([id, label]) => {
@@ -249,16 +250,22 @@ function renderGrid() {
 }
 
 function renderCards() {
-  const quick = [["zh", "vc6", "Zero Hour", "Retail-compatible. Use this for online play."], ["generals", "vc6", "Generals", "Retail-compatible. Use this for online play."],
-                 ["zh", "msvc", "Zero Hour", "Modern compiler. Easier to debug; not retail-compatible."], ["generals", "msvc", "Generals", "Modern compiler. Easier to debug; not retail-compatible."]];
-  $("quick-cards").replaceChildren(...quick.map(([g, c, n, blurb]) => {
+  const quick = [
+    ["universal", "vc6", "Universal", "Both games in one package, built with VC6. Retail-compatible: use this for online play.", true],
+    ["universal", "msvc", "Universal", "Both games, modern compiler. Easier to debug; not retail-compatible."],
+    ["zh", "vc6", "Zero Hour", "Zero Hour only. Retail-compatible."],
+    ["generals", "vc6", "Generals", "Generals only. Retail-compatible."],
+    ["zh", "msvc", "Zero Hour", "Zero Hour only, modern compiler. Not retail-compatible."],
+    ["generals", "msvc", "Generals", "Generals only, modern compiler. Not retail-compatible."],
+  ];
+  $("quick-cards").replaceChildren(...quick.map(([g, c, n, blurb, isDefault]) => {
     const b = byId[buildId(g, c, "release", {})];
-    const ready = b && b.status === "built";
-    const card = el("div", { class: "card" }, el("h4", { text: `${n} · ${c === "vc6" ? "VC6" : "Modern MSVC"}` }), el("p", { text: blurb }));
+    const head = el("h4", { text: `${n} · ${c === "vc6" ? "VC6" : "Modern MSVC"}` });
+    if (isDefault) head.append(" ", el("span", { class: "tag ok", text: "default" }));
+    const card = el("div", { class: "card" + (isDefault ? " primary" : "") }, head, el("p", { text: blurb }));
     const row = el("div", { class: "row" });
-    if (ready && b.files && b.files[0]) row.append(el("a", { class: "btn", href: b.files[0].url, text: "Download" }));
+    if (b && b.status === "built" && b.files && b.files[0]) row.append(el("a", { class: "btn", href: b.files[0].url, text: "Download" }));
     else row.append(el("span", { class: "tag", text: b ? "not built yet" : "on request" }));
-    row.append(el("button", { type: "button", class: "ghost", text: "Customise", onclick: () => b && loadBuild(b) }));
     card.append(row);
     return card;
   }));

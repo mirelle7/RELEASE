@@ -2,6 +2,16 @@
  "repo": "",
  "games": [
   {
+   "id": "universal",
+   "name": "Universal (both games)",
+   "cmake": {
+    "RTS_BUILD_GENERALS": "ON",
+    "RTS_BUILD_ZEROHOUR": "ON"
+   },
+   "ci_name": "Universal",
+   "tier2": false
+  },
+  {
    "id": "generals",
    "name": "Generals",
    "cmake": {

@@ -185,6 +185,25 @@ func TestMultiConfigPresetCollectsFromConfigDir(t *testing.T) {
 	}
 }
 
+func TestUniversalCollectsBothGames(t *testing.T) {
+	e := newEnv(t)
+	e.a.Run = func(ctx context.Context, dir string, log io.Writer, name string, args ...string) error {
+		if args[0] == "--build" {
+			for game, exe := range map[string]string{"Generals": "generals.exe", "GeneralsMD": "generalszh.exe"} {
+				d := filepath.Join(e.src, "build", "vc6", game)
+				_ = os.MkdirAll(d, 0o755)
+				_ = os.WriteFile(filepath.Join(d, exe), []byte("MZ"), 0o644)
+			}
+		}
+		return nil
+	}
+	e.post(`{"id":"universal-vc6-release","preset":"vc6","game":"Universal","args":["-DRTS_BUILD_GENERALS=ON","-DRTS_BUILD_ZEROHOUR=ON"]}`)
+	res := e.waitResult("universal-vc6-release")
+	if res["ok"] != true || res["files"] != float64(2) {
+		t.Fatalf("%v", res)
+	}
+}
+
 func TestHostileJobsRejected(t *testing.T) {
 	e := newEnv(t)
 	bad := []string{

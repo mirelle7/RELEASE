@@ -82,10 +82,19 @@ class Expansion(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
         self.assertGreater(len(ids), 20)
 
-    def test_tier1_covers_both_games(self):
+    def test_tier1_covers_every_game_including_universal(self):
         t1 = [b for b in portal.expand(M) if b["tier"] == 1]
-        self.assertEqual({b["game"] for b in t1}, {"generals", "zh"})
-        self.assertEqual(len(t1), 2 * len(M["tier1"]))
+        self.assertEqual({b["game"] for b in t1}, {"universal", "generals", "zh"})
+        self.assertEqual(len(t1), len(M["games"]) * len(M["tier1"]))
+
+    def test_universal_builds_both_games_and_has_no_variants(self):
+        r = portal.resolve(M, sel(game="universal"))
+        self.assertEqual(r["id"], "universal-vc6-release")
+        self.assertIn("-DRTS_BUILD_GENERALS=ON", r["cmake_args"])
+        self.assertIn("-DRTS_BUILD_ZEROHOUR=ON", r["cmake_args"])
+        self.assertTrue(r["retail_crc"])
+        self.assertFalse([b for b in portal.expand(M) if b["game"] == "universal" and b["tier"] == 2])
+        self.assertEqual(M["games"][0]["id"], "universal")  # first = the default selection
 
     @unittest.skipUnless((ROOT.parent / "CMakePresets.json").exists(), "needs the GeneralsGameCode checkout")
     def test_every_tier1_preset_exists_in_cmakepresets(self):

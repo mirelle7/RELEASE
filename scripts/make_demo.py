@@ -12,6 +12,7 @@ from pathlib import Path
 
 SITE = Path(__file__).resolve().parent.parent / "site"
 BUILT = {
+    "universal-vc6-release", "universal-msvc-release",
     "zh-vc6-release", "generals-vc6-release", "zh-msvc-release", "generals-msvc-release",
     "zh-vc6-debug", "zh-msvc-debug", "zh-vc6-profile", "generals-vc6-releaselog",
 }
@@ -29,7 +30,7 @@ for b in doc["builds"]:
         d.mkdir(parents=True, exist_ok=True)
         z = d / f"{bid}.zip"
         with zipfile.ZipFile(z, "w", zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("DEMO-README.txt",
+            zf.writestr(zipfile.ZipInfo("DEMO-README.txt", (2026, 10, 8, 0, 0, 0)),
                         f"PLACEHOLDER for build {bid}\n\nThis is a demo. This archive contains no executable.\n"
                         f"A real build of this configuration would be produced with:\n\n  {b['command']}\n")
         digest = hashlib.sha256(z.read_bytes()).hexdigest()

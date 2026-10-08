@@ -180,7 +180,8 @@ def expand(m):
                 f"{cfg_name[t['config']]} ({comp_name[t['compiler']]})", "CI preset, default switches.")
     for v in m["tier2"]:
         for on in v["where"]:
-            for g, comp, cfg in itertools.product((g["id"] for g in m["games"]), on["compiler"], on["config"]):
+            variant_games = (g["id"] for g in m["games"] if g.get("tier2", True))
+            for g, comp, cfg in itertools.product(variant_games, on["compiler"], on["config"]):
                 add(g, comp, cfg, v["switches"], 2, v["name"], v["blurb"])
     return sorted(builds.values(), key=lambda b: (b["tier"], b["game"], b["compiler"], b["config"], b["id"]))
 

@@ -53,7 +53,7 @@ var (
 	reID     = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,80}$`)
 	rePreset = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
 	reArg    = regexp.MustCompile(`^-DRTS_[A-Z0-9_]{1,80}=(ON|OFF|DEFAULT)$`)
-	games    = map[string]bool{"Generals": true, "GeneralsMD": true}
+	games    = map[string]bool{"Generals": true, "GeneralsMD": true, "Universal": true}
 )
 
 // Job is what the page sends: an already-resolved build.
@@ -142,7 +142,7 @@ func (a *Agent) Validate(j Job) error {
 	case !rePreset.MatchString(j.Preset):
 		return errors.New("bad preset name")
 	case !games[j.Game]:
-		return errors.New("game must be Generals or GeneralsMD")
+		return errors.New("game must be Generals, GeneralsMD or Universal")
 	case len(j.Args) > 40:
 		return errors.New("too many arguments")
 	}
@@ -260,13 +260,20 @@ func (a *Agent) build(j Job) Result {
 // collect gathers the binaries the way the CI workflow does.
 func collect(src, preset, game string) []string {
 	base := filepath.Join(src, "build", preset)
-	dirs := []string{filepath.Join(base, "Core"), filepath.Join(base, game)}
-	if strings.HasPrefix(preset, "win32") {
-		cfg := "Release"
+	folders := []string{"Core", game}
+	if game == "Universal" { // both games in one package
+		folders = []string{"Core", "Generals", "GeneralsMD"}
+	}
+	cfg := ""
+	if strings.HasPrefix(preset, "win32") { // multi-config generators put output in a Debug/Release folder
+		cfg = "Release"
 		if strings.Contains(preset, "debug") {
 			cfg = "Debug"
 		}
-		dirs = []string{filepath.Join(base, "Core", cfg), filepath.Join(base, game, cfg)}
+	}
+	var dirs []string
+	for _, f := range folders {
+		dirs = append(dirs, filepath.Join(base, f, cfg))
 	}
 	seen := map[string]string{}
 	for _, d := range dirs {
