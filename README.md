@@ -30,7 +30,10 @@ It is plain static files, no build step. On Vercel: **Add New > Project**, impor
 (`vercel.json` already sets the output directory to `site`), and deploy. Visitors only ever see your Vercel URL.
 Or from a terminal: `npx vercel --prod` in this folder.
 
-### GitHub Pages (optional)
+### GitHub Pages
+
+One-time setup: repo **Settings > Pages > Source: GitHub Actions** (the repo must be public, or on a plan that allows private Pages).
+After that every push to `main` that touches `site/` redeploys to `https://mirelle7.github.io/RELEASE/`.
 
 Add a workflow that uploads `site/` with `actions/upload-pages-artifact` and `actions/deploy-pages`, or upload the contents of `site/` to any host.
 
