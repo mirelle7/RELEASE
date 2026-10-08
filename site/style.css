@@ -137,3 +137,21 @@ details.range select, details.range input { font: inherit; font-size: 14px; colo
 details.range input[type="number"] { width: 5.5em; }
 #agent-queue .qgroup { margin: 8px 0 2px; font-weight: 600; font-size: 14px; }
 #agent-queue .progress { font-size: 14px; margin: 0 0 6px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* main switches: always visible, larger than the folded fine-grained ones */
+#main-switches { padding-bottom: 4px; }
+#main-switches legend { font-size: 14px; font-weight: 600; color: var(--ink); }
+#main-switch-list .sw { padding: 10px 0; }
+#main-switch-list .sw:first-child { border-top: 0; }
+#main-switch-list .sw .name { font-size: 15px; }
+#advanced > summary { color: var(--muted); font-weight: 500; }
+
+#agent-doctor { margin: 6px 0 10px; }
+#agent-doctor .doc-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-bottom: 6px; font-size: 14px; }
+#agent-doctor .doc-head .ok { color: var(--ok); font-weight: 600; } #agent-doctor .doc-head .bad { color: var(--bad); font-weight: 600; }
+.chk { display: flex; gap: 8px; padding: 3px 0; font-size: 14px; }
+.chk .ico { width: 1.2em; text-align: center; font-weight: 700; flex: none; }
+.chk.ok .ico { color: var(--ok); } .chk.fail .ico { color: var(--bad); } .chk.warn .ico { color: var(--warn); } .chk.info .ico { color: var(--muted); }
+.chk .fix { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.note { background: var(--code); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+.not-ready { font-size: 13px; color: var(--bad); margin: 6px 0 0; }

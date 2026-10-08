@@ -387,6 +387,7 @@ func TestRealCMakeBuild(t *testing.T) {
 	write("GeneralsMD/main.c", "int main(void){return 0;}\n")
 
 	a := NewAgent(src, out, "t", nil, false, nil) // nil runner = the real cmake
+	a.SkipChecks = true                           // this tiny project builds on Linux; the Windows checks do not apply
 	srv := httptest.NewServer(a.Handler())
 	defer srv.Close()
 	req, _ := http.NewRequest("POST", srv.URL+"/api/queue", strings.NewReader(`{"id":"tiny-vc6-release","preset":"vc6","game":"GeneralsMD","args":["-DRTS_FLAG=ON"]}`))

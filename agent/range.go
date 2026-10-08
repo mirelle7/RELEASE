@@ -14,10 +14,14 @@ import (
 // GitFunc runs git in dir and returns its trimmed output.
 type GitFunc func(ctx context.Context, dir string, args ...string) (string, error)
 
-func realGit(ctx context.Context, dir string, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", args...)
+func (a *Agent) realGit(ctx context.Context, dir string, args ...string) (string, error) {
+	p := which(a.env, "git")
+	if p == "" {
+		return "", fmt.Errorf("git was not found")
+	}
+	cmd := exec.CommandContext(ctx, p, args...)
 	cmd.Dir = dir
-	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0") // never sit waiting for a password
+	cmd.Env = append(append([]string(nil), a.env...), "GIT_TERMINAL_PROMPT=0") // never sit waiting for a password
 	out, err := cmd.CombinedOutput()
 	text := strings.TrimSpace(string(out))
 	if err != nil {
@@ -53,11 +57,11 @@ func (a *Agent) runRange(ctx context.Context, j Job) {
 
 	git := a.Git
 	if git == nil {
-		if _, err := exec.LookPath("git"); err != nil {
-			a.record(a.fail(j.ID, nil, "git was not found on PATH, and range builds need it."))
+		if which(a.env, "git") == "" {
+			a.record(a.fail(j.ID, nil, "git was not found on PATH, and range builds need it. Install it (winget install --id Git.Git -e) and open a new prompt."))
 			return
 		}
-		git = realGit
+		git = a.realGit
 	}
 	remote := a.Remote
 	if remote == "" {

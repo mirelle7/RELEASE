@@ -155,6 +155,25 @@ class EveryFlagIsExposed(unittest.TestCase):
         self.assertEqual(sorted(covered - options), [], "switch names that are not CMake options")
 
 
+class Prominence(unittest.TestCase):
+    """The big switches stay on show; the many small ones must not crowd them out."""
+
+    def test_featured_switches_are_few_and_titled(self):
+        featured = [s for s in M["switches"] if s.get("featured")]
+        self.assertTrue(8 <= len(featured) <= 20, len(featured))
+        self.assertTrue(all(s.get("title") for s in featured))
+
+    def test_small_flags_are_never_featured(self):
+        for s in M["switches"]:
+            if s["group"] in ("bugs", "compat", "gameplay", "files"):
+                self.assertFalse(s.get("featured"), s["id"])
+            if s["id"].startswith("mp_"):
+                self.assertFalse(s.get("featured"), s["id"])
+
+    def test_most_switches_are_not_featured(self):
+        self.assertGreater(sum(1 for s in M["switches"] if not s.get("featured")), 3 * sum(1 for s in M["switches"] if s.get("featured")))
+
+
 class Flags(unittest.TestCase):
     def test_labels_are_keyed_by_the_strings_ON_and_OFF(self):
         # a bare ON/OFF key in YAML is read as a boolean, which silently loses the labels
@@ -189,6 +208,21 @@ class Flags(unittest.TestCase):
         self.assertFalse(portal.resolve(M, sel(game="generals", zh_docs="ON"))["valid"])
         self.assertTrue(portal.resolve(M, sel(game="universal", zh_docs="ON", generals_docs="ON"))["valid"])
 
+    def test_mingw_is_a_compiler_with_its_own_presets(self):
+        for config, preset in (("release", "mingw-w64-i686"), ("profile", "mingw-w64-i686-profile"), ("debug", "mingw-w64-i686-debug")):
+            r = portal.resolve(M, sel(compiler="mingw", config=config))
+            self.assertTrue(r["valid"], r["errors"])
+            self.assertEqual(r["preset"], preset)
+            self.assertFalse(r["retail_crc"])
+        self.assertFalse(portal.resolve(M, sel(compiler="mingw", config="releaselog"))["valid"])
+
+    def test_mingw_turns_the_tools_off_and_has_no_vc6_or_msvc_only_switches(self):
+        self.assertFalse(portal.resolve(M, sel(compiler="mingw", tools="OFF"))["valid"])
+        self.assertTrue(portal.resolve(M, sel(compiler="msvc", tools="OFF"))["valid"])
+        for sw in ("asan", "ffmpeg", "vc6_full_debug"):
+            self.assertFalse(portal.resolve(M, sel(compiler="mingw", **{sw: "ON"}))["valid"], sw)
+        self.assertFalse(portal.resolve(M, sel(compiler="mingw", game="universal", zh_tools="OFF"))["valid"])
+
     def test_vc6_only_and_debug_only_flags(self):
         self.assertTrue(portal.resolve(M, sel(vc6_full_debug="ON"))["valid"])
         self.assertFalse(portal.resolve(M, sel(compiler="msvc", vc6_full_debug="ON"))["valid"])
@@ -210,7 +244,7 @@ class JsParity(unittest.TestCase):
                    sel(retail_compat="OFF", debug_logging="ON", debug_multi_instance="ON"), sel(compiler="msvc", config="releaselog"),
                    sel(bug_tunnel_heal_stacking="OFF", feat_use_buffered_io="OFF"), sel(game="universal", zh_docs="ON", generals_docs="ON"),
                    sel(game="generals", zh_docs="ON"), sel(compat_crc="OFF"), sel(retail_compat="ON", compat_networking="OFF"),
-                   sel(vc6_full_debug="ON"), sel(compiler="msvc", config="debug", feat_tell_computer_identity_in_lan_lobby="OFF", bug_perpetual_horde_bonus="OFF")]
+                   sel(vc6_full_debug="ON"), sel(compiler="mingw", config="debug"), sel(compiler="mingw", tools="OFF"), sel(compiler="msvc", config="debug", feat_tell_computer_identity_in_lan_lobby="OFF", bug_perpetual_horde_bonus="OFF")]
         py = [portal.resolve(M, v) for v in vectors]
         script = (
             "const a=require(%r);const m=JSON.parse(require('fs').readFileSync(%r));"

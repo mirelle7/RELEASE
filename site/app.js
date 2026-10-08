@@ -9,7 +9,7 @@ const el = (tag, props = {}, ...kids) => {
     if (k === "class") n.className = v;
     else if (k === "text") n.textContent = v;
     else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
-    else n.setAttribute(k, v);
+    else if (v !== undefined && v !== false && v !== null) n.setAttribute(k, v);
   }
   for (const c of kids) n.append(c);
   return n;
@@ -98,7 +98,7 @@ function resolve(m, sel) {
   for (const s of m.switches) if (!(s.id in disabled) && values[s.id] !== s.default) switches[s.id] = values[s.id];
   const eff = (i) => (i in disabled ? swById[i].default : values[i]);
   const retail = compilers[compiler].retail_crc && eff("retail_compat") !== "OFF" && eff("compat_crc") !== "OFF" && eff("compat_aigroup") !== "OFF";
-  if (!compilers[compiler].retail_crc && values.retail_compat !== "OFF") warnings.push("Not CRC-compatible with retail: " + compilers[compiler].note);
+  if (!compilers[compiler].retail_crc && values.retail_compat !== "OFF") warnings.push("Not CRC-compatible with retail, so it cannot play online against retail clients.");
 
   const out = { valid: errors.length === 0, errors, warnings, disabled, game, compiler, config, switches, retail_crc: retail, values, id: buildId(game, compiler, config, switches) };
   if (preset && !errors.length) {
@@ -191,11 +191,16 @@ function renderResult(r) {
     acts.append(el("a", { class: "btn", href: `https://github.com/${M.repo}/issues/new?labels=build-request&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`, text: "Request this build" }));
   }
   const ag = window.PortalAgent;
+  if (r.valid && ag && ag.connected) ag.setPreset(r.preset);
+  const ready = r.valid && ag && ag.connected ? ag.readiness(r.preset) : { ready: true, problems: [] };
   if (r.valid && ag && ag.connected) {
     const done = ag.resultFor(r.id);
     if (done && done.ok && done.file) acts.append(el("button", { type: "button", class: "btn", text: "Download from my PC", onclick: () => ag.download(r.id) }));
-    acts.append(el("button", { type: "button", class: done && done.ok ? "btn alt" : "btn", text: done ? "Rebuild on my PC" : "Build on my PC",
-      onclick: () => ag.queueBuild({ id: r.id, preset: r.preset, game: r.ci_game, args: r.cmake_args }) }));
+    const buildBtn = el("button", { type: "button", class: done && done.ok ? "btn alt" : "btn", text: done ? "Rebuild on my PC" : "Build on my PC",
+      onclick: () => ag.queueBuild({ id: r.id, preset: r.preset, game: r.ci_game, args: r.cmake_args }) });
+    buildBtn.disabled = !ready.ready; // a property, not an attribute: setAttribute("disabled", anything) always disables
+    acts.append(buildBtn);
+    if (!ready.ready) acts.append(el("p", { class: "not-ready" }, "Not ready: " + ready.problems.map((p) => p.name).join(", ") + ". ", el("a", { href: "#desktop", text: "See what to fix" })));
   } else if (r.valid) {
     acts.append(el("a", { class: "btn alt", href: "#desktop", text: "Build on my PC…" }));
   }
@@ -237,8 +242,9 @@ function renderRange(r) {
   $("range-preview").textContent = problem || `${pts.length} build${pts.length === 1 ? "" : "s"}: ${show.map((n) => (n === "…" ? n : tag + n)).join(", ")}`;
   $("range-preview").className = "hint" + (problem ? " bad" : "");
   const go = $("range-go");
-  go.disabled = !(r.valid && !problem && ag && ag.connected);
-  go.title = !ag || !ag.connected ? "Connect to your PC first (see Build on my PC)" : "";
+  const ready = r.valid && ag && ag.connected ? ag.readiness(r.preset) : { ready: true };
+  go.disabled = !(r.valid && !problem && ag && ag.connected && ready.ready);
+  go.title = !ag || !ag.connected ? "Connect to your PC first (see Build on my PC)" : !ready.ready ? "This PC is not ready for this build (see Build on my PC)" : "";
 }
 
 function wireRange() {
@@ -251,38 +257,52 @@ function wireRange() {
   });
 }
 
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function switchRow(s, r) {
+  const off = s.id in r.disabled;
+  const val = off ? s.default : state.switches[s.id] ?? s.default;
+  const row = el("div", { class: "sw" + (off ? " off" : "") + (val !== s.default ? " changed" : "") });
+  row.append(el("div", { class: "name", text: (s.title || cap(s.id.replace(/_/g, " "))) + " " }, el("code", { text: s.define || s.cmake })));
+  const values = s.type === "tristate" ? ["DEFAULT", "ON", "OFF"] : ["ON", "OFF"];
+  const label = (v) => (v === "DEFAULT" ? "Auto" : (s.labels && s.labels[v]) || v);
+  const ctl = el("div", { class: "seg", role: "radiogroup", "aria-label": s.title || s.id });
+  seg(ctl, values.map((v) => [v, label(v)]), val, (v) => { if (v === s.default) delete state.switches[s.id]; else state.switches[s.id] = v; render(); }, () => off);
+  ctl.querySelectorAll("button").forEach((b, k) => { if (values[k] === s.default) { b.classList.add("src"); b.title = "As the source has it"; } });
+  row.append(ctl, el("div", { class: "help", text: s.help }));
+  if (off) row.append(el("div", { class: "why", text: s.why || "Not available here." }));
+  else if (s.warn && val !== s.default) row.append(el("div", { class: "why", text: s.warn }));
+  return row;
+}
+
+const changedCount = (items, r) => items.filter((s) => !(s.id in r.disabled) && (state.switches[s.id] ?? s.default) !== s.default).length;
+
 function renderSwitches(r) {
+  // The big switches are always on show; the many small ones are folded away below them.
+  const featured = M.switches.filter((s) => s.featured), rest = M.switches.filter((s) => !s.featured);
+  const main = $("main-switch-list");
+  main.replaceChildren(...featured.map((s) => switchRow(s, r)));
+  const mc = changedCount(featured, r);
+  $("main-count").textContent = mc ? `(${mc} changed)` : "";
+
   const root = $("switch-groups");
   const wasOpen = new Set([...root.querySelectorAll("details.group[open]")].map((d) => d.dataset.group));
   root.replaceChildren();
   for (const g of M.groups) {
-    const items = M.switches.filter((x) => x.group === g.id);
+    const items = rest.filter((x) => x.group === g.id);
     if (!items.length) continue;
-    const changed = items.filter((s) => !(s.id in r.disabled) && (state.switches[s.id] ?? s.default) !== s.default).length;
+    const changed = changedCount(items, r);
     const box = el("details", { class: "group", "data-group": g.id });
     if (wasOpen.has(g.id) || changed) box.open = true;
     box.append(el("summary", {}, g.name, " ", el("span", { class: "count", text: `${items.length} switches` + (changed ? `, ${changed} changed` : "") })));
     if (g.note) box.append(el("p", { class: "hint", text: g.note }));
-    for (const s of items) {
-      const off = s.id in r.disabled;
-      const val = off ? s.default : state.switches[s.id] ?? s.default;
-      const row = el("div", { class: "sw" + (off ? " off" : "") + (val !== s.default ? " changed" : "") });
-      const code = s.define || s.cmake;
-      row.append(el("div", { class: "name", text: (s.title || s.id.replace(/_/g, " ")) + " " }, el("code", { text: code })));
-      const values = s.type === "tristate" ? ["DEFAULT", "ON", "OFF"] : ["ON", "OFF"];
-      const label = (v) => (v === "DEFAULT" ? "Auto" : (s.labels && s.labels[v]) || v);
-      const ctl = el("div", { class: "seg", role: "radiogroup", "aria-label": s.title || s.id });
-      seg(ctl, values.map((v) => [v, label(v)]), val, (v) => { if (v === s.default) delete state.switches[s.id]; else state.switches[s.id] = v; render(); }, () => off);
-      ctl.querySelectorAll("button").forEach((b, k) => { if (values[k] === s.default) { b.classList.add("src"); b.title = "As the source has it"; } });
-      row.append(ctl, el("div", { class: "help", text: s.help }));
-      if (off) row.append(el("div", { class: "why", text: s.why || "Not available here." }));
-      else if (s.warn && val !== s.default) row.append(el("div", { class: "why", text: s.warn }));
-      box.append(row);
-    }
+    for (const s of items) box.append(switchRow(s, r));
     root.append(box);
   }
-  const n = Object.keys(r.switches || {}).length;
-  $("adv-count").textContent = n ? `(${n} changed)` : "";
+  const rc = changedCount(rest, r);
+  $("adv-count").textContent = `(${rest.length} switches${rc ? `, ${rc} changed` : ""})`;
+  // keep the folded section open while one of its switches is changed
+  if (rc) $("advanced").open = true;
 }
 
 function renderGrid() {

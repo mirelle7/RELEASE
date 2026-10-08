@@ -9,7 +9,7 @@
       if (k === "class") n.className = v;
       else if (k === "text") n.textContent = v;
       else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
-      else n.setAttribute(k, v);
+      else if (v !== undefined && v !== false && v !== null) n.setAttribute(k, v);
     }
     for (const c of kids) n.append(c);
     return n;
@@ -24,7 +24,7 @@
   const m = /(?:^#|[&#])agent-token=([\w-]+)/.exec(location.hash);
   if (m) { hashToken = m[1]; history.replaceState(null, "", location.pathname + location.search); }
 
-  const Agent = { connected: false, url: null, token: null, current: null, progress: "", queue: [], results: [], timer: null, fails: 0 };
+  const Agent = { connected: false, url: null, token: null, current: null, progress: "", queue: [], results: [], timer: null, fails: 0, reports: {}, watch: null };
   window.PortalAgent = Agent;
   const changed = () => window.dispatchEvent(new CustomEvent("portal:agent"));
   const say = (msg, cls = "") => { const s = $("agent-status"); s.textContent = msg; s.className = "agent-status " + cls; };
@@ -67,7 +67,7 @@
 
   function disconnect() {
     clearInterval(Agent.timer);
-    Object.assign(Agent, { connected: false, current: null, progress: "", queue: [], results: [] });
+    Object.assign(Agent, { connected: false, current: null, progress: "", queue: [], results: [], reports: {}, watch: null });
     store.set("agent-token", null);
     $("agent-connect").hidden = false; $("agent-disconnect").hidden = true;
     say("Disconnected.");
@@ -107,6 +107,49 @@
     say(r.status === 200 ? "Cancelled. Nothing more will start." : "Could not cancel (" + r.status + ").", r.status === 200 ? "" : "bad");
     poll();
   };
+
+  /* Can this PC build this preset? The agent checks (OS, tools, compiler, container/WSL) and says how to fix what is missing. */
+  const inflight = {};
+  Agent.checkPreset = async function (preset, force) {
+    if (!Agent.connected || !preset) return;
+    const cur = Agent.reports[preset];
+    if (!force && ((cur && Date.now() - cur.at < 20000) || inflight[preset])) return;
+    inflight[preset] = true;
+    try {
+      const r = await call("/api/doctor?preset=" + encodeURIComponent(preset));
+      if (r.status === 200) { Agent.reports[preset] = { ...r.body, at: Date.now() }; renderDoctor(); changed(); }
+    } catch (e) { /* the status poll notices a lost agent */ } finally { delete inflight[preset]; }
+  };
+  Agent.setPreset = function (preset) {
+    if (Agent.watch !== preset) { Agent.watch = preset; renderDoctor(); }
+    Agent.checkPreset(preset);
+  };
+  /* { known, ready, problems } for a preset; unknown means the report has not arrived yet (the agent still checks). */
+  Agent.readiness = function (preset) {
+    const r = Agent.reports[preset];
+    if (!r) return { known: false, ready: true, problems: [] };
+    return { known: true, ready: r.ready, problems: r.checks.filter((c) => c.status === "fail") };
+  };
+
+  function renderDoctor() {
+    const box = $("agent-doctor");
+    box.replaceChildren();
+    const r = Agent.connected && Agent.watch && Agent.reports[Agent.watch];
+    if (!r) return;
+    const family = { vc6: "Visual C++ 6", msvc: "Visual Studio", mingw: "MinGW-w64" }[r.family] || r.family;
+    box.append(el("div", { class: "doc-head" },
+      el("strong", { text: `This PC for ${family} (${r.preset}): ` }),
+      el("span", { class: r.ready ? "ok" : "bad", text: r.ready ? (r.skipped ? "checks skipped" : "ready") : "not ready" }),
+      el("button", { type: "button", class: "ghost", text: "Check again", onclick: () => Agent.checkPreset(r.preset, true) })));
+    if (r.backend && r.backend !== "native") box.append(el("p", { class: "hint", text: "The build will run in: " + r.backend }));
+    const icon = { ok: "✓", warn: "!", fail: "✗", info: "·" };
+    for (const c of r.checks) {
+      box.append(el("div", { class: "chk " + c.status },
+        el("span", { class: "ico", text: icon[c.status] || "·" }),
+        el("div", {}, el("div", { class: "nm", text: c.name + (c.detail ? ": " + c.detail : "") }), c.fix && c.status !== "ok" ? el("div", { class: "fix", text: c.fix }) : "")));
+    }
+    if (!r.ready) box.append(el("p", { class: "hint", text: "Fix the items marked ✗ and press “Check again”. If you know your setup works, start the agent with --skip-checks." }));
+  }
 
   Agent.resultFor = (id) => Agent.results.find((r) => r.id === id);
 
@@ -156,6 +199,7 @@
 
   async function init() {
     if (!$("agent-connect")) return;
+    if (!/Windows/i.test(navigator.userAgent || "")) $("os-note").hidden = false;
     $("agent-connect").addEventListener("click", () => connect($("agent-url").value.trim(), $("agent-token").value.trim()));
     $("agent-disconnect").addEventListener("click", disconnect);
     const saved = store.get("agent-url"), savedToken = store.get("agent-token");

@@ -139,6 +139,14 @@ type Agent struct {
 	Remote string  // git remote that range builds fetch pull requests from
 	Git    GitFunc // nil = the real git; replaced in tests
 
+	env         []string // what every program the agent runs sees (the agent's own environment, plus --env-script)
+	GOOS        string   // runtime.GOOS; replaced in tests
+	SkipChecks  bool     // --skip-checks: build even if the pre-flight checks fail
+	BackendPref string   // --backend: auto, docker, podman, wsl or wsl:<distro>
+	Image       string   // container image for the MinGW build
+	docMu       sync.Mutex
+	docCache    map[string]docEntry
+
 	mu        sync.Mutex
 	current   string
 	progress  string
@@ -155,7 +163,8 @@ type queued struct {
 }
 
 func NewAgent(src, out, token string, allow []string, dryRun bool, run Runner) *Agent {
-	a := &Agent{Src: src, Out: out, Token: token, Allow: map[string]bool{}, DryRun: dryRun, Run: run, Remote: "origin", jobs: make(chan queued, 64)}
+	a := &Agent{Src: src, Out: out, Token: token, Allow: map[string]bool{}, DryRun: dryRun, Run: run, Remote: "origin", jobs: make(chan queued, 64),
+		env: os.Environ(), GOOS: runtime.GOOS, Image: defaultImage, BackendPref: "auto", docCache: map[string]docEntry{}}
 	for _, o := range allow {
 		a.Allow[strings.TrimRight(o, "/")] = true
 	}
@@ -334,21 +343,37 @@ func (a *Agent) build(ctx context.Context, src string, j Job, id string, meta *s
 		r.OK, r.DryRun = true, true
 		return r
 	}
-	if _, err := exec.LookPath("cmake"); err != nil && a.Run == nil {
-		return a.fail(id, meta, "cmake was not found on PATH. Start the agent from a developer shell with the compiler and CMake set up.")
-	}
 	ctx, cancel := context.WithTimeout(ctx, buildBudget)
 	defer cancel()
+	fam := familyOf(j.Preset)
 	run := a.Run
-	if run == nil {
-		run = execRunner
+	if run == nil { // a real build: check this PC first, then run where the preset needs to run
+		if rep := a.DoctorCached(ctx, j.Preset); !rep.Ready {
+			return a.fail(id, meta, rep.Summary())
+		}
+		if fam == "mingw" {
+			b := pickBackend(a.Backends(), a.BackendPref)
+			if b == nil {
+				return a.fail(id, meta, "no container or WSL is available for the MinGW-w64 build")
+			}
+			if err := a.ensureImage(ctx, *b, logf); err != nil {
+				return a.fail(id, meta, err.Error())
+			}
+			run = a.containerRunner(*b)
+		} else {
+			run = a.nativeRunner()
+		}
 	}
 	for _, s := range steps {
 		if err := run(ctx, src, logf, "cmake", s...); err != nil {
 			if errors.Is(ctx.Err(), context.Canceled) {
 				return a.fail(id, meta, "cancelled")
 			}
-			return a.fail(id, meta, fmt.Sprintf("cmake %s failed: %v (see %s)", s[0], err, filepath.Join(dir, "build.log")))
+			msg := fmt.Sprintf("cmake %s failed: %v", s[0], err)
+			if hints := explainFailure(fam, readTail(filepath.Join(dir, "build.log"))); len(hints) > 0 {
+				msg += ". " + strings.Join(hints, " ")
+			}
+			return a.fail(id, meta, msg+" (details: "+filepath.Join(dir, "build.log")+")")
 		}
 	}
 
@@ -513,10 +538,18 @@ func (a *Agent) Handler() http.Handler {
 	})
 	mux.HandleFunc("/api/status", a.auth(func(w http.ResponseWriter, r *http.Request) {
 		a.mu.Lock()
-		st := map[string]any{"busy": a.current != "", "current": a.current, "progress": a.progress, "queue": append([]string{}, a.pending...), "dry_run": a.DryRun}
+		st := map[string]any{"busy": a.current != "", "current": a.current, "progress": a.progress, "queue": append([]string{}, a.pending...), "dry_run": a.DryRun, "skip_checks": a.SkipChecks}
 		a.mu.Unlock()
 		st["results"] = a.results()
 		writeJSON(w, 200, st)
+	}))
+	mux.HandleFunc("/api/doctor", a.auth(func(w http.ResponseWriter, r *http.Request) {
+		preset := r.URL.Query().Get("preset")
+		if !rePreset.MatchString(preset) {
+			writeJSON(w, 400, map[string]string{"error": "bad preset name"})
+			return
+		}
+		writeJSON(w, 200, a.DoctorCached(r.Context(), preset))
 	}))
 	mux.HandleFunc("/api/queue", a.auth(a.handleQueue))
 	mux.HandleFunc("/api/cancel", a.auth(func(w http.ResponseWriter, r *http.Request) {
@@ -678,6 +711,12 @@ func main() {
 		dryRun    = flag.Bool("dry-run", false, "accept jobs but build nothing")
 		noBrowser = flag.Bool("no-browser", false, "do not open the page automatically")
 		remote    = flag.String("remote", "origin", "git remote that range builds fetch pull requests from")
+		envScript = flag.String("env-script", "", `a compiler setup script to run first, e.g. "C:\path\to\VCVARS32.BAT" (Windows)`)
+		envArgs   = flag.String("env-args", "", "arguments for --env-script, e.g. x86 for vcvarsall.bat")
+		skip      = flag.Bool("skip-checks", false, "build even if the pre-flight checks fail (for setups the checks do not understand)")
+		backend   = flag.String("backend", "auto", "where the MinGW build runs: auto, docker, podman, wsl or wsl:<distro>")
+		image     = flag.String("image", defaultImage, "container image for the MinGW build (default: built from the shipped recipe)")
+		checkImg  = flag.Bool("check-image", false, "build and verify the MinGW build environment, then exit")
 		allow     multiFlag
 	)
 	flag.Var(&allow, "allow-origin", "also answer a copy of the page hosted at this origin, e.g. https://you.github.io (repeatable)")
@@ -710,7 +749,19 @@ func main() {
 		os.Exit(1)
 	}
 	a := NewAgent(abs, *out, tok, allow, *dryRun, nil)
-	a.Remote = *remote
+	a.Remote, a.SkipChecks, a.BackendPref, a.Image = *remote, *skip, *backend, *image
+	if *envScript != "" {
+		env, err := loadEnvScript(*envScript, *envArgs)
+		if err != nil {
+			pause(err.Error())
+			os.Exit(1)
+		}
+		a.env = env
+		fmt.Println("Loaded the compiler environment from", *envScript)
+	}
+	if *checkImg {
+		os.Exit(a.runCheckImage())
+	}
 	if _, err := a.presets(); err != nil {
 		pause(err.Error())
 		os.Exit(1)
@@ -732,6 +783,7 @@ func main() {
 	if *dryRun {
 		fmt.Println("(dry run: nothing will be built)")
 	}
+	a.printStartupReport()
 	fmt.Println("Builds and logs are saved in", *out, "- close this window to stop.")
 	if !*noBrowser {
 		openBrowser(link)

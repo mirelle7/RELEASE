@@ -2,6 +2,72 @@
  "commit": "demo-sample",
  "builds": [
   {
+   "id": "generals-mingw-debug",
+   "game": "generals",
+   "compiler": "mingw",
+   "config": "debug",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686-debug",
+   "ci_game": "Generals",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=OFF"
+   ],
+   "command": "cmake --preset mingw-w64-i686-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
+   "tier": 1,
+   "name": "Debug (MINGW)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "generals-mingw-profile",
+   "game": "generals",
+   "compiler": "mingw",
+   "config": "profile",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686-profile",
+   "ci_game": "Generals",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=OFF"
+   ],
+   "command": "cmake --preset mingw-w64-i686-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
+   "tier": 1,
+   "name": "Profile (MINGW)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "generals-mingw-release",
+   "game": "generals",
+   "compiler": "mingw",
+   "config": "release",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686",
+   "ci_game": "Generals",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=OFF"
+   ],
+   "command": "cmake --preset mingw-w64-i686 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
+   "tier": 1,
+   "name": "Release (MINGW)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
    "id": "generals-msvc-debug",
    "game": "generals",
    "compiler": "msvc",
@@ -19,7 +85,7 @@
    "name": "Debug (MSVC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -41,7 +107,7 @@
    "name": "Profile (MSVC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "failed",
    "built_at": "2026-10-08 03:00 UTC (sample)"
@@ -64,7 +130,7 @@
    "name": "Release (MSVC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "built",
    "commit": "demo-sample",
@@ -199,6 +265,72 @@
    "status": "planned"
   },
   {
+   "id": "universal-mingw-debug",
+   "game": "universal",
+   "compiler": "mingw",
+   "config": "debug",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686-debug",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset mingw-w64-i686-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Debug (MINGW)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "universal-mingw-profile",
+   "game": "universal",
+   "compiler": "mingw",
+   "config": "profile",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686-profile",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset mingw-w64-i686-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Profile (MINGW)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "universal-mingw-release",
+   "game": "universal",
+   "compiler": "mingw",
+   "config": "release",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset mingw-w64-i686 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Release (MINGW)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
    "id": "universal-msvc-debug",
    "game": "universal",
    "compiler": "msvc",
@@ -216,7 +348,7 @@
    "name": "Debug (MSVC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -238,7 +370,7 @@
    "name": "Profile (MSVC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -260,7 +392,7 @@
    "name": "Release (MSVC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "built",
    "commit": "demo-sample",
@@ -385,6 +517,72 @@
    "status": "planned"
   },
   {
+   "id": "zh-mingw-debug",
+   "game": "zh",
+   "compiler": "mingw",
+   "config": "debug",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686-debug",
+   "ci_game": "GeneralsMD",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=OFF",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset mingw-w64-i686-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Debug (MINGW)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "zh-mingw-profile",
+   "game": "zh",
+   "compiler": "mingw",
+   "config": "profile",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686-profile",
+   "ci_game": "GeneralsMD",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=OFF",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset mingw-w64-i686-profile -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Profile (MINGW)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "zh-mingw-release",
+   "game": "zh",
+   "compiler": "mingw",
+   "config": "release",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686",
+   "ci_game": "GeneralsMD",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=OFF",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset mingw-w64-i686 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Release (MINGW)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
    "id": "zh-msvc-debug",
    "game": "zh",
    "compiler": "msvc",
@@ -402,7 +600,7 @@
    "name": "Debug (MSVC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "built",
    "commit": "demo-sample",
@@ -434,7 +632,7 @@
    "name": "Profile (MSVC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -456,7 +654,7 @@
    "name": "Release (MSVC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "built",
    "commit": "demo-sample",
@@ -632,7 +830,7 @@
     "mp_debug_stacktrace: Slows the game down significantly.",
     "mp_debug_intense_verify: Very slow.",
     "mp_debug_block_ownership: Very slow.",
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -657,7 +855,7 @@
    "name": "No game memory allocator",
    "blurb": "Uses the CRT heap; handy for third-party memory tools.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -684,7 +882,7 @@
    "name": "Address Sanitizer",
    "blurb": "Debug build with ASAN. Game memory allocator is turned off.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -709,7 +907,7 @@
    "name": "Multi-instance",
    "blurb": "Run several clients on one machine for network testing.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -734,7 +932,7 @@
    "name": "Tracy profiler",
    "blurb": "Profile build wired to the Tracy profiler.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -765,7 +963,7 @@
    "name": "Release with full diagnostics",
    "blurb": "Logging, crash dialogs, stack traces and profiling in a release build.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -791,7 +989,7 @@
    "blurb": "Debug cheats in a release build. Single player only.",
    "warnings": [
     "debug_cheats: Cheats in a release build. Do not use for multiplayer.",
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -826,7 +1024,7 @@
    "name": "Every retail bug kept",
    "blurb": "All retail bug switches ON: the original behaviour, quirks included.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -851,7 +1049,7 @@
    "name": "FFmpeg",
    "blurb": "Video decoding through FFmpeg (vcpkg).",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -899,7 +1097,7 @@
    "name": "No game memory allocator",
    "blurb": "Uses the CRT heap; handy for third-party memory tools.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -924,7 +1122,7 @@
    "name": "Multi-instance",
    "blurb": "Run several clients on one machine for network testing.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -949,7 +1147,7 @@
    "name": "Retail forced on",
    "blurb": "Retail compatibility ON explicitly (what the source does anyway, kept as a reference build).",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -981,7 +1179,7 @@
    "name": "Every retail bug fixed",
    "blurb": "All retail bug switches OFF: the fixed behaviour. Will not stay in sync with retail players.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1296,7 +1494,7 @@
    "name": "No game memory allocator",
    "blurb": "Uses the CRT heap; handy for third-party memory tools.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1332,7 +1530,7 @@
     "mp_debug_stacktrace: Slows the game down significantly.",
     "mp_debug_intense_verify: Very slow.",
     "mp_debug_block_ownership: Very slow.",
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1359,7 +1557,7 @@
    "name": "Address Sanitizer",
    "blurb": "Debug build with ASAN. Game memory allocator is turned off.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1384,7 +1582,7 @@
    "name": "Multi-instance",
    "blurb": "Run several clients on one machine for network testing.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1409,7 +1607,7 @@
    "name": "Tracy profiler",
    "blurb": "Profile build wired to the Tracy profiler.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1457,7 +1655,7 @@
    "name": "No game memory allocator",
    "blurb": "Uses the CRT heap; handy for third-party memory tools.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1482,7 +1680,7 @@
    "name": "Multi-instance",
    "blurb": "Run several clients on one machine for network testing.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1507,7 +1705,7 @@
    "name": "Retail forced on",
    "blurb": "Retail compatibility ON explicitly (what the source does anyway, kept as a reference build).",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1533,7 +1731,7 @@
    "blurb": "Debug cheats in a release build. Single player only.",
    "warnings": [
     "debug_cheats: Cheats in a release build. Do not use for multiplayer.",
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1564,7 +1762,7 @@
    "name": "Release with full diagnostics",
    "blurb": "Logging, crash dialogs, stack traces and profiling in a release build.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1589,7 +1787,7 @@
    "name": "FFmpeg",
    "blurb": "Video decoding through FFmpeg (vcpkg).",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1621,7 +1819,7 @@
    "name": "Every retail bug fixed",
    "blurb": "All retail bug switches OFF: the fixed behaviour. Will not stay in sync with retail players.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },
@@ -1656,7 +1854,7 @@
    "name": "Every retail bug kept",
    "blurb": "All retail bug switches ON: the original behaviour, quirks included.",
    "warnings": [
-    "Not CRC-compatible with retail: Not CRC-compatible with retail. Cannot play online against retail clients."
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
    ],
    "status": "planned"
   },

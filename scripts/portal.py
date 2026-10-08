@@ -124,7 +124,7 @@ def resolve(m, sel):
     retail = (compilers[compiler]["retail_crc"] and eff("retail_compat") != "OFF"
               and eff("compat_crc") != "OFF" and eff("compat_aigroup") != "OFF")
     if not compilers[compiler]["retail_crc"] and values["retail_compat"] != "OFF":
-        warnings.append("Not CRC-compatible with retail: " + compilers[compiler]["note"])
+        warnings.append("Not CRC-compatible with retail, so it cannot play online against retail clients.")
 
     out = {
         "valid": not errors,

@@ -27,20 +27,24 @@ compilers:
     retail_crc: true
   - id: msvc
     name: "Modern MSVC (VS2022)"
-    note: "Not CRC-compatible with retail. Cannot play online against retail clients."
+    note: "A modern compiler: easier to debug."
+    retail_crc: false
+  - id: mingw
+    name: "MinGW-w64 (container)"
+    note: "Open-source cross compiler. Its whole build environment ships as a container image (Docker or Podman) or runs in WSL, so it works on any computer, Windows or not."
     retail_crc: false
 
 # Which CMake preset each (compiler, config) pair maps to. Missing pair = not buildable.
 configs:
   - id: release
     name: "Release"
-    presets: { vc6: vc6, msvc: win32 }
+    presets: { vc6: vc6, msvc: win32, mingw: mingw-w64-i686 }
   - id: profile
     name: "Profile"
-    presets: { vc6: vc6-profile, msvc: win32-profile }
+    presets: { vc6: vc6-profile, msvc: win32-profile, mingw: mingw-w64-i686-profile }
   - id: debug
     name: "Debug"
-    presets: { vc6: vc6-debug, msvc: win32-debug }
+    presets: { vc6: vc6-debug, msvc: win32-debug, mingw: mingw-w64-i686-debug }
   - id: releaselog
     name: "Release + logging"
     presets: { vc6: vc6-releaselog }
@@ -78,6 +82,8 @@ switches:
   - id: retail_compat
     cmake: RTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME
     group: retail
+    featured: true
+    title: "Retail compatibility"
     type: tristate
     default: DEFAULT
     help: "OFF enables retail-incompatible fixes (CRC, data, save and network changes). Auto leaves each detail switch below as the source has it; ON or OFF sets them all."
@@ -86,30 +92,40 @@ switches:
   - id: debug_logging
     cmake: RTS_DEBUG_LOGGING
     group: debug
+    featured: true
+    title: "Debug logging"
     type: tristate
     default: DEFAULT
     help: "Debug logging. Auto: on in debug builds."
   - id: debug_crashing
     cmake: RTS_DEBUG_CRASHING
     group: debug
+    featured: true
+    title: "Debug assert dialogs"
     type: tristate
     default: DEFAULT
     help: "Debug assert dialogs. Auto: on in debug builds."
   - id: debug_stacktrace
     cmake: RTS_DEBUG_STACKTRACE
     group: debug
+    featured: true
+    title: "Stack tracing"
     type: tristate
     default: DEFAULT
     help: "Stack tracing. Implies debug logging. Auto: on in debug builds."
   - id: debug_profile
     cmake: RTS_DEBUG_PROFILE
     group: debug
+    featured: true
+    title: "Debug profiling"
     type: tristate
     default: DEFAULT
     help: "Debug profiling. Auto: on in debug builds."
   - id: debug_cheats
     cmake: RTS_DEBUG_CHEATS
     group: debug
+    featured: true
+    title: "Debug cheats"
     type: bool
     default: "OFF"
     warn: "Cheats in a release build. Do not use for multiplayer."
@@ -117,6 +133,8 @@ switches:
   - id: debug_multi_instance
     cmake: RTS_DEBUG_MULTI_INSTANCE
     group: debug
+    featured: true
+    title: "Multiple game instances"
     type: bool
     default: "OFF"
     help: "Allow multiple client instances."
@@ -129,6 +147,8 @@ switches:
   - id: tracy
     cmake: RTS_BUILD_OPTION_PROFILE_TRACY
     group: debug
+    featured: true
+    title: "Tracy profiler"
     type: bool
     default: "OFF"
     when: [{ config: [profile], compiler: [msvc] }]
@@ -137,6 +157,8 @@ switches:
   - id: asan
     cmake: RTS_BUILD_OPTION_ASAN
     group: debug
+    featured: true
+    title: "Address Sanitizer"
     type: bool
     default: "OFF"
     when: [{ compiler: [msvc] }]
@@ -147,6 +169,8 @@ switches:
   - id: gamememory
     cmake: RTS_GAMEMEMORY_ENABLE
     group: memory
+    featured: true
+    title: "Game memory allocator"
     type: bool
     default: "ON"
     help: "Original game memory pool and dynamic memory allocator."
@@ -236,6 +260,8 @@ switches:
   - id: crashdump
     cmake: RTS_CRASHDUMP_ENABLE
     group: memory
+    featured: true
+    title: "Crash dumps"
     type: bool
     default: "ON"
     help: "Write crash dumps on unhandled exceptions."
@@ -244,6 +270,8 @@ switches:
   - id: ffmpeg
     cmake: RTS_BUILD_OPTION_FFMPEG
     group: extras
+    featured: true
+    title: "FFmpeg video"
     type: bool
     default: "OFF"
     when: [{ compiler: [msvc] }]
@@ -252,12 +280,18 @@ switches:
   - id: tools
     cmake: RTS_BUILD_CORE_TOOLS
     group: extras
+    featured: true
+    title: "Mod tools"
     type: bool
     default: "ON"
+    when: [{ compiler: [vc6, msvc] }]
+    why: "The MinGW toolchain turns the tools off, because they need MFC."
     help: "Build the mod tools."
   - id: extras
     cmake: RTS_BUILD_CORE_EXTRAS
     group: extras
+    featured: true
+    title: "Extra tools and tests"
     type: bool
     default: "OFF"
     help: "Build extra tools and tests."
@@ -558,6 +592,7 @@ switches:
   - id: vc6_full_debug
     cmake: RTS_BUILD_OPTION_VC6_FULL_DEBUG
     group: extras
+    featured: true
     title: "VC6 full debug info"
     type: bool
     default: "OFF"
@@ -570,8 +605,8 @@ switches:
     title: "Zero Hour tools"
     type: bool
     default: "ON"
-    when: [{ game: [zh, universal] }]
-    why: "Zero Hour is not part of this build."
+    when: [{ game: [zh, universal], compiler: [vc6, msvc] }]
+    why: "Not available here: Zero Hour is not part of this build, or the MinGW toolchain turns the tools off."
     help: "Build the Zero Hour mod tools."
   - id: zh_extras
     cmake: RTS_BUILD_ZEROHOUR_EXTRAS
@@ -597,8 +632,8 @@ switches:
     title: "Generals tools"
     type: bool
     default: "ON"
-    when: [{ game: [generals, universal] }]
-    why: "Generals is not part of this build."
+    when: [{ game: [generals, universal], compiler: [vc6, msvc] }]
+    why: "Not available here: Generals is not part of this build, or the MinGW toolchain turns the tools off."
     help: "Build the Generals mod tools."
   - id: generals_extras
     cmake: RTS_BUILD_GENERALS_EXTRAS
@@ -680,6 +715,9 @@ tier1:
   - { compiler: msvc, config: release }
   - { compiler: msvc, config: profile }
   - { compiler: msvc, config: debug }
+  - { compiler: mingw, config: release }
+  - { compiler: mingw, config: profile }
+  - { compiler: mingw, config: debug }
 
 tier2:
   - id: retail-off
