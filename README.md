@@ -33,7 +33,7 @@ Or from a terminal: `npx vercel --prod` in this folder.
 ### GitHub Pages
 
 Settings > Pages > Source must be **GitHub Actions** (the repo must be public, or on a plan that allows private Pages).
-`.github/workflows/static.yml` publishes `site/` on every push to `main`, at to `https://mirelle7.github.io/RELEASE/`.
+`.github/workflows/static.yml` publishes `site/` on every push to `main`, at `https://mirelle7.github.io/RELEASE/`.
 
 Add a workflow that uploads `site/` with `actions/upload-pages-artifact` and `actions/deploy-pages`, or upload the contents of `site/` to any host.
 

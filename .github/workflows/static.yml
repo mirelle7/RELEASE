@@ -36,10 +36,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
- Upload entire repository
-# Upload entire repository
- Upload entire repository
-path: '.'
+          # Publish only the built site (site/index.html), not the whole repo
+          path: 'site'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
