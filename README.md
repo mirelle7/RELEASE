@@ -61,16 +61,46 @@ in `agent/` and `sh agent/build.sh` rebuilds it; the SHA-256 of each build is in
   whether the whole matrix compiled.
 * **Live tasks** shows the running build with a timer and its log following along, and a bar of how much of the batch is done.
 
-What has been run for real on one Windows 11 PC (Podman for the containers, Visual Studio Build Tools 18 for MSVC):
+### Status: what works, what is untested
+
+Everything below was run on **one Windows 11 PC** (Podman for the containers, Visual Studio Build Tools 18 for MSVC).
+
+**Works (run for real)**
 
 | Platform | Result |
 |---|---|
-| Visual C++ 6 (Podman + Wine) | Release, Profile, Debug, Release + logging, Weekly: green for Generals, Zero Hour and Universal |
-| Modern MSVC (native, `--env-script vcvarsall.bat --env-args x86`) | Release, Profile, Debug: green for all three |
-| MinGW-w64 + Clang 18 (Podman) | Release, Profile, Debug: green for all three. Profile has no function-level call tracing, because the source writes it in MSVC-only assembly |
-| MinGW-w64 + GCC (Podman) | Release, Debug: green for all three. There is no Profile build: gcc cannot compile that assembly |
+| Visual C++ 6 (Podman + Wine) | Release, Profile, Debug, Release + logging, Weekly: green for Generals, Zero Hour and Universal (15 of 15) |
+| Modern MSVC (native, `--env-script vcvarsall.bat --env-args x86`) | Release, Profile, Debug: green for all three (9 of 9) |
+| MinGW-w64 + Clang 18 (Podman) | Release, Profile, Debug: green for all three (9 of 9), also from the latest upstream main. Profile has no function-level call tracing, because the source writes it in MSVC-only assembly |
+| MinGW-w64 + GCC (Podman) | Release and Debug: green for all three (6 of 6) on an older checkout. No Profile build (same assembly) |
 
-Not verified: WSL as the container route, the `vcpkg` presets, VC6 or MSVC *in Windows containers*, a second PC.
+* The whole-matrix button ran 39 builds from the page and the matrix turned green with the banner "all 39 builds compiled".
+* The agent downloaded the source itself from GitHub (no folder set) and built Zero Hour with Clang from it; rebuilds are incremental.
+* Platform menu, live task view (timer, last 3 lines, full log), autoconnect, rebuild and cancel buttons, zip and plain-exe download
+  links (served and checked), project and source-version selectors: used in a browser against the real agent (the commit
+  picker against a mock agent).
+* MinGW exes no longer need `libwinpthread-1.dll` or `d3dx8d.dll` (they link the same static `d3dx8.lib` as the VC6 and MSVC
+  builds): checked by reading the exes' import tables.
+* The agent's Go tests pass on Linux in a container; the Python tests pass (48).
+
+**Untested**
+
+* **The built exes have never been run on Windows**, so a problem from the swapped-in static D3DX8 code would only show at run time.
+* **macOS**: the macOS agent and the native macOS builds have never run (only checked with fakes). The Linux x86-64 agent was
+  started in a container and built a toy project natively; the Linux ARM64 agent was only compiled.
+* **GeneralsX, the bobtista fork, Generals Online**: switches and presets are checked against their source, but no real game
+  build of them has been run. The bobtista fork was only checked from its saved `cmake/` files.
+* WSL as the container route, VC6 or MSVC in Windows containers, the msvc-wine image, the `vcpkg` presets, a second PC, and
+  the SmartScreen prompt for the unsigned Windows agent.
+* The commit picker through the GitHub API for the real project (rate limits), `core.longpaths` on Windows, and `git clean`
+  keeping `build/` on a real incremental rebuild.
+* The agent's own Go tests fake `docker`, `podman` and `wsl` with shell scripts, so many of them fail on Windows (they pass on Linux).
+
+**Known problems**
+
+* **GCC cannot link the newest upstream main** (undefined `MOTDSystem`, `OSDisplaySetBusyState`, winsock `listen` and `accept`),
+  with or without our flags: an upstream problem. Older source links, and Clang links the newest.
+* Builds need disk: about 4 GB per configured preset, and each downloaded project is about 1.5 GB.
 
 ### Build across history
 
