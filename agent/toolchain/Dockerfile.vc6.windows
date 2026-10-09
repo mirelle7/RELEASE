@@ -1,0 +1,67 @@
+# escape=`
+# ============================================================================================================
+# NEVER BUILT. This recipe has not been run by anyone yet. Likeliest failure points, most likely first:
+#   * Host/container Windows version mismatch: servercore:ltsc2022 only runs with process isolation on a matching
+#     host build. The agent runs it with --isolation=hyperv, which needs Hyper-V enabled (Windows 11 Pro is fine).
+#   * Docker must be in Windows-container mode ("Switch to Windows containers"); Podman cannot run this image.
+#   * Image size: servercore is ~5 GB before anything is added, and the first pull is slow.
+#   * Only the VC6 package is hash-pinned (the same commit and SHA-256 TheSuperHackers' CI uses) and CMake is checked
+#     against Kitware's published SHA-256 file. Ninja and MinGit are pinned by version and fetched over https from
+#     GitHub, with no published checksum to compare against here.
+#   * PATH is written out in full instead of being expanded from the base image's, because expansion of the base
+#     PATH inside ENV is not something this recipe could confirm.
+#   * Used with the agent's --accept-licenses gate: nothing here is shipped, it is downloaded when the player builds.
+# Build:  docker build -t generals-portal-vc6-win:1 -     (the agent does this for you the first time)
+# Run:    docker run --rm --isolation=hyperv --mount type=bind,source=<repo>,target=C:\src -w C:\src <image> cmake ...
+# Probe:  docker run --rm --isolation=hyperv <image> cmd /c C:\toolprobe.cmd
+# ============================================================================================================
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+SHELL ["powershell", "-NoLogo", "-NoProfile", "-Command", "$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;"]
+
+# CMake: verified against the SHA-256 file Kitware publishes next to the release.
+RUN $v='3.30.5'; $base="https://github.com/Kitware/CMake/releases/download/v$v"; `
+    Invoke-WebRequest "$base/cmake-$v-windows-x86_64.zip" -OutFile cmake.zip -UseBasicParsing; `
+    Invoke-WebRequest "$base/cmake-$v-SHA-256.txt" -OutFile cmake.sha -UseBasicParsing; `
+    $want = ((Get-Content cmake.sha | Where-Object { $_ -match "cmake-$v-windows-x86_64\.zip$" }) -split '\s+')[0]; `
+    if (-not $want) { throw 'no checksum for the CMake zip in the published file' }; `
+    $got = (Get-FileHash cmake.zip -Algorithm SHA256).Hash; `
+    if ($got -ne $want) { throw "CMake hash mismatch: $got" }; `
+    Expand-Archive cmake.zip C:\tools; `
+    Move-Item "C:\tools\cmake-$v-windows-x86_64" C:\tools\cmake; `
+    Remove-Item cmake.zip, cmake.sha
+
+# Ninja and MinGit (git for CMake's dependency downloads), pinned by version.
+RUN Invoke-WebRequest https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip -OutFile ninja.zip -UseBasicParsing; `
+    Expand-Archive ninja.zip C:\tools\ninja; `
+    Invoke-WebRequest https://github.com/git-for-windows/git/releases/download/v2.47.1.windows.1/MinGit-2.47.1-64-bit.zip -OutFile mingit.zip -UseBasicParsing; `
+    Expand-Archive mingit.zip C:\tools\git; `
+    Remove-Item ninja.zip, mingit.zip
+
+# Visual C++ 6 (SP6), the same pinned package TheSuperHackers' build-toolchain.yml downloads. The build fails on a hash mismatch.
+RUN $c = '001c4bafdcf2ef4b474d693acccd35a91e848f40'; `
+    Invoke-WebRequest "https://github.com/itsmattkc/MSVC600/archive/$c.zip" -OutFile vc6.zip -UseBasicParsing; `
+    $h = (Get-FileHash vc6.zip -Algorithm SHA256).Hash; `
+    if ($h -ne 'D0EE1F6DCEF7DB3AD703120D9FB4FAD49EBCA28F44372E40550348B1C00CA583') { throw "VC6 hash mismatch: $h" }; `
+    Expand-Archive vc6.zip C:\VC6; `
+    Move-Item "C:\VC6\MSVC600-$c" C:\VC6\VC6SP6; `
+    Remove-Item vc6.zip
+
+# The compiler environment, exactly as TheSuperHackers' CI sets it (build-toolchain.yml, "Set Up VC6 Environment").
+ENV VSCommonDir="C:\VC6\VC6SP6\Common"
+ENV MSDevDir="C:\VC6\VC6SP6\Common\msdev98"
+ENV MSVCDir="C:\VC6\VC6SP6\VC98"
+ENV VcOsDir="WINNT"
+ENV INCLUDE="C:\VC6\VC6SP6\VC98\ATL\INCLUDE;C:\VC6\VC6SP6\VC98\INCLUDE;C:\VC6\VC6SP6\VC98\MFC\INCLUDE"
+ENV LIB="C:\VC6\VC6SP6\VC98\LIB;C:\VC6\VC6SP6\VC98\MFC\LIB"
+ENV PATH="C:\VC6\VC6SP6\Common\msdev98\BIN;C:\VC6\VC6SP6\VC98\BIN;C:\VC6\VC6SP6\Common\TOOLS\WINNT;C:\VC6\VC6SP6\Common\TOOLS;C:\tools\cmake\bin;C:\tools\ninja;C:\tools\git\cmd;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\"
+
+# What the agent runs to check the image: prints MISSING:<tool> for anything absent, then the cmake and cl banners.
+RUN Set-Content -Path C:\toolprobe.cmd -Encoding Ascii -Value @( `
+      '@echo off', `
+      'for %%T in (cmake ninja git cl link rc midl) do (where %%T >nul 2>nul || echo MISSING:%%T)', `
+      'cmake --version 2>nul | findstr /b /c:"cmake version"', `
+      'cl 2>&1 | findstr /i /c:"Version"', `
+      'exit /b 0')
+
+WORKDIR C:\src

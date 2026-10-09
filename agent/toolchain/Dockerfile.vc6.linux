@@ -1,0 +1,156 @@
+# Visual C++ 6 build environment, as a LINUX image that runs the Windows tools under Wine.
+# Works with Docker (Linux containers), Podman and WSL. Built on the player's PC; nothing from Microsoft is shipped.
+#
+# ############################################################################################################
+# NEVER BUILT. This recipe was written without being able to run it. Likeliest failure points, most likely first:
+#   1. Windows CMake running a Ninja build with cl.exe (VC6) under Wine: process launching, paths (Z:\src) and
+#      CMake's compiler detection of "12.00.8804" have not been seen working here.
+#   2. The Wine prefix: Wine refuses a prefix owned by another user, so wine-run copies it to /tmp when the
+#      container runs as a different uid (agent uses --user on Linux hosts). That copy costs time on every run.
+#   3. MinGit and Ninja are downloaded over HTTPS without a pinned checksum (upstream publishes none we could pin);
+#      pass --build-arg NINJA_SHA256=... / MINGIT_SHA256=... to enforce one. CMake is checked against Kitware's list.
+#   4. wine32:i386 / libwine package names on ubuntu:24.04 and the dpkg i386 architecture setup.
+#   5. VC6's case-insensitive include paths on a case-sensitive filesystem (Wine normally copes, slowly).
+# ############################################################################################################
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive HOME=/tmp WINEPREFIX=/opt/wine WINEDEBUG=-all WINEARCH=win64 \
+    WINEDLLOVERRIDES="mscoree,mshtml="
+
+# Windows CMake, Ninja and Git run under Wine too, so every path the build sees is a Windows path (repo = Z:\src).
+RUN dpkg --add-architecture i386 \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates curl unzip xvfb xauth wine wine64 wine32:i386 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Initialise the Wine prefix once, here, so builds do not pay for it. a+rwX lets any user read it.
+RUN xvfb-run -a wineboot --init; wineserver -w; chmod -R a+rwX /opt/wine
+
+ARG CMAKE_VERSION=3.30.5
+ARG NINJA_VERSION=1.12.1
+ARG MINGIT_VERSION=2.47.1
+ARG NINJA_SHA256=""
+ARG MINGIT_SHA256=""
+
+# CMake: verified against the SHA-256 list Kitware publishes next to the release.
+RUN set -e; mkdir -p /opt/tools /tmp/dl && cd /tmp/dl \
+ && base=https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION} \
+ && curl -fsSL --retry 3 -O ${base}/cmake-${CMAKE_VERSION}-windows-x86_64.zip \
+ && curl -fsSL --retry 3 -O ${base}/cmake-${CMAKE_VERSION}-SHA-256.txt \
+ && grep " cmake-${CMAKE_VERSION}-windows-x86_64.zip\$" cmake-${CMAKE_VERSION}-SHA-256.txt | sha256sum -c - \
+ && unzip -q cmake-${CMAKE_VERSION}-windows-x86_64.zip -d /opt/tools \
+ && mv /opt/tools/cmake-${CMAKE_VERSION}-windows-x86_64 /opt/tools/cmake \
+ && rm -rf /tmp/dl
+
+# Ninja (checksum enforced only if NINJA_SHA256 is given).
+RUN set -e; mkdir -p /tmp/dl /opt/tools/ninja && cd /tmp/dl \
+ && curl -fsSL --retry 3 -o ninja-win.zip https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-win.zip \
+ && if [ -n "$NINJA_SHA256" ]; then echo "$NINJA_SHA256  ninja-win.zip" | sha256sum -c -; fi \
+ && unzip -q ninja-win.zip -d /opt/tools/ninja \
+ && rm -rf /tmp/dl
+
+# MinGit (CMake uses git to download the project's dependencies). Checksum enforced only if MINGIT_SHA256 is given.
+RUN set -e; mkdir -p /tmp/dl /opt/tools/git && cd /tmp/dl \
+ && curl -fsSL --retry 3 -o mingit.zip https://github.com/git-for-windows/git/releases/download/v${MINGIT_VERSION}.windows.1/MinGit-${MINGIT_VERSION}-64-bit.zip \
+ && if [ -n "$MINGIT_SHA256" ]; then echo "$MINGIT_SHA256  mingit.zip" | sha256sum -c -; fi \
+ && unzip -q mingit.zip -d /opt/tools/git \
+ && mkdir -p /opt/tools/git/etc \
+ && printf '[safe]\n\tdirectory = *\n' >> /opt/tools/git/etc/gitconfig \
+ && rm -rf /tmp/dl
+
+# Visual C++ 6 (SP6): the portable package TheSuperHackers' CI uses, at the same pinned commit and hash.
+# The build FAILS if the hash does not match.
+ARG VC6_COMMIT=001c4bafdcf2ef4b474d693acccd35a91e848f40
+ARG VC6_SHA256=D0EE1F6DCEF7DB3AD703120D9FB4FAD49EBCA28F44372E40550348B1C00CA583
+RUN set -e; mkdir -p /tmp/dl /opt/VC6 && cd /tmp/dl \
+ && curl -fsSL --retry 3 -o vc6.zip https://github.com/itsmattkc/MSVC600/archive/${VC6_COMMIT}.zip \
+ && echo "$(echo $VC6_SHA256 | tr 'A-F' 'a-f')  vc6.zip" | sha256sum -c - \
+ && unzip -q vc6.zip -d /opt/VC6 \
+ && mv /opt/VC6/MSVC600-${VC6_COMMIT} /opt/VC6/VC6SP6 \
+ && rm -rf /tmp/dl
+
+# wine-run: run a Windows program; if the baked prefix belongs to another user (the container runs as the host user),
+# use a private copy in /tmp instead, because Wine will not use a prefix it does not own.
+RUN printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ ! -O "$WINEPREFIX" ]; then' \
+  '  P=/tmp/wineprefix-$(id -u)' \
+  '  [ -d "$P" ] || cp -R --no-preserve=ownership /opt/wine "$P"' \
+  '  export WINEPREFIX="$P"' \
+  'fi' \
+  'exec wine "$@"' \
+  > /usr/local/bin/wine-run \
+ && chmod +x /usr/local/bin/wine-run
+
+# entry: the environment TheSuperHackers' build-toolchain.yml sets for VC6 (VcOsDir=WINNT), as Windows paths, then run
+# whatever was asked. WINEPATH is how Wine adds directories to the Windows PATH.
+RUN printf '%s\n' \
+  '#!/bin/sh' \
+  'export MSVCDir="Z:\\opt\\VC6\\VC6SP6\\VC98"' \
+  'export VSCommonDir="Z:\\opt\\VC6\\VC6SP6\\Common"' \
+  'export MSDevDir="Z:\\opt\\VC6\\VC6SP6\\Common\\msdev98"' \
+  'export VcOsDir=WINNT' \
+  'export INCLUDE="$MSVCDir\\ATL\\INCLUDE;$MSVCDir\\INCLUDE;$MSVCDir\\MFC\\INCLUDE"' \
+  'export LIB="$MSVCDir\\LIB;$MSVCDir\\MFC\\LIB"' \
+  'export WINEPATH="$MSDevDir\\BIN;$MSVCDir\\BIN;$VSCommonDir\\TOOLS\\WINNT;$VSCommonDir\\TOOLS;Z:\\opt\\tools\\cmake\\bin;Z:\\opt\\tools\\ninja;Z:\\opt\\tools\\git\\cmd"' \
+  'exec "$@"' \
+  > /usr/local/bin/entry \
+ && chmod +x /usr/local/bin/entry
+
+# cmake, ninja and git on the Linux PATH, so the agent runs `cmake --preset vc6` like anywhere else.
+RUN for t in cmake:cmake/bin/cmake.exe ninja:ninja/ninja.exe git:git/cmd/git.exe; do \
+      name=${t%%:*}; exe=/opt/tools/${t#*:}; \
+      printf '%s\n' '#!/bin/sh' "exec /usr/local/bin/entry /usr/local/bin/wine-run $exe \"\$@\"" > /usr/local/bin/$name; \
+      chmod +x /usr/local/bin/$name; \
+    done
+
+# Git for Windows runs `git submodule` as an MSYS shell script, and that script hangs under Wine (seen: 19 minutes on
+# `git submodule update --recursive --init` while CMake fetched dependencies). The game's dependencies are plain
+# repositories without submodules, so `git submodule` is replaced by a do-nothing program compiled with the VC6 compiler
+# itself. Plain git (clone, checkout, fetch) is untouched. The original script is kept as git-submodule.sh.orig.
+RUN set -e; mkdir -p /tmp/stub && cd /tmp/stub \
+ && printf 'int main(void) { return 0; }\n' > stub.c \
+ && /usr/local/bin/entry /usr/local/bin/wine-run /opt/VC6/VC6SP6/VC98/Bin/CL.EXE /nologo /MT stub.c /Festub.exe \
+ && G=/opt/tools/git/mingw64/libexec/git-core \
+ && mv "$G/git-submodule" "$G/git-submodule.sh.orig" \
+ && cp stub.exe "$G/git-submodule.exe" \
+ && rm -rf /tmp/stub
+
+# toolprobe: MISSING:<tool> for anything absent, then the cmake and cl banners. midl is reported if Wine cannot find it.
+RUN printf '%s\n' \
+  '#!/bin/sh' \
+  'for t in cmake ninja git; do command -v $t >/dev/null 2>&1 || echo MISSING:$t; done' \
+  'for t in cl link rc midl; do' \
+  '  [ -n "$(find /opt/VC6 -iname "$t.exe" 2>/dev/null | head -n 1)" ] || echo MISSING:$t' \
+  'done' \
+  'cmake --version 2>/dev/null | head -n 1' \
+  '/usr/local/bin/entry /usr/local/bin/wine-run cl 2>&1 | head -n 2' \
+  > /usr/local/bin/toolprobe \
+ && chmod +x /usr/local/bin/toolprobe
+
+# Speed: the bind-mounted /src is a slow network-style filesystem on Windows hosts (Podman machine / Docker Desktop /
+# WSL /mnt/c): VC6 reads thousands of headers per file, and a 1600-file build took hours with idle CPUs. The cmake
+# wrapper below copies the source (and only this preset's build folder) to the container's own disk (/work/src), runs
+# CMake there, and copies the build folder back to /src/build/<preset> afterwards, also when the build failed.
+RUN apt-get update && apt-get install -y --no-install-recommends rsync && rm -rf /var/lib/apt/lists/*
+RUN printf '%s\n' \
+  '#!/bin/sh' \
+  'CM="/usr/local/bin/entry /usr/local/bin/wine-run /opt/tools/cmake/bin/cmake.exe"' \
+  'case "$1" in --version|--help|-E) exec $CM "$@";; esac' \
+  '[ "$(pwd)" = /src ] || exec $CM "$@"' \
+  'P=; prev=' \
+  'for a in "$@"; do' \
+  '  case "$a" in --preset=*) P=${a#--preset=};; *) [ "$prev" = --preset ] && P=$a;; esac' \
+  '  prev=$a' \
+  'done' \
+  'W=/work/src; mkdir -p $W' \
+  'rsync -rt --no-perms --delete --exclude=/build/ /src/ $W/' \
+  'if [ -n "$P" ]; then mkdir -p $W/build/$P; [ -d /src/build/$P ] && rsync -rt --no-perms --delete /src/build/$P/ $W/build/$P/; fi' \
+  'cd $W; $CM "$@"; rc=$?' \
+  'if [ -n "$P" ] && [ -d $W/build/$P ]; then mkdir -p /src/build/$P; rsync -rt --no-perms --delete $W/build/$P/ /src/build/$P/; fi' \
+  'exit $rc' \
+  > /usr/local/bin/cmake \
+ && chmod +x /usr/local/bin/cmake
+
+WORKDIR /src

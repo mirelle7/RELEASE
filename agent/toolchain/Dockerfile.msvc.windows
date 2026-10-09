@@ -1,0 +1,73 @@
+# escape=`
+# ============================================================================================================
+# NEVER BUILT. This recipe has not been run by anyone yet. Likeliest failure points, most likely first:
+#   * Visual Studio Build Tools inside a container: the install is large (several GB, 20+ minutes) and can fail or
+#     stall with the default 1 GB memory of a Hyper-V container. If it does, build with more memory
+#     (docker build --memory 4g ...). The install step accepts exit code 3010 (reboot needed) as success.
+#   * Host/container Windows version mismatch: servercore:ltsc2022 only runs with process isolation on a matching
+#     host build. The agent runs it with --isolation=hyperv, which needs Hyper-V enabled (Windows 11 Pro is fine).
+#   * Docker must be in Windows-container mode ("Switch to Windows containers"); Podman cannot run this image.
+#   * The Build Tools download (aka.ms/vs/17/release) is not version-pinned: it installs whatever Microsoft currently
+#     ships as "VS 2022 Build Tools". CMake is checked against Kitware's published SHA-256 file; Ninja and MinGit are
+#     pinned by version over https with no checksum to compare against here.
+#   * x86 midl.exe is expected from the Windows SDK that --includeRecommended brings; C:\toolprobe.cmd reports it if not.
+#   * Used with the agent's --accept-licenses gate: --quiet installation implies accepting Microsoft's licence terms,
+#     so the agent must not build this image until the player has said yes.
+# Build:  docker build -t generals-portal-msvc-win:1 -     (the agent does this for you the first time)
+# Run:    docker run --rm --isolation=hyperv --mount type=bind,source=<repo>,target=C:\src -w C:\src <image> cmake ...
+#         (C:\entry.cmd sets up the 32-bit compiler with vcvarsall.bat x86, then runs the command)
+# Probe:  docker run --rm --isolation=hyperv <image> C:\toolprobe.cmd
+# ============================================================================================================
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+SHELL ["powershell", "-NoLogo", "-NoProfile", "-Command", "$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;"]
+
+# CMake: verified against the SHA-256 file Kitware publishes next to the release.
+RUN $v='3.30.5'; $base="https://github.com/Kitware/CMake/releases/download/v$v"; `
+    Invoke-WebRequest "$base/cmake-$v-windows-x86_64.zip" -OutFile cmake.zip -UseBasicParsing; `
+    Invoke-WebRequest "$base/cmake-$v-SHA-256.txt" -OutFile cmake.sha -UseBasicParsing; `
+    $want = ((Get-Content cmake.sha | Where-Object { $_ -match "cmake-$v-windows-x86_64\.zip$" }) -split '\s+')[0]; `
+    if (-not $want) { throw 'no checksum for the CMake zip in the published file' }; `
+    $got = (Get-FileHash cmake.zip -Algorithm SHA256).Hash; `
+    if ($got -ne $want) { throw "CMake hash mismatch: $got" }; `
+    Expand-Archive cmake.zip C:\tools; `
+    Move-Item "C:\tools\cmake-$v-windows-x86_64" C:\tools\cmake; `
+    Remove-Item cmake.zip, cmake.sha
+
+# Ninja and MinGit (git for CMake's dependency downloads), pinned by version.
+RUN Invoke-WebRequest https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip -OutFile ninja.zip -UseBasicParsing; `
+    Expand-Archive ninja.zip C:\tools\ninja; `
+    Invoke-WebRequest https://github.com/git-for-windows/git/releases/download/v2.47.1.windows.1/MinGit-2.47.1-64-bit.zip -OutFile mingit.zip -UseBasicParsing; `
+    Expand-Archive mingit.zip C:\tools\git; `
+    Remove-Item ninja.zip, mingit.zip
+
+# Visual Studio Build Tools with the C++ workload, following Microsoft's documented container recipe.
+RUN Invoke-WebRequest https://aka.ms/vs/17/release/vs_buildtools.exe -OutFile vs_buildtools.exe -UseBasicParsing; `
+    $p = Start-Process -FilePath .\vs_buildtools.exe -Wait -PassThru -ArgumentList `
+      '--quiet', '--wait', '--norestart', '--nocache', '--installPath', 'C:\BuildTools', `
+      '--add', 'Microsoft.VisualStudio.Workload.VCTools', '--includeRecommended'; `
+    if (($p.ExitCode -ne 0) -and ($p.ExitCode -ne 3010)) { throw "Visual Studio Build Tools setup failed with exit code $($p.ExitCode)" }; `
+    Remove-Item vs_buildtools.exe; `
+    Remove-Item -Recurse -Force "$env:ProgramData\Package Cache" -ErrorAction SilentlyContinue
+
+# Tools that do not come from Visual Studio; vcvarsall.bat adds the compiler's own folders when a command runs.
+ENV PATH="C:\tools\cmake\bin;C:\tools\ninja;C:\tools\git\cmd;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\"
+
+# Every command runs after the 32-bit compiler environment is set up.
+RUN Set-Content -Path C:\entry.cmd -Encoding Ascii -Value @( `
+      '@echo off', `
+      'call "C:\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x86 >nul', `
+      'if errorlevel 1 exit /b 1', `
+      '%*', `
+      'exit /b %errorlevel%')
+
+# What the agent runs to check the image: prints MISSING:<tool> for anything absent, then the cmake and cl banners.
+RUN Set-Content -Path C:\toolprobe.cmd -Encoding Ascii -Value @( `
+      '@echo off', `
+      'for %%T in (cmake ninja git cl link rc midl) do (where %%T >nul 2>nul || echo MISSING:%%T)', `
+      'cmake --version 2>nul | findstr /b /c:"cmake version"', `
+      'cl 2>&1 | findstr /i /c:"Version"', `
+      'exit /b 0')
+
+ENTRYPOINT ["C:\\entry.cmd"]
+WORKDIR C:\src

@@ -2,9 +2,10 @@
  "commit": "demo-sample",
  "builds": [
   {
-   "id": "generals-mingw-debug",
+   "id": "generals-mingw-clang-debug",
+   "project": "ggc",
    "game": "generals",
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "debug",
    "switches": {},
    "retail_crc": false,
@@ -16,7 +17,7 @@
    ],
    "command": "cmake --preset mingw-w64-i686-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
-   "name": "Debug (MINGW)",
+   "name": "Debug (MINGW-CLANG)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail, so it cannot play online against retail clients."
@@ -24,9 +25,10 @@
    "status": "planned"
   },
   {
-   "id": "generals-mingw-profile",
+   "id": "generals-mingw-clang-profile",
+   "project": "ggc",
    "game": "generals",
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "profile",
    "switches": {},
    "retail_crc": false,
@@ -38,7 +40,7 @@
    ],
    "command": "cmake --preset mingw-w64-i686-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
-   "name": "Profile (MINGW)",
+   "name": "Profile (MINGW-CLANG)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail, so it cannot play online against retail clients."
@@ -46,9 +48,10 @@
    "status": "planned"
   },
   {
-   "id": "generals-mingw-release",
+   "id": "generals-mingw-clang-release",
+   "project": "ggc",
    "game": "generals",
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "release",
    "switches": {},
    "retail_crc": false,
@@ -60,7 +63,53 @@
    ],
    "command": "cmake --preset mingw-w64-i686 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
    "tier": 1,
-   "name": "Release (MINGW)",
+   "name": "Release (MINGW-CLANG)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "generals-mingw-gcc-debug",
+   "project": "ggc",
+   "game": "generals",
+   "compiler": "mingw-gcc",
+   "config": "debug",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686-debug",
+   "ci_game": "Generals",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=OFF"
+   ],
+   "command": "cmake --preset mingw-w64-i686-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
+   "tier": 1,
+   "name": "Debug (MINGW-GCC)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "generals-mingw-gcc-release",
+   "project": "ggc",
+   "game": "generals",
+   "compiler": "mingw-gcc",
+   "config": "release",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686",
+   "ci_game": "Generals",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=OFF"
+   ],
+   "command": "cmake --preset mingw-w64-i686 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=OFF",
+   "tier": 1,
+   "name": "Release (MINGW-GCC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail, so it cannot play online against retail clients."
@@ -69,6 +118,7 @@
   },
   {
    "id": "generals-msvc-debug",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "debug",
@@ -91,6 +141,7 @@
   },
   {
    "id": "generals-msvc-profile",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "profile",
@@ -114,6 +165,7 @@
   },
   {
    "id": "generals-msvc-release",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "release",
@@ -139,13 +191,14 @@
      "name": "generals-msvc-release.zip",
      "url": "builds/generals-msvc-release/generals-msvc-release.zip",
      "size": 358,
-     "sha256": "bb4cd9656cc8053b5f5151f79e968d0af938299a95b38af8965365030801c262"
+     "sha256": "c63e7a40f7e50f758f44c4d08f40463f6cf052a76344d4d86ed11e7b286414f3"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "generals-vc6-debug",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "debug",
@@ -166,6 +219,7 @@
   },
   {
    "id": "generals-vc6-profile",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "profile",
@@ -186,6 +240,7 @@
   },
   {
    "id": "generals-vc6-release",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "release",
@@ -209,13 +264,14 @@
      "name": "generals-vc6-release.zip",
      "url": "builds/generals-vc6-release/generals-vc6-release.zip",
      "size": 355,
-     "sha256": "dd4d0ba8228a1cf08ae626985c428ea7a43f47f7deaa5ffb81ba0ff88d1e02c0"
+     "sha256": "fbfadd3e2fc55fdf16f97be3a31169b4d3bd80dab374bffa9e87878d000b0e06"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "generals-vc6-releaselog",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "releaselog",
@@ -239,13 +295,14 @@
      "name": "generals-vc6-releaselog.zip",
      "url": "builds/generals-vc6-releaselog/generals-vc6-releaselog.zip",
      "size": 369,
-     "sha256": "bdf19e5c17fa7b751a877838f9711415af6e3429ef4244ea03d2fcff101ede25"
+     "sha256": "bf6996908419297d657792fe704a5c3845122ea42bfd7f0352c872e3afb4be44"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "generals-vc6-weekly",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "weekly",
@@ -265,9 +322,10 @@
    "status": "planned"
   },
   {
-   "id": "universal-mingw-debug",
+   "id": "universal-mingw-clang-debug",
+   "project": "ggc",
    "game": "universal",
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "debug",
    "switches": {},
    "retail_crc": false,
@@ -279,7 +337,7 @@
    ],
    "command": "cmake --preset mingw-w64-i686-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
-   "name": "Debug (MINGW)",
+   "name": "Debug (MINGW-CLANG)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail, so it cannot play online against retail clients."
@@ -287,9 +345,10 @@
    "status": "planned"
   },
   {
-   "id": "universal-mingw-profile",
+   "id": "universal-mingw-clang-profile",
+   "project": "ggc",
    "game": "universal",
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "profile",
    "switches": {},
    "retail_crc": false,
@@ -301,7 +360,7 @@
    ],
    "command": "cmake --preset mingw-w64-i686-profile -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
-   "name": "Profile (MINGW)",
+   "name": "Profile (MINGW-CLANG)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail, so it cannot play online against retail clients."
@@ -309,9 +368,10 @@
    "status": "planned"
   },
   {
-   "id": "universal-mingw-release",
+   "id": "universal-mingw-clang-release",
+   "project": "ggc",
    "game": "universal",
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "release",
    "switches": {},
    "retail_crc": false,
@@ -323,7 +383,53 @@
    ],
    "command": "cmake --preset mingw-w64-i686 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
-   "name": "Release (MINGW)",
+   "name": "Release (MINGW-CLANG)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "universal-mingw-gcc-debug",
+   "project": "ggc",
+   "game": "universal",
+   "compiler": "mingw-gcc",
+   "config": "debug",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686-debug",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset mingw-w64-i686-debug -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Debug (MINGW-GCC)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "universal-mingw-gcc-release",
+   "project": "ggc",
+   "game": "universal",
+   "compiler": "mingw-gcc",
+   "config": "release",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686",
+   "ci_game": "Universal",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=ON",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset mingw-w64-i686 -DRTS_BUILD_GENERALS=ON -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Release (MINGW-GCC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail, so it cannot play online against retail clients."
@@ -332,6 +438,7 @@
   },
   {
    "id": "universal-msvc-debug",
+   "project": "ggc",
    "game": "universal",
    "compiler": "msvc",
    "config": "debug",
@@ -354,6 +461,7 @@
   },
   {
    "id": "universal-msvc-profile",
+   "project": "ggc",
    "game": "universal",
    "compiler": "msvc",
    "config": "profile",
@@ -376,6 +484,7 @@
   },
   {
    "id": "universal-msvc-release",
+   "project": "ggc",
    "game": "universal",
    "compiler": "msvc",
    "config": "release",
@@ -401,13 +510,14 @@
      "name": "universal-msvc-release.zip",
      "url": "builds/universal-msvc-release/universal-msvc-release.zip",
      "size": 358,
-     "sha256": "e9e31ed70be7dbeea361b44c7b185e8521b8fc2248a0d6da3a463236acd9cb7d"
+     "sha256": "d6a4d843c8e8b609d0b7b522c04b2bbea6b821fac7ae08e5c469283e653fbee9"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "universal-vc6-debug",
+   "project": "ggc",
    "game": "universal",
    "compiler": "vc6",
    "config": "debug",
@@ -428,6 +538,7 @@
   },
   {
    "id": "universal-vc6-profile",
+   "project": "ggc",
    "game": "universal",
    "compiler": "vc6",
    "config": "profile",
@@ -448,6 +559,7 @@
   },
   {
    "id": "universal-vc6-release",
+   "project": "ggc",
    "game": "universal",
    "compiler": "vc6",
    "config": "release",
@@ -471,13 +583,14 @@
      "name": "universal-vc6-release.zip",
      "url": "builds/universal-vc6-release/universal-vc6-release.zip",
      "size": 355,
-     "sha256": "2fbe9dd64ea60d1f50fc200d304b836e84066890ac8cc995b3d0981066d01ec0"
+     "sha256": "4c10990b271c60a2f4bba4823596c672cf893dae98cb37c639f347a4132658ed"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "universal-vc6-releaselog",
+   "project": "ggc",
    "game": "universal",
    "compiler": "vc6",
    "config": "releaselog",
@@ -498,6 +611,7 @@
   },
   {
    "id": "universal-vc6-weekly",
+   "project": "ggc",
    "game": "universal",
    "compiler": "vc6",
    "config": "weekly",
@@ -517,9 +631,10 @@
    "status": "planned"
   },
   {
-   "id": "zh-mingw-debug",
+   "id": "zh-mingw-clang-debug",
+   "project": "ggc",
    "game": "zh",
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "debug",
    "switches": {},
    "retail_crc": false,
@@ -531,7 +646,7 @@
    ],
    "command": "cmake --preset mingw-w64-i686-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
-   "name": "Debug (MINGW)",
+   "name": "Debug (MINGW-CLANG)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail, so it cannot play online against retail clients."
@@ -539,9 +654,10 @@
    "status": "planned"
   },
   {
-   "id": "zh-mingw-profile",
+   "id": "zh-mingw-clang-profile",
+   "project": "ggc",
    "game": "zh",
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "profile",
    "switches": {},
    "retail_crc": false,
@@ -553,7 +669,7 @@
    ],
    "command": "cmake --preset mingw-w64-i686-profile -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
-   "name": "Profile (MINGW)",
+   "name": "Profile (MINGW-CLANG)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail, so it cannot play online against retail clients."
@@ -561,9 +677,10 @@
    "status": "planned"
   },
   {
-   "id": "zh-mingw-release",
+   "id": "zh-mingw-clang-release",
+   "project": "ggc",
    "game": "zh",
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "release",
    "switches": {},
    "retail_crc": false,
@@ -575,7 +692,53 @@
    ],
    "command": "cmake --preset mingw-w64-i686 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
    "tier": 1,
-   "name": "Release (MINGW)",
+   "name": "Release (MINGW-CLANG)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "zh-mingw-gcc-debug",
+   "project": "ggc",
+   "game": "zh",
+   "compiler": "mingw-gcc",
+   "config": "debug",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686-debug",
+   "ci_game": "GeneralsMD",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=OFF",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset mingw-w64-i686-debug -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Debug (MINGW-GCC)",
+   "blurb": "The CI preset, built as is.",
+   "warnings": [
+    "Not CRC-compatible with retail, so it cannot play online against retail clients."
+   ],
+   "status": "planned"
+  },
+  {
+   "id": "zh-mingw-gcc-release",
+   "project": "ggc",
+   "game": "zh",
+   "compiler": "mingw-gcc",
+   "config": "release",
+   "switches": {},
+   "retail_crc": false,
+   "preset": "mingw-w64-i686",
+   "ci_game": "GeneralsMD",
+   "cmake_args": [
+    "-DRTS_BUILD_GENERALS=OFF",
+    "-DRTS_BUILD_ZEROHOUR=ON"
+   ],
+   "command": "cmake --preset mingw-w64-i686 -DRTS_BUILD_GENERALS=OFF -DRTS_BUILD_ZEROHOUR=ON",
+   "tier": 1,
+   "name": "Release (MINGW-GCC)",
    "blurb": "The CI preset, built as is.",
    "warnings": [
     "Not CRC-compatible with retail, so it cannot play online against retail clients."
@@ -584,6 +747,7 @@
   },
   {
    "id": "zh-msvc-debug",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "debug",
@@ -609,13 +773,14 @@
      "name": "zh-msvc-debug.zip",
      "url": "builds/zh-msvc-debug/zh-msvc-debug.zip",
      "size": 356,
-     "sha256": "0d62a76ca402deb7ab5d63b37a1c7d118802d8533e49f633a403f7d5982b3ee0"
+     "sha256": "9f0c5c5f75f69c978a4d1e6c4fa3c1839109b0006a8cea8ccba7e51274c7f3df"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-msvc-profile",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "profile",
@@ -638,6 +803,7 @@
   },
   {
    "id": "zh-msvc-release",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "release",
@@ -663,13 +829,14 @@
      "name": "zh-msvc-release.zip",
      "url": "builds/zh-msvc-release/zh-msvc-release.zip",
      "size": 352,
-     "sha256": "af49e8754b53d8f3c512477491b27a7dbdd747cd47bdda3f6b49feff4aba7bb8"
+     "sha256": "eb0c18ef12b64157e0738c7640e98b97daa024f490d6f451d51c0a4c20851108"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-debug",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "debug",
@@ -693,13 +860,14 @@
      "name": "zh-vc6-debug.zip",
      "url": "builds/zh-vc6-debug/zh-vc6-debug.zip",
      "size": 353,
-     "sha256": "fbc056fe9ca83f684e9fe4cae851de8bdd6144e343996d2c7f04aa30e76106de"
+     "sha256": "7cc23082dc4bae204707f653f42ca167967fc7f079815bd1506a894e33278f81"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-profile",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "profile",
@@ -723,13 +891,14 @@
      "name": "zh-vc6-profile.zip",
      "url": "builds/zh-vc6-profile/zh-vc6-profile.zip",
      "size": 357,
-     "sha256": "bc31988733b4a196b3e9e27f5f2c4140d44fa11d0af48cf0b0224b6ff07009a6"
+     "sha256": "ff8a680bdb874fc3e1c755a4097fd6603ffd6064443c0b06b1324112ad5a9a3b"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "release",
@@ -753,13 +922,14 @@
      "name": "zh-vc6-release.zip",
      "url": "builds/zh-vc6-release/zh-vc6-release.zip",
      "size": 349,
-     "sha256": "a3f42b67bd1c58d786213f8da14a7082b6447409947488502a5eca2201f5e724"
+     "sha256": "10419cda12841adce82fe941d5d59418c7c9f1620a1c74b15426ed6a076f987f"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-releaselog",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "releaselog",
@@ -780,6 +950,7 @@
   },
   {
    "id": "zh-vc6-weekly",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "weekly",
@@ -800,6 +971,7 @@
   },
   {
    "id": "generals-msvc-debug-211f1905",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "debug",
@@ -836,6 +1008,7 @@
   },
   {
    "id": "generals-msvc-debug-3df3fa9e",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "debug",
@@ -861,6 +1034,7 @@
   },
   {
    "id": "generals-msvc-debug-a08328c3",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "debug",
@@ -888,6 +1062,7 @@
   },
   {
    "id": "generals-msvc-debug-b9ce4605",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "debug",
@@ -913,6 +1088,7 @@
   },
   {
    "id": "generals-msvc-profile-39fcd033",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "profile",
@@ -938,6 +1114,7 @@
   },
   {
    "id": "generals-msvc-release-1317c282",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "release",
@@ -969,6 +1146,7 @@
   },
   {
    "id": "generals-msvc-release-39d2bc55",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "release",
@@ -995,6 +1173,7 @@
   },
   {
    "id": "generals-msvc-release-591e331d",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "release",
@@ -1030,6 +1209,7 @@
   },
   {
    "id": "generals-msvc-release-699b33f0",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "release",
@@ -1055,6 +1235,7 @@
   },
   {
    "id": "generals-msvc-release-a3e39e81",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "release",
@@ -1078,6 +1259,7 @@
   },
   {
    "id": "generals-msvc-release-b86bb9d4",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "release",
@@ -1103,6 +1285,7 @@
   },
   {
    "id": "generals-msvc-release-d14c1b4d",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "release",
@@ -1128,6 +1311,7 @@
   },
   {
    "id": "generals-msvc-release-e45c4ccc",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "release",
@@ -1153,6 +1337,7 @@
   },
   {
    "id": "generals-msvc-release-ebbe3ba8",
+   "project": "ggc",
    "game": "generals",
    "compiler": "msvc",
    "config": "release",
@@ -1185,6 +1370,7 @@
   },
   {
    "id": "generals-vc6-debug-047a342c",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "debug",
@@ -1220,6 +1406,7 @@
   },
   {
    "id": "generals-vc6-debug-0e4e4c60",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "debug",
@@ -1243,6 +1430,7 @@
   },
   {
    "id": "generals-vc6-debug-a3812bbc",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "debug",
@@ -1266,6 +1454,7 @@
   },
   {
    "id": "generals-vc6-release-0e1049ec",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "release",
@@ -1289,6 +1478,7 @@
   },
   {
    "id": "generals-vc6-release-0f9ff475",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "release",
@@ -1312,6 +1502,7 @@
   },
   {
    "id": "generals-vc6-release-171c0dd5",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "release",
@@ -1345,6 +1536,7 @@
   },
   {
    "id": "generals-vc6-release-35c459c1",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "release",
@@ -1370,6 +1562,7 @@
   },
   {
    "id": "generals-vc6-release-5987df33",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "release",
@@ -1399,6 +1592,7 @@
   },
   {
    "id": "generals-vc6-release-9345fa05",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "release",
@@ -1429,6 +1623,7 @@
   },
   {
    "id": "generals-vc6-release-c44ed1d6",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "release",
@@ -1452,6 +1647,7 @@
   },
   {
    "id": "generals-vc6-release-ebd83208",
+   "project": "ggc",
    "game": "generals",
    "compiler": "vc6",
    "config": "release",
@@ -1475,6 +1671,7 @@
   },
   {
    "id": "zh-msvc-debug-117bc796",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "debug",
@@ -1500,6 +1697,7 @@
   },
   {
    "id": "zh-msvc-debug-2778347b",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "debug",
@@ -1536,6 +1734,7 @@
   },
   {
    "id": "zh-msvc-debug-2f221234",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "debug",
@@ -1563,6 +1762,7 @@
   },
   {
    "id": "zh-msvc-debug-94cd1cf2",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "debug",
@@ -1588,6 +1788,7 @@
   },
   {
    "id": "zh-msvc-profile-7496ef04",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "profile",
@@ -1613,6 +1814,7 @@
   },
   {
    "id": "zh-msvc-release-05974e4c",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "release",
@@ -1636,6 +1838,7 @@
   },
   {
    "id": "zh-msvc-release-511af770",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "release",
@@ -1661,6 +1864,7 @@
   },
   {
    "id": "zh-msvc-release-63fcdf47",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "release",
@@ -1686,6 +1890,7 @@
   },
   {
    "id": "zh-msvc-release-6994e7d5",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "release",
@@ -1711,6 +1916,7 @@
   },
   {
    "id": "zh-msvc-release-72325070",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "release",
@@ -1737,6 +1943,7 @@
   },
   {
    "id": "zh-msvc-release-9d47ec96",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "release",
@@ -1768,6 +1975,7 @@
   },
   {
    "id": "zh-msvc-release-a2af145a",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "release",
@@ -1793,6 +2001,7 @@
   },
   {
    "id": "zh-msvc-release-c1816001",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "release",
@@ -1825,6 +2034,7 @@
   },
   {
    "id": "zh-msvc-release-f0c468b8",
+   "project": "ggc",
    "game": "zh",
    "compiler": "msvc",
    "config": "release",
@@ -1860,6 +2070,7 @@
   },
   {
    "id": "zh-vc6-debug-3e4ef0d0",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "debug",
@@ -1883,6 +2094,7 @@
   },
   {
    "id": "zh-vc6-debug-8d3ea9ac",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "debug",
@@ -1918,6 +2130,7 @@
   },
   {
    "id": "zh-vc6-debug-a11c7e1b",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "debug",
@@ -1941,6 +2154,7 @@
   },
   {
    "id": "zh-vc6-release-04c31765",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "release",
@@ -1967,13 +2181,14 @@
      "name": "zh-vc6-release-04c31765.zip",
      "url": "builds/zh-vc6-release-04c31765/zh-vc6-release-04c31765.zip",
      "size": 404,
-     "sha256": "c6ebeb2fa24e5784d84ba199c0013f36aeb737541bc1330560555f694707681a"
+     "sha256": "0c0df88fb97f912be055127b2e919f06d1c7b70ba325435c74f4ba46800a45c1"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-4d38fade",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "release",
@@ -2007,13 +2222,14 @@
      "name": "zh-vc6-release-4d38fade.zip",
      "url": "builds/zh-vc6-release-4d38fade/zh-vc6-release-4d38fade.zip",
      "size": 668,
-     "sha256": "4bd94858accba50d389d7be07a588ccddc53cba04575c0617225a4ec1ef49ae3"
+     "sha256": "6ba637d7e847e9939352e4b6729baa371f8afdf41401c32598afe9073ba79a31"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-749b5023",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "release",
@@ -2040,13 +2256,14 @@
      "name": "zh-vc6-release-749b5023.zip",
      "url": "builds/zh-vc6-release-749b5023/zh-vc6-release-749b5023.zip",
      "size": 386,
-     "sha256": "dcb8825fe2d228cabe8fdf29d96c234a3dcc39730ead2c5109e1cf7555373a67"
+     "sha256": "e14a90473b84d626c0f6e7da6c22fe9b15553cb7e870393bd46270d74c9368a2"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-a22db4ae",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "release",
@@ -2073,13 +2290,14 @@
      "name": "zh-vc6-release-a22db4ae.zip",
      "url": "builds/zh-vc6-release-a22db4ae/zh-vc6-release-a22db4ae.zip",
      "size": 403,
-     "sha256": "eff05a68e6303ba7a16b5f139637d71722e9eae2d8da1f376926971009bd8b9b"
+     "sha256": "0c8cfda3b6e9182eb422200b929855e16d3763a43c03145b2f204e9abc29c61d"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-a3bbb31f",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "release",
@@ -2106,13 +2324,14 @@
      "name": "zh-vc6-release-a3bbb31f.zip",
      "url": "builds/zh-vc6-release-a3bbb31f/zh-vc6-release-a3bbb31f.zip",
      "size": 388,
-     "sha256": "79e45419d8f5f2fdc7167a3da3a1903166dd2bbb3459cd2927ab55d8c007d8d4"
+     "sha256": "04525fcaf88142d199a41ceef19a42d28a2593a4398b30247513450ea4779c2b"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-ab71425b",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "release",
@@ -2149,13 +2368,14 @@
      "name": "zh-vc6-release-ab71425b.zip",
      "url": "builds/zh-vc6-release-ab71425b/zh-vc6-release-ab71425b.zip",
      "size": 838,
-     "sha256": "e5e4a8b8acde41e2f303845b11a01ba92fe31af3fc8bea97eccf80de6edc00fc"
+     "sha256": "08f413212f36bef1a0b2303342932e1d38b1dd236355d9e0d38364ccefe2110f"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-bbb03501",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "release",
@@ -2184,13 +2404,14 @@
      "name": "zh-vc6-release-bbb03501.zip",
      "url": "builds/zh-vc6-release-bbb03501/zh-vc6-release-bbb03501.zip",
      "size": 380,
-     "sha256": "e61e76dd059e6ffcf4aa68fe03c4a2d9de800e8f3e45a1e119f7272a8d2d770c"
+     "sha256": "a99316c592677bea3afa54a50bd5a564d4a7044b770d0af9a0e0344dee172566"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"
   },
   {
    "id": "zh-vc6-release-e63ee7ae",
+   "project": "ggc",
    "game": "zh",
    "compiler": "vc6",
    "config": "release",
@@ -2223,7 +2444,7 @@
      "name": "zh-vc6-release-e63ee7ae.zip",
      "url": "builds/zh-vc6-release-e63ee7ae/zh-vc6-release-e63ee7ae.zip",
      "size": 454,
-     "sha256": "4e53c9adf8bdeae4c2cd0f20c189af6051148deec4f5690bfb7a012bf9677fe0"
+     "sha256": "33e1f8a73c23f465f880c5e882b5c8fd32992df382f7fd8068701b20f9840e3b"
     }
    ],
    "built_at": "2026-10-08 03:00 UTC (sample)"

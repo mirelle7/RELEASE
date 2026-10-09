@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // GitFunc runs git in dir and returns its trimmed output.
@@ -21,6 +22,7 @@ func (a *Agent) realGit(ctx context.Context, dir string, args ...string) (string
 	}
 	cmd := exec.CommandContext(ctx, p, args...)
 	cmd.Dir = dir
+	cmd.WaitDelay = 3 * time.Second // after a cancel, do not wait on helper processes git left holding the pipe
 	cmd.Env = append(append([]string(nil), a.env...), "GIT_TERMINAL_PROMPT=0") // never sit waiting for a password
 	out, err := cmd.CombinedOutput()
 	text := strings.TrimSpace(string(out))
@@ -37,6 +39,17 @@ func (a *Agent) realGit(ctx context.Context, dir string, args ...string) (string
 // objects and, while the range runs, the worktree's bookkeeping, which is removed at the end.
 func (a *Agent) runRange(ctx context.Context, j Job) {
 	r := j.Range
+	auto := a.isAuto(j.Project)
+	var src string
+	if auto {
+		src = a.cacheDir(j.Project)
+	} else {
+		var serr error
+		if src, serr = a.checkSrc(j.Project); serr != nil && !a.DryRun {
+			a.record(a.fail(j.ID, nil, serr.Error()))
+			return
+		}
+	}
 	points := r.Points()
 	group := j.ID
 	label := func(n int) (string, string) {
@@ -50,7 +63,7 @@ func (a *Agent) runRange(ctx context.Context, j Job) {
 		for i, n := range points {
 			id, lab := label(n)
 			a.setCurrent(id, fmt.Sprintf("%s (%d of %d)", lab, i+1, len(points)))
-			a.record(a.build(ctx, a.Src, j, id, &stepMeta{Group: group, Label: lab}))
+			a.record(a.build(ctx, src, j, id, &stepMeta{Group: group, Label: lab}))
 		}
 		return
 	}
@@ -67,14 +80,32 @@ func (a *Agent) runRange(ctx context.Context, j Job) {
 	if remote == "" {
 		remote = "origin"
 	}
-	if _, err := git(ctx, a.Src, "rev-parse", "--git-dir"); err != nil {
+	base := "HEAD" // where the worktree starts and what "commit #N" counts along
+	if auto {
+		remote = autoRemote
+		_ = os.MkdirAll(filepath.Join(a.Out, j.ID), 0o755)
+		lg, err := os.Create(filepath.Join(a.Out, j.ID, "build.log"))
+		if err != nil {
+			a.record(a.fail(j.ID, nil, err.Error()))
+			return
+		}
+		dir, _, tip, err := a.fetchTip(ctx, git, j.Project, lg)
+		if err != nil {
+			fmt.Fprintln(lg, "FAILED:", err)
+			lg.Close()
+			a.record(a.fail(j.ID, nil, err.Error()))
+			return
+		}
+		lg.Close()
+		src, base = dir, tip
+	} else if _, err := git(ctx, src, "rev-parse", "--git-dir"); err != nil {
 		a.record(a.fail(j.ID, nil, "your game folder is not a git checkout, and range builds need one."))
 		return
 	}
 
 	var commits []string
 	if r.Unit == "commit" {
-		out, err := git(ctx, a.Src, "rev-list", "--first-parent", "--reverse", "HEAD")
+		out, err := git(ctx, src, "rev-list", "--first-parent", "--reverse", base)
 		if err != nil {
 			a.record(a.fail(j.ID, nil, err.Error()))
 			return
@@ -84,20 +115,20 @@ func (a *Agent) runRange(ctx context.Context, j Job) {
 
 	wt := filepath.Join(a.Out, "worktrees", group)
 	_ = os.RemoveAll(wt)
-	_, _ = git(ctx, a.Src, "worktree", "prune")
+	_, _ = git(ctx, src, "worktree", "prune")
 	if err := os.MkdirAll(filepath.Dir(wt), 0o755); err != nil {
 		a.record(a.fail(j.ID, nil, err.Error()))
 		return
 	}
-	if _, err := git(ctx, a.Src, "worktree", "add", "--detach", wt, "HEAD"); err != nil {
+	if _, err := git(ctx, src, "worktree", "add", "--detach", wt, base); err != nil {
 		a.record(a.fail(j.ID, nil, "could not create a temporary worktree: "+err.Error()))
 		return
 	}
 	defer func() {
 		bg := context.Background()
-		_, _ = git(bg, a.Src, "worktree", "remove", "--force", wt)
+		_, _ = git(bg, src, "worktree", "remove", "--force", wt)
 		_ = os.RemoveAll(wt)
-		_, _ = git(bg, a.Src, "worktree", "prune")
+		_, _ = git(bg, src, "worktree", "prune")
 	}()
 
 	for i, n := range points {
@@ -108,7 +139,7 @@ func (a *Agent) runRange(ctx context.Context, j Job) {
 		meta := &stepMeta{Group: group, Label: lab}
 		a.setCurrent(id, fmt.Sprintf("%s (%d of %d)", lab, i+1, len(points)))
 
-		sha, err := a.resolveRef(ctx, git, remote, r.Unit, n, commits)
+		sha, err := a.resolveRef(ctx, src, git, remote, r.Unit, n, commits)
 		if err != nil {
 			a.record(a.fail(id, meta, err.Error()))
 			continue
@@ -126,20 +157,20 @@ func (a *Agent) runRange(ctx context.Context, j Job) {
 	}
 }
 
-func (a *Agent) resolveRef(ctx context.Context, git GitFunc, remote, unit string, n int, commits []string) (string, error) {
+func (a *Agent) resolveRef(ctx context.Context, src string, git GitFunc, remote, unit string, n int, commits []string) (string, error) {
 	if unit == "commit" {
 		if n > len(commits) {
 			return "", fmt.Errorf("your history has only %d commits", len(commits))
 		}
 		return commits[n-1], nil
 	}
-	if _, err := git(ctx, a.Src, "fetch", "--no-tags", remote, fmt.Sprintf("pull/%d/head", n)); err != nil {
+	if _, err := git(ctx, src, "fetch", "--no-tags", remote, fmt.Sprintf("pull/%d/head", n)); err != nil {
 		if ctx.Err() != nil {
 			return "", errors.New("cancelled")
 		}
 		return "", fmt.Errorf("PR #%d could not be fetched from %q (not a pull request there, or no access)", n, remote)
 	}
-	return git(ctx, a.Src, "rev-parse", "FETCH_HEAD")
+	return git(ctx, src, "rev-parse", "FETCH_HEAD")
 }
 
 // presetExists checks that this revision of the project defines the preset (old revisions may predate presets).

@@ -24,4 +24,8 @@ RUN update-alternatives --set i686-w64-mingw32-gcc /usr/bin/i686-w64-mingw32-gcc
 RUN (command -v widl >/dev/null || (for p in /usr/lib/wine/widl /usr/lib/wine-development/widl /usr/lib64/wine/widl; do [ -x "$p" ] && ln -s "$p" /usr/local/bin/widl && break; done)) \
  && command -v widl
 
+# The source folder is a bind mount owned by the host user, which git refuses as "dubious ownership" (CMake could not
+# check out its dependencies). Everything in this container is the player's own build, so trust any directory.
+RUN git config --system --add safe.directory '*'
+
 WORKDIR /src

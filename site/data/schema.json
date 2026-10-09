@@ -45,9 +45,243 @@
    "retail_crc": false
   },
   {
-   "id": "mingw",
-   "name": "MinGW-w64 (container)",
-   "note": "Open-source cross compiler. Its whole build environment ships as a container image (Docker or Podman) or runs in WSL, so it works on any computer, Windows or not.",
+   "id": "mingw-clang",
+   "name": "MinGW-w64 + Clang (container)",
+   "toolchain": "clang",
+   "note": "Open-source cross compiler (clang 18). Its whole build environment ships as a container image (Docker or Podman) or runs in WSL, so it works on any computer, Windows or not. The Profile build leaves out function-level call tracing, which the game source writes in MSVC-only assembly.",
+   "retail_crc": false
+  },
+  {
+   "id": "mingw-gcc",
+   "name": "MinGW-w64 + GCC (container)",
+   "toolchain": "gcc",
+   "note": "Open-source cross compiler (gcc), in the same kind of container image. There is no Profile build: the game's profiling code is MSVC-only assembly that gcc cannot compile.",
+   "retail_crc": false
+  },
+  {
+   "id": "linux",
+   "name": "Linux (native)",
+   "note": "Builds natively on a Linux computer, using the build agent for Linux. It does not run in a container or on another operating system.",
+   "flags_base": "",
+   "flag_prefix": "-",
+   "retail_crc": false
+  },
+  {
+   "id": "macos",
+   "name": "macOS (Apple silicon, native)",
+   "note": "Builds natively on a Mac with Apple silicon, using the build agent for macOS. It does not run in a container or on another operating system.",
+   "flags_base": "",
+   "flag_prefix": "-",
+   "retail_crc": false
+  }
+ ],
+ "projects": [
+  {
+   "id": "ggc",
+   "name": "GeneralsGameCode",
+   "repo": "https://github.com/TheSuperHackers/GeneralsGameCode",
+   "branch": "main",
+   "local_hint": "Your clone of TheSuperHackers/GeneralsGameCode",
+   "compilers": [
+    "vc6",
+    "msvc",
+    "mingw-clang",
+    "mingw-gcc"
+   ]
+  },
+  {
+   "id": "generalsx",
+   "name": "GeneralsX",
+   "repo": "https://github.com/fbraz3/GeneralsX",
+   "branch": "main",
+   "local_hint": "Your clone of fbraz3/GeneralsX",
+   "compilers": [
+    "vc6",
+    "msvc",
+    "mingw-clang",
+    "mingw-gcc",
+    "linux",
+    "macos"
+   ],
+   "presets": {
+    "release": {
+     "linux": "linux64-deploy",
+     "macos": "macos-vulkan"
+    },
+    "native": {
+     "linux": "unix"
+    }
+   },
+   "preset_values": {
+    "linux64-deploy": {
+     "sage_use_dx8": "OFF",
+     "sage_use_sdl3": "ON",
+     "sage_use_openal": "ON",
+     "sage_use_glm": "ON",
+     "sage_update_check": "ON",
+     "crashdump": "OFF",
+     "ffmpeg": "ON"
+    },
+    "macos-vulkan": {
+     "sage_use_dx8": "OFF",
+     "sage_use_sdl3": "ON",
+     "sage_use_openal": "ON",
+     "sage_use_glm": "ON",
+     "sage_use_moltenvk": "ON",
+     "sage_update_check": "ON",
+     "crashdump": "OFF",
+     "ffmpeg": "ON"
+    }
+   }
+  },
+  {
+   "id": "bobtista",
+   "name": "bobtista fork, latest trunk",
+   "repo": "https://github.com/bobtista/GeneralsGameCode",
+   "branch": "bobtista/topic/trunk",
+   "local_hint": "Your clone of bobtista/GeneralsGameCode (branch bobtista/topic/trunk)",
+   "compilers": [
+    "vc6",
+    "msvc",
+    "mingw-clang",
+    "mingw-gcc",
+    "linux",
+    "macos"
+   ],
+   "presets": {
+    "release": {
+     "linux": "linux-generalsmd-sdl3-bgfx",
+     "macos": "macos-generalsmd-sdl3-bgfx"
+    },
+    "profile": {
+     "macos": "macos-generalsmd-sdl3-bgfx-profile"
+    },
+    "sdl3": {
+     "msvc": "win32-generalsmd-sdl3-bgfx"
+    },
+    "win64": {
+     "msvc": "win64"
+    },
+    "win64debug": {
+     "msvc": "win64-debug"
+    }
+   },
+   "preset_values": {
+    "linux-generalsmd-sdl3-bgfx": {
+     "generals_tools": "OFF",
+     "zh_tools": "OFF",
+     "tools": "OFF",
+     "ffmpeg": "ON",
+     "crashdump": "OFF",
+     "sage_use_sdl3": "ON",
+     "sage_use_openal": "ON",
+     "gamememory": "OFF",
+     "render_backend": "bgfx",
+     "bgfx_renderer": "vulkan"
+    },
+    "macos-generalsmd-sdl3-bgfx": {
+     "generals_tools": "OFF",
+     "zh_tools": "OFF",
+     "tools": "OFF",
+     "ffmpeg": "ON",
+     "sage_use_sdl3": "ON",
+     "sage_use_openal": "ON",
+     "gamememory": "OFF",
+     "render_backend": "bgfx",
+     "bgfx_renderer": "metal"
+    },
+    "macos-generalsmd-sdl3-bgfx-profile": {
+     "generals_tools": "OFF",
+     "zh_tools": "OFF",
+     "tools": "OFF",
+     "ffmpeg": "ON",
+     "sage_use_sdl3": "ON",
+     "sage_use_openal": "ON",
+     "gamememory": "OFF",
+     "tracy": "ON",
+     "crashdump": "OFF",
+     "render_backend": "bgfx",
+     "bgfx_renderer": "metal"
+    },
+    "win32-generalsmd-sdl3-bgfx": {
+     "generals_tools": "OFF",
+     "zh_tools": "OFF",
+     "tools": "OFF",
+     "ffmpeg": "ON",
+     "sage_use_sdl3": "ON",
+     "sage_use_openal": "ON",
+     "render_backend": "bgfx"
+    },
+    "win64": {
+     "generals_tools": "OFF",
+     "zh_tools": "OFF",
+     "tools": "OFF",
+     "ffmpeg": "ON",
+     "sage_use_sdl3": "ON",
+     "sage_use_openal": "ON",
+     "render_backend": "bgfx"
+    },
+    "win64-debug": {
+     "generals_tools": "OFF",
+     "zh_tools": "OFF",
+     "tools": "OFF",
+     "ffmpeg": "ON",
+     "sage_use_sdl3": "ON",
+     "sage_use_openal": "ON",
+     "render_backend": "bgfx"
+    },
+    "win32-bgfx": {
+     "render_backend": "bgfx"
+    },
+    "win32-debug-bgfx": {
+     "render_backend": "bgfx"
+    }
+   },
+   "preset_games": {
+    "linux-generalsmd-sdl3-bgfx": [
+     "zh"
+    ],
+    "macos-generalsmd-sdl3-bgfx": [
+     "zh"
+    ],
+    "macos-generalsmd-sdl3-bgfx-profile": [
+     "zh"
+    ],
+    "win32-generalsmd-sdl3-bgfx": [
+     "zh"
+    ],
+    "win64": [
+     "zh"
+    ],
+    "win64-debug": [
+     "zh"
+    ]
+   },
+   "preset_swaps": [
+    {
+     "if": {
+      "switch": "render_backend",
+      "in": [
+       "bgfx"
+      ]
+     },
+     "map": {
+      "win32": "win32-bgfx",
+      "win32-debug": "win32-debug-bgfx"
+     }
+    }
+   ]
+  },
+  {
+   "id": "generalsonline",
+   "name": "Generals Online",
+   "repo": "https://github.com/GeneralsOnlineDevelopmentTeam/GameClient",
+   "branch": "main",
+   "local_hint": "Your clone of GeneralsOnlineDevelopmentTeam/GameClient",
+   "compilers": [
+    "vc6",
+    "msvc"
+   ],
    "retail_crc": false
   }
  ],
@@ -58,7 +292,8 @@
    "presets": {
     "vc6": "vc6",
     "msvc": "win32",
-    "mingw": "mingw-w64-i686"
+    "mingw-clang": "mingw-w64-i686",
+    "mingw-gcc": "mingw-w64-i686"
    }
   },
   {
@@ -67,7 +302,7 @@
    "presets": {
     "vc6": "vc6-profile",
     "msvc": "win32-profile",
-    "mingw": "mingw-w64-i686-profile"
+    "mingw-clang": "mingw-w64-i686-profile"
    }
   },
   {
@@ -76,7 +311,8 @@
    "presets": {
     "vc6": "vc6-debug",
     "msvc": "win32-debug",
-    "mingw": "mingw-w64-i686-debug"
+    "mingw-clang": "mingw-w64-i686-debug",
+    "mingw-gcc": "mingw-w64-i686-debug"
    }
   },
   {
@@ -92,6 +328,26 @@
    "presets": {
     "vc6": "vc6-weekly"
    }
+  },
+  {
+   "id": "native",
+   "name": "Native default",
+   "presets": {}
+  },
+  {
+   "id": "sdl3",
+   "name": "SDL3 + bgfx (Zero Hour)",
+   "presets": {}
+  },
+  {
+   "id": "win64",
+   "name": "64-bit Release",
+   "presets": {}
+  },
+  {
+   "id": "win64debug",
+   "name": "64-bit Debug",
+   "presets": {}
   }
  ],
  "vcpkg_presets": {
@@ -133,11 +389,19 @@
   {
    "id": "extras",
    "name": "Extras"
+  },
+  {
+   "id": "platform",
+   "name": "Platform and renderer"
   }
  ],
  "switches": [
   {
    "id": "retail_compat",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "cmake": "RTS_BUILD_OPTION_RETAIL_COMPATIBLE_GAME",
    "group": "retail",
    "featured": true,
@@ -217,6 +481,11 @@
   },
   {
    "id": "tracy",
+   "projects": [
+    "ggc",
+    "generalsx",
+    "bobtista"
+   ],
    "cmake": "RTS_BUILD_OPTION_PROFILE_TRACY",
    "group": "debug",
    "featured": true,
@@ -229,11 +498,13 @@
       "profile"
      ],
      "compiler": [
-      "msvc"
+      "msvc",
+      "linux",
+      "macos"
      ]
     }
    ],
-   "why": "Tracy needs a Profile build with modern MSVC.",
+   "why": "Tracy needs a Profile build with modern MSVC (or the native Linux or macOS build).",
    "help": "Tracy profiler integration."
   },
   {
@@ -458,11 +729,13 @@
    "when": [
     {
      "compiler": [
-      "msvc"
+      "msvc",
+      "linux",
+      "macos"
      ]
     }
    ],
-   "why": "FFmpeg comes from vcpkg, which needs modern MSVC.",
+   "why": "FFmpeg comes from vcpkg, which needs modern MSVC (or the native Linux or macOS build).",
    "help": "Build with FFmpeg support (uses the vcpkg preset)."
   },
   {
@@ -496,6 +769,10 @@
   },
   {
    "id": "bug_building_resumption_delay",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_BUILDING_RESUMPTION_DELAY",
    "group": "bugs",
    "title": "Building resumption delay",
@@ -509,6 +786,10 @@
   },
   {
    "id": "bug_chinook_passenger_dumping",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_CHINOOK_PASSENGER_DUMPING",
    "group": "bugs",
    "title": "Chinook passenger dumping",
@@ -522,6 +803,10 @@
   },
   {
    "id": "bug_hardcoded_black_lotus_cash_hack",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK",
    "group": "bugs",
    "title": "Hardcoded Black Lotus cash hack",
@@ -535,6 +820,10 @@
   },
   {
    "id": "bug_multi_crate_pickup",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_MULTI_CRATE_PICKUP",
    "group": "bugs",
    "title": "Multi crate pickup",
@@ -548,6 +837,10 @@
   },
   {
    "id": "bug_no_xp_from_flame_kills",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_NO_XP_FROM_FLAME_KILLS",
    "group": "bugs",
    "title": "No XP from flame kills",
@@ -561,6 +854,10 @@
   },
   {
    "id": "bug_no_xp_from_ocl_kills",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_NO_XP_FROM_OCL_KILLS",
    "group": "bugs",
    "title": "No XP from OCL kills",
@@ -574,6 +871,10 @@
   },
   {
    "id": "bug_no_xp_from_poison_kills",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_NO_XP_FROM_POISON_KILLS",
    "group": "bugs",
    "title": "No XP from poison kills",
@@ -587,6 +888,10 @@
   },
   {
    "id": "bug_occupant_detection_via_drag_selection",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION",
    "group": "bugs",
    "title": "Occupant detection via drag selection",
@@ -600,6 +905,10 @@
   },
   {
    "id": "bug_perpetual_horde_bonus",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_PERPETUAL_HORDE_BONUS",
    "group": "bugs",
    "title": "Perpetual horde bonus",
@@ -613,6 +922,10 @@
   },
   {
    "id": "bug_premature_battle_bus_death",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_PREMATURE_BATTLE_BUS_DEATH",
    "group": "bugs",
    "title": "Premature Battle Bus death",
@@ -626,6 +939,10 @@
   },
   {
    "id": "bug_radar_warning_suppression",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_RADAR_WARNING_SUPPRESSION",
    "group": "bugs",
    "title": "Radar warning suppression",
@@ -639,6 +956,10 @@
   },
   {
    "id": "bug_structure_stealth_during_repair",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_STRUCTURE_STEALTH_DURING_REPAIR",
    "group": "bugs",
    "title": "Structure stealth during repair",
@@ -652,6 +973,10 @@
   },
   {
    "id": "bug_tunnel_heal_stacking",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_TUNNEL_HEAL_STACKING",
    "group": "bugs",
    "title": "Tunnel heal stacking",
@@ -665,6 +990,10 @@
   },
   {
    "id": "bug_unreliable_firestorms",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_UNRELIABLE_FIRESTORMS",
    "group": "bugs",
    "title": "Unreliable firestorms",
@@ -678,6 +1007,10 @@
   },
   {
    "id": "bug_sniping_empty_stinger_sites",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_SNIPING_EMPTY_STINGER_SITES",
    "group": "bugs",
    "title": "Sniping empty Stinger sites",
@@ -691,6 +1024,11 @@
   },
   {
    "id": "bug_retail_scripted_camera",
+   "projects": [
+    "ggc",
+    "generalsx",
+    "bobtista"
+   ],
    "define": "PRESERVE_RETAIL_SCRIPTED_CAMERA",
    "group": "bugs",
    "title": "Retail scripted camera",
@@ -704,6 +1042,10 @@
   },
   {
    "id": "bug_retail_particles",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_RETAIL_PARTICLES",
    "group": "bugs",
    "title": "Retail particle look",
@@ -717,6 +1059,10 @@
   },
   {
    "id": "bug_retail_nuke_missile_outer_radius_search",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH",
    "group": "bugs",
    "title": "Nuke missile outer radius search",
@@ -730,6 +1076,10 @@
   },
   {
    "id": "bug_retail_nuke_missile_outer_radius_damage",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "PRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE",
    "group": "bugs",
    "title": "Nuke missile outer radius damage",
@@ -743,6 +1093,11 @@
   },
   {
    "id": "compat_crc",
+   "projects": [
+    "ggc",
+    "generalsx",
+    "bobtista"
+   ],
    "define": "RETAIL_COMPATIBLE_CRC",
    "group": "compat",
    "title": "CRC",
@@ -765,6 +1120,10 @@
   },
   {
    "id": "compat_data",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "RETAIL_COMPATIBLE_DATA",
    "group": "compat",
    "title": "Data files",
@@ -787,6 +1146,11 @@
   },
   {
    "id": "compat_xfer_save",
+   "projects": [
+    "ggc",
+    "generalsx",
+    "bobtista"
+   ],
    "define": "RETAIL_COMPATIBLE_XFER_SAVE",
    "group": "compat",
    "title": "Save files",
@@ -809,6 +1173,11 @@
   },
   {
    "id": "compat_pathfinding",
+   "projects": [
+    "ggc",
+    "generalsx",
+    "bobtista"
+   ],
    "define": "RETAIL_COMPATIBLE_PATHFINDING",
    "group": "compat",
    "title": "Pathfinding",
@@ -831,6 +1200,11 @@
   },
   {
    "id": "compat_pathfinding_allocation",
+   "projects": [
+    "ggc",
+    "generalsx",
+    "bobtista"
+   ],
    "define": "RETAIL_COMPATIBLE_PATHFINDING_ALLOCATION",
    "group": "compat",
    "title": "Pathfinding memory",
@@ -853,6 +1227,12 @@
   },
   {
    "id": "compat_circle_fill_algorithm",
+   "projects": [
+    "ggc",
+    "generalsx",
+    "bobtista",
+    "generalsonline"
+   ],
    "define": "RETAIL_COMPATIBLE_CIRCLE_FILL_ALGORITHM",
    "group": "compat",
    "title": "Circle fill",
@@ -875,6 +1255,11 @@
   },
   {
    "id": "compat_networking",
+   "projects": [
+    "ggc",
+    "generalsx",
+    "bobtista"
+   ],
    "define": "RETAIL_COMPATIBLE_NETWORKING",
    "group": "compat",
    "title": "Networking",
@@ -897,6 +1282,11 @@
   },
   {
    "id": "compat_aigroup",
+   "projects": [
+    "ggc",
+    "generalsx",
+    "bobtista"
+   ],
    "define": "RETAIL_COMPATIBLE_AIGROUP",
    "group": "compat",
    "title": "AI groups",
@@ -932,6 +1322,10 @@
   },
   {
    "id": "feat_allow_money_per_minute_for_player",
+   "projects": [
+    "ggc",
+    "bobtista"
+   ],
    "define": "ALLOW_MONEY_PER_MINUTE_FOR_PLAYER",
    "group": "gameplay",
    "title": "Money per minute",
@@ -1210,6 +1604,245 @@
     "OFF": "Off"
    },
    "help": "Interpolate raw animations. Wanted for meshes that move and rotate, but not for animations that teleport meshes, such as blinking lights."
+  },
+  {
+   "id": "sage_use_sdl3",
+   "cmake": "SAGE_USE_SDL3",
+   "projects": [
+    "generalsx",
+    "bobtista"
+   ],
+   "group": "platform",
+   "featured": true,
+   "title": "SDL3 windowing and input",
+   "type": "bool",
+   "default": "OFF",
+   "help": "Use SDL3 for windowing and input instead of the Win32 path (the Linux and macOS presets turn it on)."
+  },
+  {
+   "id": "sage_use_openal",
+   "cmake": "SAGE_USE_OPENAL",
+   "projects": [
+    "generalsx",
+    "bobtista"
+   ],
+   "group": "platform",
+   "featured": true,
+   "title": "OpenAL audio",
+   "type": "bool",
+   "default": "OFF",
+   "help": "Use OpenAL for audio instead of the Windows audio path (the Linux and macOS presets turn it on)."
+  },
+  {
+   "id": "sage_use_moltenvk",
+   "cmake": "SAGE_USE_MOLTENVK",
+   "projects": [
+    "generalsx"
+   ],
+   "group": "platform",
+   "title": "MoltenVK (Vulkan on macOS)",
+   "type": "bool",
+   "default": "OFF",
+   "when": [
+    {
+     "compiler": [
+      "macos"
+     ]
+    }
+   ],
+   "why": "MoltenVK is only used for the native macOS build.",
+   "help": "Use MoltenVK for Vulkan on macOS."
+  },
+  {
+   "id": "sage_dxvk_local_fork",
+   "cmake": "SAGE_DXVK_USE_LOCAL_FORK",
+   "projects": [
+    "generalsx"
+   ],
+   "group": "platform",
+   "title": "DXVK from the local fork checkout",
+   "type": "bool",
+   "default": "OFF",
+   "when": [
+    {
+     "compiler": [
+      "macos"
+     ]
+    }
+   ],
+   "why": "DXVK is built from source only for the native macOS build.",
+   "help": "Build DXVK from the references/fbraz3-dxvk checkout in the project instead of cloning it from GitHub."
+  },
+  {
+   "id": "sage_use_deterministic_math",
+   "cmake": "SAGE_USE_DETERMINISTIC_MATH",
+   "projects": [
+    "generalsx"
+   ],
+   "group": "platform",
+   "title": "Deterministic math",
+   "type": "bool",
+   "default": "OFF",
+   "when": [
+    {
+     "compiler": [
+      "msvc",
+      "mingw-clang",
+      "mingw-gcc",
+      "linux",
+      "macos"
+     ]
+    }
+   ],
+   "why": "Visual C++ 6 uses its own x87 assembly, so deterministic math does not apply.",
+   "help": "Use fdlibm-based deterministic math, for replay validation across platforms."
+  },
+  {
+   "id": "sage_use_ccache",
+   "cmake": "SAGE_USE_CCACHE",
+   "projects": [
+    "generalsx"
+   ],
+   "group": "platform",
+   "title": "ccache",
+   "type": "bool",
+   "default": "ON",
+   "help": "Use the ccache compiler cache when it is installed."
+  },
+  {
+   "id": "sage_update_check",
+   "cmake": "SAGE_UPDATE_CHECK",
+   "projects": [
+    "generalsx"
+   ],
+   "group": "platform",
+   "title": "In-game update check",
+   "type": "tristate",
+   "default": "DEFAULT",
+   "help": "Check GitHub Releases for a newer version from inside the game. Auto: on when SDL3 is on."
+  },
+  {
+   "id": "sage_use_glm",
+   "cmake": "SAGE_USE_GLM",
+   "projects": [
+    "generalsx"
+   ],
+   "group": "platform",
+   "title": "GLM math library",
+   "type": "tristate",
+   "default": "DEFAULT",
+   "help": "Use the GLM math library as the DirectX 8 replacement. Auto: as the preset has it."
+  },
+  {
+   "id": "sage_use_dx8",
+   "cmake": "SAGE_USE_DX8",
+   "projects": [
+    "generalsx"
+   ],
+   "group": "platform",
+   "title": "Direct3D 8 renderer",
+   "type": "tristate",
+   "default": "DEFAULT",
+   "help": "Use the real Direct3D 8 renderer, or DXVK. Auto: as the preset has it."
+  },
+  {
+   "id": "render_backend",
+   "cmake": "GGC_RENDER_BACKEND",
+   "projects": [
+    "bobtista"
+   ],
+   "group": "platform",
+   "featured": true,
+   "title": "Render backend",
+   "type": "choice",
+   "choices": [
+    {
+     "id": "dx8",
+     "label": "DirectX 8"
+    },
+    {
+     "id": "bgfx",
+     "label": "bgfx"
+    }
+   ],
+   "default": "dx8",
+   "when": [
+    {
+     "compiler": [
+      "msvc",
+      "mingw-clang",
+      "mingw-gcc",
+      "linux",
+      "macos"
+     ]
+    }
+   ],
+   "why": "Visual C++ 6 can only use the DirectX 8 backend.",
+   "help": "Rendering backend for the graphics engine. bgfx is cross-platform (DirectX 11, Vulkan or Metal) and needs a modern compiler."
+  },
+  {
+   "id": "bgfx_renderer",
+   "cmake": "GGC_BGFX_RENDERER",
+   "projects": [
+    "bobtista"
+   ],
+   "group": "platform",
+   "title": "bgfx renderer",
+   "type": "choice",
+   "choices": [
+    {
+     "id": "dx11",
+     "label": "DirectX 11"
+    },
+    {
+     "id": "vulkan",
+     "label": "Vulkan"
+    },
+    {
+     "id": "metal",
+     "label": "Metal"
+    }
+   ],
+   "default": "dx11",
+   "when": [
+    {
+     "switch": "render_backend",
+     "in": [
+      "bgfx"
+     ]
+    }
+   ],
+   "why": "Only used with the bgfx render backend.",
+   "help": "Which graphics API bgfx drives (the Linux presets use Vulkan, the macOS presets Metal)."
+  },
+  {
+   "id": "ggc_diagnostic_tools",
+   "cmake": "GGC_DIAGNOSTIC_TOOLS",
+   "projects": [
+    "bobtista"
+   ],
+   "group": "debug",
+   "title": "Diagnostic runtime flags",
+   "type": "bool",
+   "default": "ON",
+   "help": "Compile the diagnostic and probe-tier GGC_* runtime flags into the game."
+  },
+  {
+   "id": "preserve_retail_behavior",
+   "define": "PRESERVE_RETAIL_BEHAVIOR",
+   "projects": [
+    "generalsx",
+    "generalsonline"
+   ],
+   "group": "retail",
+   "title": "Preserve retail behaviour",
+   "type": "bool",
+   "default": "ON",
+   "labels": {
+    "ON": "Retail",
+    "OFF": "Changed"
+   },
+   "help": "Retain the behaviour of retail Generals 1.08 and Zero Hour 1.04."
   }
  ],
  "rules": [
@@ -1291,15 +1924,23 @@
    "config": "debug"
   },
   {
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "release"
   },
   {
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
    "config": "profile"
   },
   {
-   "compiler": "mingw",
+   "compiler": "mingw-clang",
+   "config": "debug"
+  },
+  {
+   "compiler": "mingw-gcc",
+   "config": "release"
+  },
+  {
+   "compiler": "mingw-gcc",
    "config": "debug"
   }
  ],

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Generals Build Portal (Demo)</title>
-<meta name="description" content="Every build of GeneralsGameCode: both games, both compilers, every major switch.">
+<meta name="description" content="Builds of Generals and Zero Hour from several source projects: both games, every compiler, every major switch.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%232f5d3a%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -39,6 +39,13 @@
     <h2>Configurator</h2>
     <div class="cfg">
       <div class="cfg-form">
+        <fieldset><legend>Project</legend><div class="seg" id="seg-project" role="radiogroup"></div><p class="hint" id="project-note"></p></fieldset>
+        <fieldset><legend>Source version</legend><div class="seg" id="seg-ref" role="radiogroup"></div>
+          <div id="ref-commit" class="row" hidden>
+            <select id="ref-select" aria-label="Recent commits"></select>
+            <input id="ref-sha" type="text" placeholder="or type a commit id" size="22" maxlength="40" autocomplete="off" spellcheck="false" aria-label="Commit id">
+          </div>
+          <p class="hint" id="ref-hint" role="status"></p></fieldset>
         <fieldset><legend>Game</legend><div class="seg" id="seg-game" role="radiogroup"></div></fieldset>
         <fieldset><legend>Compiler</legend><div class="seg" id="seg-compiler" role="radiogroup"></div><p class="hint" id="compiler-note"></p></fieldset>
         <fieldset><legend>Configuration</legend><div class="seg" id="seg-config" role="radiogroup"></div></fieldset>
@@ -83,8 +90,10 @@
   </section>
 
   <section id="matrix">
-    <h2>Matrix</h2>
-    <p class="hint">Reference builds with every switch as the source has it. Click a cell to load it in the configurator.</p>
+    <h2 id="matrix-title">Matrix</h2>
+    <p class="hint">Every combination, with every switch as the source has it. Each cell shows what has happened on your PC. Click a cell to load it in the configurator.</p>
+    <div class="row"><button type="button" class="btn" id="matrix-build" disabled>Build the whole matrix on my PC</button>
+      <span id="matrix-summary" class="matrix-summary" role="status"></span></div>
     <div class="table-scroll"><table class="grid" id="grid"></table></div>
   </section>
 
@@ -98,11 +107,17 @@
   <section id="desktop">
     <h2>Build on my PC</h2>
     <p class="hint">Run the builds on your own computer, with your own compiler. Nothing to install: it is one small program.</p>
-    <p id="os-note" class="note" hidden>This computer is not running Windows. Visual C++ 6 and Visual Studio builds need Windows, but the <strong>MinGW-w64 (container)</strong> compiler builds in Docker, Podman or WSL on any computer. You can also choose switches here and copy the <code>cmake</code> command.</p>
+    <p id="os-note" class="note" hidden>This computer is not running Windows. Modern Visual Studio builds need Windows. Visual C++ 6 builds in a container (under Wine), and the <strong>MinGW-w64</strong> compilers build in a container too: install Docker or Podman. You can also choose switches here and copy the <code>cmake</code> command.</p>
     <ol class="steps">
-      <li>Download the agent: <a href="downloads/build-agent-windows-x64.exe" download>Windows 64-bit</a> or <a href="downloads/build-agent-windows-x86.exe" download>32-bit</a>.</li>
-      <li>Run the agent. The first time, it asks for the folder your game code is in, then checks this PC and tells you exactly what is missing and how to fix it. Visual C++ 6 and Visual Studio builds run from the prompt where that compiler is set up (or pass <code>--env-script</code>); the MinGW-w64 build needs only Docker, Podman or WSL.</li>
-      <li>It opens this page already connected. Pick a configuration above and press <strong>Build on my PC</strong>.</li>
+      <li>Download the agent for your computer:
+        <ul class="agents" id="agent-downloads">
+          <li data-os="windows"><a href="downloads/build-agent-windows-x64.exe" download>Windows 64-bit</a> or <a href="downloads/build-agent-windows-x86.exe" download>32-bit</a></li>
+          <li data-os="mac"><a href="downloads/build-agent-macos-arm64" download>macOS, Apple silicon (M1 and newer)</a></li>
+          <li data-os="linux"><a href="downloads/build-agent-linux-x64" download>Linux x86-64</a> or <a href="downloads/build-agent-linux-arm64" download>Linux ARM64</a></li>
+        </ul>
+        <span class="hint">On macOS and Linux, open a terminal in the download folder and run <code>chmod +x build-agent-*</code> first. On macOS, if it is blocked as from an unidentified developer, run <code>xattr -d com.apple.quarantine build-agent-macos-arm64</code> once (or allow it in System Settings, Privacy and Security).</span></li>
+      <li>Run the agent. It downloads the game source from GitHub itself, so it needs nothing but itself (and <code>git</code> on this PC: it checks, and tells you how to get it if it is missing; on Windows, <code>winget install Git.Git</code>). It then checks this PC and tells you exactly what is missing and how to fix it. Visual C++ 6 and Visual Studio builds run from the prompt where that compiler is set up (or pass <code>--env-script</code>); the MinGW-w64 build needs only Docker, Podman or WSL.</li>
+      <li>It opens this page already connected. Pick a configuration above and press <strong>Build on my PC</strong>. The first build of a project downloads it from GitHub (a few hundred MB); later builds only fetch what changed.</li>
     </ol>
     <div class="panel">
       <div class="fields">
@@ -110,9 +125,26 @@
         <label>Token <input id="agent-token" type="password" autocomplete="off"></label>
         <button type="button" class="btn" id="agent-connect">Connect</button>
         <button type="button" class="ghost" id="agent-disconnect" hidden>Disconnect</button>
+        <button type="button" class="ghost" id="agent-restart" hidden>Restart agent</button>
+        <button type="button" class="ghost" id="agent-quit" hidden>Stop agent</button>
       </div>
       <p id="agent-status" class="agent-status" role="status">Not connected.</p>
+      <div id="agent-projects"></div>
+      <div id="agent-platforms"></div>
       <div id="agent-doctor"></div>
+      <div id="agent-data"></div>
+      <div id="agent-live" hidden>
+        <div class="doc-head"><strong>Live tasks</strong><span id="live-counts" class="hint"></span></div>
+        <div id="live-bar" class="live-bar" aria-hidden="true"></div>
+        <div id="live-now" hidden>
+          <div class="live-title"><span class="tag">building</span> <code id="live-id"></code> <span id="live-elapsed" class="hint"></span> <span id="live-progress" class="hint"></span></div>
+          <pre id="live-tail" aria-label="Last 3 lines of the build" aria-live="off"></pre>
+          <details id="live-full"><summary>Show full log</summary>
+            <pre id="live-log" tabindex="0" aria-label="Live build log" aria-live="off"></pre>
+          </details>
+        </div>
+        <p id="live-idle" class="hint">Nothing is building.</p>
+      </div>
       <div id="agent-queue"></div>
     </div>
   </section>

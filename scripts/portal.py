@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import itertools
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -47,113 +48,190 @@ def cond_ok(cond, ctx):
 
 # --------------------------------------------------------------------------- resolve
 
-def canonical(game, compiler, config, switches):
-    """Canonical text hashed into the build id. Keys sorted, no whitespace."""
+def canonical(game, compiler, config, switches, project=None):
+    """Canonical text hashed into the build id. Keys sorted, no whitespace.
+    The project is part of it only for projects other than the first, so the first project's ids never change."""
     obj = {"compiler": compiler, "config": config, "game": game, "switches": dict(sorted(switches.items()))}
+    if project:
+        obj["project"] = project
     return json.dumps(obj, sort_keys=True, separators=(",", ":"))
 
 
-def build_id(game, compiler, config, switches):
+def build_id(game, compiler, config, switches, project=None):
+    """project is None for the first project (plain ids), else its id (becomes a prefix)."""
     base = f"{game}-{compiler}-{config}"
+    if project:
+        base = f"{project}-{base}"
     if not switches:
         return base
-    digest = hashlib.sha1(canonical(game, compiler, config, switches).encode()).hexdigest()[:8]
+    digest = hashlib.sha1(canonical(game, compiler, config, switches, project).encode()).hexdigest()[:8]
     return f"{base}-{digest}"
+
+
+SHA_RE = re.compile(r"^[0-9a-fA-F]{7,40}$")
+
+
+def ref_suffix(ref):
+    """'' for my checkout as it is, '-latest', or '-c' + the first 7 characters of a commit. None when the ref is invalid."""
+    if not ref:
+        return ""
+    if ref == "latest":
+        return "-latest"
+    if isinstance(ref, str) and SHA_RE.match(ref):
+        return "-c" + ref[:7].lower()
+    return None
+
+
+def project_of(m, pid):
+    projects = m["projects"]
+    if pid is None:
+        return projects[0], projects
+    return next((p for p in projects if p["id"] == pid), None), projects
+
+
+def project_presets(m, proj):
+    """{config: {compiler: preset}} for one project: the base presets of its compilers, plus its own."""
+    out = {}
+    for c in m["configs"]:
+        d = {k: v for k, v in c["presets"].items() if k in proj["compilers"]}
+        d.update((proj.get("presets") or {}).get(c["id"], {}))
+        out[c["id"]] = d
+    return out
+
+
+def project_switches(m, proj):
+    return [s for s in m["switches"] if "projects" not in s or proj["id"] in s["projects"]]
+
+
+def switch_allowed(s):
+    if s["type"] == "tristate":
+        return ["DEFAULT", "ON", "OFF"]
+    if s["type"] == "choice":
+        return [c["id"] for c in s["choices"]]
+    return ["ON", "OFF"]
 
 
 def resolve(m, sel):
     """Validate a selection and return the normalised build description.
 
-    sel = {"game", "compiler", "config", "switches": {id: value}}
+    sel = {"project", "game", "compiler", "config", "switches": {id: value}, "ref"}
     Result always has "valid", "errors", "warnings", "disabled" (id -> reason).
     """
     errors, warnings, disabled = [], [], {}
     game, compiler, config = sel.get("game"), sel.get("compiler"), sel.get("config")
     user = sel.get("switches", {})
+    ref = sel.get("ref") or ""
 
+    proj, projects = project_of(m, sel.get("project"))
     games = {g["id"]: g for g in m["games"]}
     compilers = {c["id"]: c for c in m["compilers"]}
     configs = {c["id"]: c for c in m["configs"]}
+    if proj is None:
+        return {"valid": False, "errors": [f"unknown project {sel.get('project')!r}"], "warnings": [], "disabled": {}}
+    psw = project_switches(m, proj)
+    in_proj = {s["id"] for s in psw}
     sw_by_id = {s["id"]: s for s in m["switches"]}
 
     if game not in games:
         errors.append(f"unknown game {game!r}")
-    if compiler not in compilers:
+    if compiler not in compilers or compiler not in proj["compilers"]:
         errors.append(f"unknown compiler {compiler!r}")
     if config not in configs:
         errors.append(f"unknown config {config!r}")
     for k in user:
-        if k not in sw_by_id:
+        if k not in in_proj:
             errors.append(f"unknown switch {k!r}")
+    suffix = ref_suffix(ref)
+    if suffix is None:
+        errors.append("Choose a commit, or type a valid commit id (7 to 40 hex digits).")
     if errors:
         return {"valid": False, "errors": errors, "warnings": [], "disabled": {}}
 
-    preset = configs[config]["presets"].get(compiler)
+    preset = project_presets(m, proj)[config].get(compiler)
     if preset is None:
         errors.append(f"{configs[config]['name']} is not available with {compilers[compiler]['name']}")
+    elif game not in (proj.get("preset_games") or {}).get(preset, list(games)):
+        errors.append(f"{games[game]['name']} is not built by the {preset} preset")
+    pvals = (proj.get("preset_values") or {}).get(preset, {})
+    defaults = {s["id"]: pvals.get(s["id"], s["default"]) for s in m["switches"]}
 
     # Effective values, in declaration order (a switch may only depend on earlier ones).
     values = {}
     ctx = {"compiler": compiler, "config": config, "game": game, "values": values}
     for s in m["switches"]:
-        want = user.get(s["id"], s["default"])
-        allowed = ["DEFAULT", "ON", "OFF"] if s["type"] == "tristate" else ["ON", "OFF"]
+        d = defaults[s["id"]]
+        if s["id"] not in in_proj:  # not a switch of this project: it is simply as the source has it
+            values[s["id"]] = d
+            continue
+        want = user.get(s["id"], d)
+        allowed = switch_allowed(s)
         if want not in allowed:
             errors.append(f"{s['id']}: {want!r} is not one of {allowed}")
-            want = s["default"]
+            want = d
         values[s["id"]] = want
         if not all(cond_ok(c, ctx) for c in s.get("when", [])):
             disabled[s["id"]] = s.get("why", "not available in this configuration")
-            if want != s["default"]:
+            if want != d:
                 errors.append(f"{s['id']}: {disabled[s['id']]}")
             # A disabled bool counts as OFF for the switches that depend on it.
-            values[s["id"]] = "OFF" if s["type"] == "bool" else s["default"]
-        elif want != s["default"] and s.get("warn"):
+            values[s["id"]] = "OFF" if s["type"] == "bool" else d
+        elif want != d and s.get("warn"):
             warnings.append(f"{s['id']}: {s['warn']}")
 
     for r in m.get("rules", []):
         if cond_ok(r["if"], ctx) and not cond_ok(r["require"], ctx):
             errors.append(r["message"])
 
-    switches = {s["id"]: values[s["id"]] for s in m["switches"]
-                if s["id"] not in disabled and values[s["id"]] != s["default"]}
+    switches = {s["id"]: values[s["id"]] for s in psw
+                if s["id"] not in disabled and values[s["id"]] != defaults[s["id"]]}
 
     # Retail CRC compatibility: VC6, the master switch not OFF, and the two CRC-related detail switches not OFF.
     def eff(i):  # a switch that is not available counts as its source value
-        return sw_by_id[i]["default"] if i in disabled else values[i]
-    retail = (compilers[compiler]["retail_crc"] and eff("retail_compat") != "OFF"
+        return sw_by_id[i]["default"] if (i in disabled or i not in in_proj) else values[i]
+    retail = (compilers[compiler]["retail_crc"] and proj.get("retail_crc", True) and eff("retail_compat") != "OFF"
               and eff("compat_crc") != "OFF" and eff("compat_aigroup") != "OFF")
-    if not compilers[compiler]["retail_crc"] and values["retail_compat"] != "OFF":
+    if not compilers[compiler]["retail_crc"] and "retail_compat" in in_proj and values["retail_compat"] != "OFF":
         warnings.append("Not CRC-compatible with retail, so it cannot play online against retail clients.")
 
+    pid = None if proj["id"] == projects[0]["id"] else proj["id"]
     out = {
         "valid": not errors,
         "errors": errors,
         "warnings": warnings,
         "disabled": disabled,
+        "project": proj["id"],
         "game": game,
         "compiler": compiler,
         "config": config,
+        "ref": ref,
         "switches": switches,
+        "defaults": defaults,
         "retail_crc": retail,
-        "id": build_id(game, compiler, config, switches),
+        "id": build_id(game, compiler, config, switches, pid) + suffix,
     }
     if preset and not errors:
-        out.update(command_for(m, game, preset, values, switches))
+        out.update(command_for(m, proj, game, compiler, preset, values, switches))
     return out
 
 
-def command_for(m, game, preset, values, switches):
+def command_for(m, proj, game, compiler, preset, values, switches):
     sw_by_id = {s["id"]: s for s in m["switches"]}
+    for sw in proj.get("preset_swaps") or []:
+        if preset in sw["map"] and cond_ok(sw["if"], {"values": values}):
+            preset = sw["map"][preset]
+            break
     if values.get("ffmpeg") == "ON":
         preset = m["vcpkg_presets"].get(preset, preset)
     g = next(g for g in m["games"] if g["id"] == game)
+    c = next(c for c in m["compilers"] if c["id"] == compiler)
     args = [f"-D{k}={v}" for k, v in g["cmake"].items()]
     args += [f"-D{sw_by_id[k]['cmake']}={v}" for k, v in switches.items() if "cmake" in sw_by_id[k]]
     # Code flags are compile definitions, carried in RTS_FLAGS (a ;-list, which the presets also use for /W3).
-    defines = [f"/D{sw_by_id[k]['define']}={'1' if v == 'ON' else '0'}" for k, v in switches.items() if "define" in sw_by_id[k]]
+    prefix = c.get("flag_prefix", "/")
+    defines = [f"{prefix}D{sw_by_id[k]['define']}={'1' if v == 'ON' else '0'}" for k, v in switches.items() if "define" in sw_by_id[k]]
     if defines:
-        args.append("-DRTS_FLAGS=" + ";".join([m["flags_base"]] + defines))
+        base = c.get("flags_base", m["flags_base"])
+        args.append("-DRTS_FLAGS=" + ";".join(([base] if base else []) + defines))
     shown = [f'{a[:a.index("=") + 1]}"{a[a.index("=") + 1:]}"' if a.startswith("-DRTS_FLAGS=") else a for a in args]
     return {
         "preset": preset,
@@ -174,7 +252,7 @@ def expand(m):
         if not r["valid"]:
             raise SystemExit(f"matrix.yaml: {tier} entry {name!r} ({game}/{compiler}/{config}) is invalid: {r['errors']}")
         entry = builds.setdefault(r["id"], {
-            "id": r["id"], "game": game, "compiler": compiler, "config": config,
+            "id": r["id"], "project": r["project"], "game": game, "compiler": compiler, "config": config,
             "switches": r["switches"], "retail_crc": r["retail_crc"],
             "preset": r["preset"], "ci_game": r["ci_game"], "cmake_args": r["cmake_args"],
             "command": r["command"], "tier": tier, "name": name, "blurb": blurb,

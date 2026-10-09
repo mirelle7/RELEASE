@@ -97,6 +97,12 @@ summary { cursor: pointer; font-weight: 600; }
 .grid td button { background: none; border: 0; color: inherit; padding: 0; text-align: left; width: 100%; }
 .grid td.built { background: color-mix(in srgb, var(--ok) 14%, transparent); }
 .grid td.planned { background: color-mix(in srgb, var(--info) 12%, transparent); }
+.matrix-summary { font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+.matrix-summary:empty { display: none; }
+.matrix-summary.ok { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
+.matrix-summary.bad { background: color-mix(in srgb, var(--bad) 20%, transparent); color: var(--bad); }
+.matrix-summary.info { background: color-mix(in srgb, var(--info) 14%, transparent); }
+.grid td.running { background: color-mix(in srgb, var(--warn) 20%, transparent); }
 .grid td.failed { background: color-mix(in srgb, var(--bad) 14%, transparent); }
 .grid td.na { color: var(--muted); text-align: center; }
 .grid td .sub { display: block; font-size: 12px; color: var(--muted); }
@@ -146,6 +152,12 @@ details.range input[type="number"] { width: 5.5em; }
 #main-switch-list .sw .name { font-size: 15px; }
 #advanced > summary { color: var(--muted); font-weight: 500; }
 
+#agent-platforms { margin: 6px 0 10px; }
+#agent-platforms .plat-list { display: grid; gap: 6px; margin-top: 6px; }
+#agent-platforms .plat { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; text-align: left; padding: 8px 10px; border: 1px solid var(--line, #8886); border-radius: 8px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+#agent-platforms .plat[aria-checked="true"] { outline: 2px solid var(--accent, #2a6df4); }
+#agent-platforms .plat .st { font-weight: 600; } #agent-platforms .plat .st.ok { color: var(--ok); } #agent-platforms .plat .st.bad { color: var(--bad); }
+#agent-platforms .plat .why { flex-basis: 100%; color: var(--muted); font-size: 13px; }
 #agent-doctor { margin: 6px 0 10px; }
 #agent-doctor .doc-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-bottom: 6px; font-size: 14px; }
 #agent-doctor .doc-head .ok { color: var(--ok); font-weight: 600; } #agent-doctor .doc-head .bad { color: var(--bad); font-weight: 600; }
@@ -155,3 +167,30 @@ details.range input[type="number"] { width: 5.5em; }
 .chk .fix { color: var(--muted); font-size: 13px; margin-top: 2px; }
 .note { background: var(--code); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
 .not-ready { font-size: 13px; color: var(--bad); margin: 6px 0 0; }
+
+#agent-live { margin: 6px 0 10px; }
+.live-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: color-mix(in srgb, var(--muted) 25%, transparent); margin: 4px 0 8px; }
+.live-bar i { display: block; height: 100%; transition: width .3s; }
+.live-bar .ok { background: var(--ok); } .live-bar .bad { background: var(--bad); } .live-bar .run { background: var(--warn); }
+.live-title { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; margin-bottom: 4px; }
+#live-log { margin: 0; max-height: 260px; overflow: auto; padding: 8px 10px; border-radius: 6px; font: 12px/1.4 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-all; background: color-mix(in srgb, var(--muted) 12%, transparent); }
+#live-tail { margin: 0 0 4px; padding: 6px 10px; border-radius: 6px; font: 12px/1.4 ui-monospace, Consolas, monospace; white-space: pre; overflow: hidden; text-overflow: ellipsis; min-height: 4.2em; background: color-mix(in srgb, var(--muted) 12%, transparent); }
+#live-full summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.agents { margin: 4px 0; padding-left: 18px; }
+
+/* project and source version */
+#ref-commit { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#ref-commit[hidden] { display: none; }
+#ref-commit select, #ref-commit input { font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; min-width: 0; max-width: 100%; }
+#ref-commit select { flex: 1 1 18em; }
+#agent-projects { margin: 12px 0; }
+#agent-projects .doc-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-bottom: 6px; font-size: 14px; }
+#agent-projects .proj { margin: 0 0 10px; }
+#agent-projects .proj .nm { font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+#agent-projects .proj .ok { color: var(--ok); font-weight: 600; } #agent-projects .proj .bad { color: var(--bad); font-weight: 600; }
+#agent-projects .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+#agent-projects .row input { flex: 1 1 18em; }
+
+#agent-projects .proj details.own { margin: 4px 0; font-size: 14px; }
+#agent-projects .proj details.own summary { cursor: pointer; color: var(--muted, inherit); }
+#agent-projects .proj .row { margin-top: 4px; }

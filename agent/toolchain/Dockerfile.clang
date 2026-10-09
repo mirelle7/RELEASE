@@ -1,0 +1,96 @@
+# Build environment for the "modern" build: the mingw-w64-i686 presets compiled with CLANG instead of GCC, in a Linux container
+# that cross-compiles the game for Windows. Open source only: no Microsoft tools, no Wine at build time, no licence to accept.
+#
+# BUILT AND VERIFIED: Universal, Generals and Zero Hour compile and link in Release, Profile and Debug (Ubuntu 24.04, clang 18).
+# What it took (all in the wrapper below):
+#  1. cmake/toolchains/mingw-w64-i686.cmake names i686-w64-mingw32-gcc/-g++, and CMake resolves them to /usr/bin, so the
+#     wrapper replaces those names in /usr/bin (and /usr/local/bin). windres' preprocessor call then uses Clang too.
+#  2. Clang ignores --gcc-install-dir for MinGW and picks 13-win32 (no std::thread): the wrapper passes the 13-posix libstdc++
+#     include and library paths itself (-nostdinc++ -isystem, -B, -L) and -pthread.
+#  3. Clang defines _M_IX86 but not _INTEGRAL_MAX_BITS, so GameSpy lacks 64-bit types: -D_INTEGRAL_MAX_BITS=64.
+#  4. profile_funclevel.cpp is MSVC inline asm in naked functions, which Clang rejects: that one file is replaced by an
+#     empty-profile stub (the Profile build works, function-level call tracing is absent).
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive HOME=/tmp
+
+# Same packages as the GCC image (mingw-w64 sysroot, libstdc++ for mingw, binutils incl. windres, wine's widl and IDL headers,
+# cmake 3.28, ninja, make, git) plus clang and lld. The mingw GCC packages stay: Clang uses their headers and libstdc++.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates git cmake ninja-build make pkg-config python3 \
+      gcc-mingw-w64-i686 g++-mingw-w64-i686 binutils-mingw-w64-i686 mingw-w64-i686-dev \
+      wine64-tools libwine-dev \
+      clang lld \
+ && rm -rf /var/lib/apt/lists/*
+
+# widl lives under /usr/lib/wine on some releases: make sure it is on PATH, and fail the image build if it is missing.
+RUN (command -v widl >/dev/null || (for p in /usr/lib/wine/widl /usr/lib/wine-development/widl /usr/lib64/wine/widl; do [ -x "$p" ] && ln -s "$p" /usr/local/bin/widl && break; done)) \
+ && command -v widl
+
+# The function-level profiler (profile_funclevel.cpp) is written in MSVC inline assembly that Clang cannot compile
+# (statements inside a naked function). The wrapper compiles this empty-profile stand-in instead: the profile build works,
+# only the function-level call tracing is absent.
+RUN printf '%s\n' \
+  '#include "profile.h"' \
+  '#include "internal.h"' \
+  '#include "internal_funclevel.h"' \
+  'bool ProfileFuncLevel::IdList::Enum(unsigned, Id &, unsigned *) const { return false; }' \
+  'const char *ProfileFuncLevel::Id::GetSource() const { return nullptr; }' \
+  'const char *ProfileFuncLevel::Id::GetFunction() const { return nullptr; }' \
+  'unsigned ProfileFuncLevel::Id::GetAddress() const { return 0; }' \
+  'unsigned ProfileFuncLevel::Id::GetLine() const { return 0; }' \
+  'unsigned _int64 ProfileFuncLevel::Id::GetCalls(unsigned) const { return 0; }' \
+  'unsigned _int64 ProfileFuncLevel::Id::GetTime(unsigned) const { return 0; }' \
+  'unsigned _int64 ProfileFuncLevel::Id::GetFunctionTime(unsigned) const { return 0; }' \
+  'ProfileFuncLevel::IdList ProfileFuncLevel::Id::GetCaller(unsigned) const { return ProfileFuncLevel::IdList(); }' \
+  'bool ProfileFuncLevel::Thread::EnumProfile(unsigned, Id &) const { return false; }' \
+  'bool ProfileFuncLevel::EnumThreads(unsigned, Thread &) { return false; }' \
+  'ProfileFuncLevel::ProfileFuncLevel() {}' \
+  'bool ProfileFuncLevelTracer::recordCaller = false;' \
+  'int ProfileFuncLevelTracer::FrameStart() { return 0; }' \
+  'void ProfileFuncLevelTracer::FrameEnd(int, int) {}' \
+  'void ProfileFuncLevelTracer::ClearTotals() {}' \
+  'void ProfileFuncLevelTracer::Shutdown() {}' \
+  > /usr/local/share/profile_funclevel_stub.cpp
+
+# One wrapper, several names (it looks at its own name to choose clang or clang++). Names:
+#   i686-w64-mingw32-clang, -clang++   the honest names
+#   i686-w64-mingw32-gcc,   -g++       what the game's toolchain file asks for, so the unchanged preset gets Clang
+# --gcc-install-dir pins the posix-threads libstdc++ (see failure point 3).
+RUN printf '%s\n' \
+  '#!/bin/sh' \
+  'D=$(ls -d /usr/lib/gcc/i686-w64-mingw32/*-posix 2>/dev/null | sort | tail -n 1)' \
+  'for a in "$@"; do shift; case "$a" in *profile_funclevel.cpp) set -- "$@" -I "$(dirname "$a")" -x c++ /usr/local/share/profile_funclevel_stub.cpp ;; *) set -- "$@" "$a" ;; esac; done' \
+  'case "$(basename "$0")" in' \
+  '  *++) exec /usr/bin/clang++ --target=i686-w64-mingw32 -nostdinc++ -isystem $D/include/c++ -isystem $D/include/c++/i686-w64-mingw32 -isystem $D/include/c++/backward -B$D -L$D -pthread -D_INTEGRAL_MAX_BITS=64 -fuse-ld=lld -Wno-unused-command-line-argument "$@" ;;' \
+  '  *) exec /usr/bin/clang --target=i686-w64-mingw32 -B$D -L$D -pthread -D_INTEGRAL_MAX_BITS=64 -fuse-ld=lld -Wno-unused-command-line-argument "$@" ;;' \
+  'esac' \
+  > /usr/local/bin/clang-mingw-wrap \
+ && chmod +x /usr/local/bin/clang-mingw-wrap \
+ && for n in i686-w64-mingw32-clang i686-w64-mingw32-clang++; do ln -s clang-mingw-wrap /usr/local/bin/$n; done \
+ && for n in i686-w64-mingw32-gcc i686-w64-mingw32-g++ i686-w64-mingw32-gcc-13 i686-w64-mingw32-g++-13; do ln -sf /usr/local/bin/clang-mingw-wrap /usr/bin/$n; ln -sf clang-mingw-wrap /usr/local/bin/$n; done
+
+ENV CC=i686-w64-mingw32-clang CXX=i686-w64-mingw32-clang++
+
+# The source folder is a bind mount owned by the host user, which git refuses as "dubious ownership" (CMake could not
+# check out its dependencies). Everything in this container is the player's own build, so trust any directory.
+RUN git config --system --add safe.directory '*'
+
+# Self-test: compile and link a C++20 program that uses std::thread, the way the game's link options do. Fails the image
+# build now, instead of an hour into a game build, if headers, libstdc++, threads or the linker are wrong.
+RUN set -e; mkdir -p /tmp/selftest && cd /tmp/selftest \
+ && printf '%s\n' '#include <string>' '#include <thread>' 'int main() { int x = 0; std::thread t([&x] { x = 1; }); t.join(); std::string s("ok"); return x == 1 && s.size() == 2 ? 0 : 1; }' > t.cpp \
+ && i686-w64-mingw32-g++ -std=c++20 -static-libgcc -static-libstdc++ t.cpp -o t.exe \
+ && test -s t.exe \
+ && rm -rf /tmp/selftest
+
+# toolprobe: MISSING:<tool> for anything absent, then the clang version line.
+RUN printf '%s\n' \
+  '#!/bin/sh' \
+  'for t in clang ld.lld i686-w64-mingw32-clang++ cmake ninja git widl i686-w64-mingw32-windres; do command -v $t >/dev/null 2>&1 || echo MISSING:$t; done' \
+  'clang --version 2>/dev/null | head -n 1' \
+  > /usr/local/bin/toolprobe \
+ && chmod +x /usr/local/bin/toolprobe
+
+WORKDIR /src

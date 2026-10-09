@@ -21,7 +21,7 @@ import (
 //go:embed toolchain/Dockerfile
 var toolchainDockerfile string
 
-const defaultImage = "generals-portal-mingw:1"
+const defaultImage = "generals-portal-mingw:2"
 
 // tools the MinGW preset needs inside the container or distro
 var mingwTools = []string{"i686-w64-mingw32-gcc", "i686-w64-mingw32-g++", "i686-w64-mingw32-windres", "cmake", "ninja", "git", "widl"}
@@ -33,6 +33,7 @@ type Backend struct {
 	Name    string `json:"name"`
 	Path    string `json:"-"`
 	Distro  string `json:"distro,omitempty"`
+	Windows bool   `json:"windows,omitempty"` // Docker is in Windows-container mode: usable for the VC6/Visual Studio images only
 	Ready   bool   `json:"ready"`
 	Problem string `json:"problem,omitempty"`
 	Fix     string `json:"fix,omitempty"`
@@ -60,6 +61,7 @@ func (a *Agent) probeEngine(kind string) Backend {
 		return b
 	}
 	if kind == "docker" && strings.Contains(strings.ToLower(out), "windows") {
+		b.Windows = true
 		b.Problem = "Docker is set to Windows containers, but the MinGW build environment is a Linux image."
 		b.Fix = "Right-click the Docker Desktop tray icon and choose \"Switch to Linux containers\"."
 		return b
@@ -173,10 +175,36 @@ func wslPath(p string) string {
 	return strings.ReplaceAll(p, `\`, "/")
 }
 
+// mingwLinkFlags make a MinGW-w64 build carry its own thread and C++ runtime, so the exe does not need
+// libwinpthread-1.dll (or libstdc++-6.dll, libgcc_s_dw2-1.dll) next to it. CMake reads LDFLAGS when it first configures a build folder.
+// --allow-multiple-definition: Microsoft's d3dx8.lib and MinGW's libdxguid.a both define the same DirectX GUID constants
+// (identical values); GNU ld refuses the duplicates, lld does not.
+func mingwLinkFlags(root string) string {
+	return "-static -Wl,--allow-multiple-definition -L" + root + "/" + dx8OverrideDir
+}
+
+// mingwStamp is written into a build folder so that one configured with other flags or another compiler is started afresh.
+const mingwStamp = "+static3"
+
+// isMingwImage is true for the MinGW-w64 build environment images (not the VC6 / Visual Studio ones).
+func isMingwImage(img string) bool {
+	return strings.Contains(img, "generals-portal-mingw") || strings.Contains(img, "generals-portal-clang")
+}
+
 // wrap turns "run this tool in dir" into the command that runs it inside the backend.
 func (a *Agent) wrap(b Backend, dir, name string, args []string) (string, []string, error) {
+	return a.wrapImage(b, a.image(), false, dir, name, args)
+}
+
+// wrapImage is wrap for a specific image. windows means a Windows container image (Docker in Windows-container mode).
+func (a *Agent) wrapImage(b Backend, img string, windows bool, dir, name string, args []string) (string, []string, error) {
 	switch b.Kind {
 	case "docker", "podman":
+		if windows {
+			// Hyper-V isolation, so the image does not have to match this PC's exact Windows build.
+			argv := []string{"run", "--rm", "--isolation=hyperv", "--mount", "type=bind,source=" + dir + `,target=C:\src`, "-w", `C:\src`, img, name}
+			return b.Path, append(argv, args...), nil
+		}
 		argv := []string{"run", "--rm", "--init", "--mount", "type=bind,source=" + dir + ",target=/src", "-w", "/src", "-e", "HOME=/tmp"}
 		if a.GOOS != "windows" && a.GOOS != "darwin" { // keep files on the host owned by the user
 			argv = append(argv, "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()))
@@ -184,21 +212,24 @@ func (a *Agent) wrap(b Backend, dir, name string, args []string) (string, []stri
 		if b.Kind == "podman" && a.GOOS == "linux" {
 			argv = append(argv, "--security-opt", "label=disable")
 		}
-		img := a.Image
-		if img == "" {
-			img = defaultImage
+		if isMingwImage(img) {
+			argv = append(argv, "-e", "LDFLAGS="+mingwLinkFlags("/src"))
 		}
 		argv = append(argv, img, name)
 		return b.Path, append(argv, args...), nil
-	case "wsl":
-		return b.Path, append([]string{"-d", b.Distro, "--cd", wslPath(dir), "--", name}, args...), nil
+	case "wsl": // WSL only ever runs the MinGW-w64 build
+		return b.Path, append([]string{"-d", b.Distro, "--cd", wslPath(dir), "--", "env", "LDFLAGS=" + mingwLinkFlags(wslPath(dir)), name}, args...), nil
 	}
 	return "", nil, fmt.Errorf("unknown backend %q", b.Kind)
 }
 
 func (a *Agent) containerRunner(b Backend) Runner {
+	return a.containerRunnerImage(b, a.image(), false)
+}
+
+func (a *Agent) containerRunnerImage(b Backend, img string, windows bool) Runner {
 	return func(ctx context.Context, dir string, log io.Writer, name string, args ...string) error {
-		exe, argv, err := a.wrap(b, dir, name, args)
+		exe, argv, err := a.wrapImage(b, img, windows, dir, name, args)
 		if err != nil {
 			return err
 		}
@@ -259,8 +290,9 @@ func (a *Agent) ensureImage(ctx context.Context, b Backend, log io.Writer) error
 // CheckToolchain runs the tool probe inside the backend and returns what is missing (empty = ready).
 func (a *Agent) CheckToolchain(ctx context.Context, b Backend) ([]string, string, error) {
 	var out bytes.Buffer
-	run := a.containerRunner(b)
-	if err := run(ctx, a.Src, &out, "sh", "-c", toolProbe); err != nil {
+	spec, _ := a.mingwImage()
+	run := a.containerRunnerImage(b, spec.Name, false)
+	if err := run(ctx, a.srcFor(""), &out, "sh", "-c", toolProbe); err != nil {
 		return nil, "", fmt.Errorf("%v\n%s", err, out.String())
 	}
 	var missing []string
@@ -299,8 +331,8 @@ func (a *Agent) doctorContainer(ctx context.Context, rep *Report) {
 	}
 	add(Check{ID: "backend", Name: "Build runs in", Status: "ok", Detail: b.Name})
 	if b.Kind != "wsl" {
-		if a.imageReady(*b) {
-			add(Check{ID: "image", Name: "Build environment image", Status: "ok", Detail: a.image()})
+		if spec, _ := a.mingwImageFor(rep.Toolchain); a.imageExists(*b, spec.Name) {
+			add(Check{ID: "image", Name: "Build environment image", Status: "ok", Detail: spec.Name})
 		} else {
 			add(Check{ID: "image", Name: "Build environment image", Status: "warn", Detail: "It is built automatically the first time (needs internet, takes several minutes). Run `build-agent --check-image` to do it now and verify it."})
 		}

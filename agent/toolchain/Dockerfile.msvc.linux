@@ -1,0 +1,134 @@
+# Modern Visual Studio C++ (32-bit target) build environment, as a LINUX image that runs the Windows tools under Wine.
+# Works with Docker (Linux containers), Podman and WSL. The compiler and Windows SDK are downloaded from Microsoft's own
+# servers when the image is built on the player's PC (mstorsjo/msvc-wine). Nothing from Microsoft is shipped.
+#
+# The agent only builds this image after --accept-licenses: vsdownload.py is run with --accept-license on the player's
+# behalf, so the player must have agreed to Microsoft's terms (https://visualstudio.microsoft.com/license-terms/).
+#
+# ############################################################################################################
+# NEVER BUILT. This recipe was written without being able to run it. Likeliest failure points, most likely first:
+#   1. msvc-wine is cloned at its default branch (not pinned: no tag or commit was known to exist). Its script names,
+#      its install layout and the msvcenv.sh file sourced by `entry` below may differ from what is assumed here.
+#   2. vsdownload.py downloads every target architecture by default: several GB and a long build. Its flags for
+#      narrowing that were not verified, so none are passed.
+#   3. Windows CMake running Ninja Multi-Config with a 64-bit-hosted cl.exe targeting x86 under Wine: path handling and
+#      process launching have not been seen working here. The `win32` presets use architecture "Win32, external".
+#   4. The Wine prefix: Wine refuses a prefix owned by another user, so wine-run copies it to /tmp when the container
+#      runs as a different uid (agent uses --user on Linux hosts). That copy costs time on every run.
+#   5. MinGit and Ninja are downloaded over HTTPS without a pinned checksum; pass --build-arg NINJA_SHA256=... /
+#      MINGIT_SHA256=... to enforce one. CMake is checked against Kitware's published list.
+# ############################################################################################################
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive HOME=/tmp WINEPREFIX=/opt/wine WINEDEBUG=-all WINEARCH=win64 \
+    WINEDLLOVERRIDES="mscoree,mshtml="
+
+# python3, msitools and friends are what msvc-wine's downloader needs.
+RUN dpkg --add-architecture i386 \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates curl unzip git bash xvfb xauth wine wine64 wine32:i386 \
+      python3 msitools libarchive-tools \
+ && rm -rf /var/lib/apt/lists/*
+
+# Initialise the Wine prefix once, here, so builds do not pay for it. a+rwX lets any user read it.
+RUN xvfb-run -a wineboot --init; wineserver -w; chmod -R a+rwX /opt/wine
+
+ARG CMAKE_VERSION=3.30.5
+ARG NINJA_VERSION=1.12.1
+ARG MINGIT_VERSION=2.47.1
+ARG NINJA_SHA256=""
+ARG MINGIT_SHA256=""
+
+# CMake: verified against the SHA-256 list Kitware publishes next to the release.
+RUN set -e; mkdir -p /opt/tools /tmp/dl && cd /tmp/dl \
+ && base=https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION} \
+ && curl -fsSL --retry 3 -O ${base}/cmake-${CMAKE_VERSION}-windows-x86_64.zip \
+ && curl -fsSL --retry 3 -O ${base}/cmake-${CMAKE_VERSION}-SHA-256.txt \
+ && grep " cmake-${CMAKE_VERSION}-windows-x86_64.zip\$" cmake-${CMAKE_VERSION}-SHA-256.txt | sha256sum -c - \
+ && unzip -q cmake-${CMAKE_VERSION}-windows-x86_64.zip -d /opt/tools \
+ && mv /opt/tools/cmake-${CMAKE_VERSION}-windows-x86_64 /opt/tools/cmake \
+ && rm -rf /tmp/dl
+
+# Ninja (checksum enforced only if NINJA_SHA256 is given).
+RUN set -e; mkdir -p /tmp/dl /opt/tools/ninja && cd /tmp/dl \
+ && curl -fsSL --retry 3 -o ninja-win.zip https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-win.zip \
+ && if [ -n "$NINJA_SHA256" ]; then echo "$NINJA_SHA256  ninja-win.zip" | sha256sum -c -; fi \
+ && unzip -q ninja-win.zip -d /opt/tools/ninja \
+ && rm -rf /tmp/dl
+
+# MinGit (CMake uses git to download the project's dependencies). Checksum enforced only if MINGIT_SHA256 is given.
+RUN set -e; mkdir -p /tmp/dl /opt/tools/git && cd /tmp/dl \
+ && curl -fsSL --retry 3 -o mingit.zip https://github.com/git-for-windows/git/releases/download/v${MINGIT_VERSION}.windows.1/MinGit-${MINGIT_VERSION}-64-bit.zip \
+ && if [ -n "$MINGIT_SHA256" ]; then echo "$MINGIT_SHA256  mingit.zip" | sha256sum -c -; fi \
+ && unzip -q mingit.zip -d /opt/tools/git \
+ && mkdir -p /opt/tools/git/etc \
+ && printf '[safe]\n\tdirectory = *\n' >> /opt/tools/git/etc/gitconfig \
+ && rm -rf /tmp/dl
+
+# Visual Studio's C++ compiler and the Windows SDK, from Microsoft, via msvc-wine (default branch: not pinned).
+ARG MSVC_WINE_REF=master
+RUN set -e; git clone --depth 1 --branch ${MSVC_WINE_REF} https://github.com/mstorsjo/msvc-wine /opt/msvc-wine \
+ && cd /opt/msvc-wine \
+ && python3 ./vsdownload.py --accept-license --dest /opt/msvc \
+ && ./install.sh /opt/msvc \
+ && chmod -R a+rX /opt/msvc \
+ && rm -rf /opt/msvc-wine/.git
+
+# wine-run: run a Windows program; if the baked prefix belongs to another user (the container runs as the host user),
+# use a private copy in /tmp instead, because Wine will not use a prefix it does not own.
+RUN printf '%s\n' \
+  '#!/bin/sh' \
+  'if [ ! -O "$WINEPREFIX" ]; then' \
+  '  P=/tmp/wineprefix-$(id -u)' \
+  '  [ -d "$P" ] || cp -R --no-preserve=ownership /opt/wine "$P"' \
+  '  export WINEPREFIX="$P"' \
+  'fi' \
+  'exec wine "$@"' \
+  > /usr/local/bin/wine-run \
+ && chmod +x /usr/local/bin/wine-run
+
+# entry: msvc-wine's environment for the x86 target (INCLUDE, LIB, WINEPATH as Windows paths), plus our Windows tools on
+# the Windows PATH. Then run whatever was asked. ASSUMES /opt/msvc/bin/x86/msvcenv.sh exists (see failure point 1).
+RUN printf '%s\n' \
+  '#!/bin/bash' \
+  'if [ ! -f /opt/msvc/bin/x86/msvcenv.sh ]; then echo "msvc-wine did not create /opt/msvc/bin/x86/msvcenv.sh" >&2; exit 1; fi' \
+  '. /opt/msvc/bin/x86/msvcenv.sh' \
+  'export INCLUDE LIB' \
+  'export WINEPATH="${WINEPATH:+$WINEPATH;}Z:\\opt\\tools\\cmake\\bin;Z:\\opt\\tools\\ninja;Z:\\opt\\tools\\git\\cmd"' \
+  'exec "$@"' \
+  > /usr/local/bin/entry \
+ && chmod +x /usr/local/bin/entry
+
+# cmake, ninja and git on the Linux PATH, so the agent runs `cmake --preset win32` like anywhere else.
+RUN for t in cmake:cmake/bin/cmake.exe ninja:ninja/ninja.exe git:git/cmd/git.exe; do \
+      name=${t%%:*}; exe=/opt/tools/${t#*:}; \
+      printf '%s\n' '#!/bin/sh' "exec /usr/local/bin/entry /usr/local/bin/wine-run $exe \"\$@\"" > /usr/local/bin/$name; \
+      chmod +x /usr/local/bin/$name; \
+    done
+
+# Git for Windows runs `git submodule` as an MSYS shell script, and that script hangs under Wine (seen in the VC6 image:
+# 19 minutes on `git submodule update --recursive --init`). The game's dependencies have no submodules, so `git submodule`
+# is replaced by a do-nothing program compiled with this image's own compiler. Plain git is untouched; the original script
+# is kept as git-submodule.sh.orig. ASSUMES msvc-wine's wrapper /opt/msvc/bin/x86/cl exists (it is what install.sh creates).
+RUN set -e; mkdir -p /tmp/stub && cd /tmp/stub \
+ && printf 'int main(void) { return 0; }\n' > stub.c \
+ && /opt/msvc/bin/x86/cl /nologo stub.c /Fe:stub.exe \
+ && G=/opt/tools/git/mingw64/libexec/git-core \
+ && mv "$G/git-submodule" "$G/git-submodule.sh.orig" \
+ && cp stub.exe "$G/git-submodule.exe" \
+ && rm -rf /tmp/stub
+
+# toolprobe: MISSING:<tool> for anything absent, then the cmake and cl banners.
+RUN printf '%s\n' \
+  '#!/bin/sh' \
+  'for t in cmake ninja git; do command -v $t >/dev/null 2>&1 || echo MISSING:$t; done' \
+  'for t in cl link rc midl; do' \
+  '  [ -n "$(find /opt/msvc -iname "$t.exe" 2>/dev/null | head -n 1)" ] || echo MISSING:$t' \
+  'done' \
+  'cmake --version 2>/dev/null | head -n 1' \
+  '/usr/local/bin/entry /usr/local/bin/wine-run cl 2>&1 | head -n 2' \
+  > /usr/local/bin/toolprobe \
+ && chmod +x /usr/local/bin/toolprobe
+
+WORKDIR /src

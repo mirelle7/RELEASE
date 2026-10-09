@@ -61,6 +61,7 @@ func newEnv(t *testing.T) *env {
 		return nil
 	}
 	e.a = NewAgent(e.src, e.out, "secret-token", []string{allowed}, false, run)
+	e.a.CacheDir = t.TempDir()
 	e.srv = httptest.NewServer(e.a.Handler())
 	t.Cleanup(e.srv.Close)
 	return e

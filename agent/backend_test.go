@@ -295,7 +295,7 @@ func TestMingwBuildInsideWSL(t *testing.T) {
 		t.Fatalf("%v", res)
 	}
 	runs := c.read("runs")
-	if !strings.Contains(runs, "-d Ubuntu --cd "+c.src+" -- cmake --preset mingw-w64-i686") {
+	if !strings.Contains(runs, "-d Ubuntu --cd "+c.src+" -- env LDFLAGS=-static -Wl,--allow-multiple-definition -L") || !strings.Contains(runs, "/build/gpa-override cmake --preset mingw-w64-i686") {
 		t.Fatalf("%s", runs)
 	}
 }

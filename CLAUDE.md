@@ -37,21 +37,32 @@ Regenerate data and the bundle after touching `matrix.yaml`: `python3 scripts/po
 - Universal (both games in one package) is a game option, not a "default".
 - Do not open pull requests unless asked. Work is pushed straight to `main` of `mirelle7/RELEASE`.
 
-## Never verified (do these first on a real machine)
+## Verified on a real PC (Windows 11, Podman, VS Build Tools 18) and what is still open
 
-1. **`agent/toolchain/Dockerfile` has never been built.** Package mirrors were unreachable where it was written. Run
-   `build-agent --check-image` (it builds the image and checks gcc/g++/windres, cmake>=3.28, ninja, git, widl). Likely trouble spots:
-   the Ubuntu package that provides `widl` and the Wine IDL headers (`wine64-tools`, `libwine-dev`), and the posix-threads alternative.
-2. **A real MinGW-w64 build of the game** (`cmake --preset mingw-w64-i686`) inside that image: never run. The tiny-project tests
-   prove the plumbing only.
-3. **WSL detection** (`backend.go`) is tested with fake `wsl.exe` only. Real `wsl -l -q` output, `--cd`, and path mapping are unproven.
-4. **`--env-script`** (`envscript_windows.go`) compiles for Windows but was never run. Test with real `vcvars32.bat` / `vcvarsall.bat x86`.
-5. **The Windows executables** build in CI but were never run on Windows. Check SmartScreen behaviour and the first-run prompt.
-6. **A real VC6 and modern MSVC build** through the agent: never run (no Windows available). The doctor's compiler detection
-   parses the `cl` banner (`Version 12.00.8804 for 80x86`, `Version 19.x for x86`); confirm against real output.
-7. Range builds with real git and CMake were tested on a tiny repository, not on the game.
-8. The GitHub Pages actions in `static.yml` are referenced by tag, not commit SHA.
-9. `build-portal/` in the game repo (`mirelle7/generalsgamecode`, branch `claude/exciting-meitner-kelqv6`) is an older copy of the matrix.
+Verified: the VC6 (Wine) image and real VC6 builds of all 3 games x 5 configs; modern MSVC natively via `--env-script`
+(`vcvarsall.bat x86`) for all 3 games x release/profile/debug; MinGW-w64 + Clang and + GCC in Podman (the shipped
+Dockerfiles built and work). gcc has no Profile build and clang's Profile stubs out `profile_funclevel.cpp` (MSVC-only asm in
+the game source; the real fix is a source `_MSC_VER` guard). `/api/platforms`, the whole-matrix button and the live task
+view were exercised in a browser.
+
+Still open:
+
+1. **WSL detection** (`backend.go`) is tested with fake `wsl.exe` only. Real `wsl -l -q` output, `--cd`, and path mapping are unproven.
+2. **VC6 / MSVC in Windows containers** (`Dockerfile.*.windows`) never run; `Dockerfile.msvc.linux` (msvc-wine) never run.
+3. **The Windows executables** build in CI but SmartScreen behaviour and the first-run prompt are unchecked.
+4. Range builds with real git and CMake were tested on a tiny repository, not on the game.
+5. The GitHub Pages actions in `static.yml` are referenced by tag, not commit SHA.
+6. `build-portal/` in the game repo (`mirelle7/generalsgamecode`, branch `claude/exciting-meitner-kelqv6`) is an older copy of the matrix.
+7. The Go tests that fake `docker`/`podman`/`wsl` with shell scripts fail on Windows (they pass on Linux: run them with
+   `podman run --rm -v <agent dir>:/w -w /w golang:1.23 go test ./...`). Two clang/gcc builds must not share `build/<preset>`
+   at the same time (the agent clears the folder when the compiler changes, `prepareBuildDir`).
+9. MinGW exes are linked `-static` (no libwinpthread-1.dll) and against Microsoft's static `d3dx8.lib` from min-dx8-sdk instead of the
+   debug import library (which needs d3dx8d.dll from the DirectX SDK): `agent/dx8shim.go` + `agent/toolchain/gpa_msvc_compat.cpp`
+   (a few MSVC runtime helpers the lib needs) build `build/gpa-override/libd3dx8d.a` after configure. Verified by inspecting the exe imports
+   (clang on latest main, gcc on an older checkout); the built exe has never been run on Windows.
+10. GCC cannot link the *latest* upstream main (2119cc9, undefined `MOTDSystem`, `OSDisplaySetBusyState`, winsock `_imp__listen`...) even
+   without our flags: an upstream problem, older source links. Clang links it.
+8. The VC6 image copies the source onto the container's own disk (the Windows bind mount is far too slow); bump its tag if you change the recipe.
 
 ## Gotchas
 
@@ -63,5 +74,5 @@ Regenerate data and the bundle after touching `matrix.yaml`: `python3 scripts/po
 
 ## Suggested next steps
 
-Verify items 1-3 on the faster PC, fix whatever the real image and real game build turn up, then update `README.md` to say what
-was verified. After that: bring `build-portal/` in the game repo in line, and pin the Pages actions by SHA.
+Fix item 7 (make the fake-tool tests portable), verify WSL (item 1), then bring `build-portal/` in the game repo in line and
+pin the Pages actions by SHA.

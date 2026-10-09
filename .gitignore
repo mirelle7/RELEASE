@@ -4,3 +4,4 @@ agent/site/*
 !agent/site/.gitkeep
 site/downloads/
 agent/*.exe
+agent-out/

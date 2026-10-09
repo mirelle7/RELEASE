@@ -24,12 +24,14 @@ type Check struct {
 }
 
 type Report struct {
-	Preset  string  `json:"preset"`
-	Family  string  `json:"family"`  // vc6, msvc or mingw
-	Backend string  `json:"backend"` // where the build will run: native, docker, podman, wsl
-	Checks  []Check `json:"checks"`
-	Ready   bool    `json:"ready"`
-	Skipped bool    `json:"skipped,omitempty"` // checks were turned off with --skip-checks
+	Preset    string  `json:"preset"`
+	Family    string  `json:"family"`              // vc6, msvc or mingw
+	Toolchain string  `json:"toolchain,omitempty"` // MinGW-w64 only: clang or gcc
+	Backend   string  `json:"backend"`             // where the build will run: native, docker, podman, wsl
+	Image     string  `json:"image,omitempty"`     // set when the build will run in a VC6 / Visual Studio container image
+	Checks    []Check `json:"checks"`
+	Ready     bool    `json:"ready"`
+	Skipped   bool    `json:"skipped,omitempty"` // checks were turned off with --skip-checks
 }
 
 func (r Report) Summary() string {
@@ -54,6 +56,10 @@ func familyOf(preset string) string {
 		return "msvc"
 	case strings.HasPrefix(preset, "mingw"):
 		return "mingw"
+	case strings.HasPrefix(preset, "unix"), strings.HasPrefix(preset, "linux"):
+		return "linux"
+	case strings.HasPrefix(preset, "macos"):
+		return "macos"
 	}
 	return "other"
 }
@@ -145,16 +151,41 @@ func wingetHint(a *Agent, id string) string {
 }
 
 // Doctor checks whether this PC can build the preset, and says exactly what is missing and how to fix it.
-func (a *Agent) Doctor(ctx context.Context, preset string) Report {
+func (a *Agent) Doctor(ctx context.Context, preset string) Report { return a.DoctorTC(ctx, preset, "") }
+
+// DoctorTC is Doctor for a MinGW toolchain ("clang", "gcc" or "" for the agent's own); other compilers ignore it.
+func (a *Agent) DoctorTC(ctx context.Context, preset, tc string) Report {
+	return a.DoctorProj(ctx, preset, tc, "")
+}
+
+// DoctorProj is DoctorTC for a project: the CMake minimum and the generator come from that project's CMakePresets.json.
+func (a *Agent) DoctorProj(ctx context.Context, preset, tc, project string) Report {
+	src := a.presetSrc(project)
 	fam := familyOf(preset)
-	rep := Report{Preset: preset, Family: fam, Backend: "native", Skipped: a.SkipChecks}
+	rep := Report{Preset: preset, Family: fam, Toolchain: a.toolchainOf(tc), Backend: "native", Skipped: a.SkipChecks}
 	add := func(c Check) { rep.Checks = append(rep.Checks, c) }
 
 	if fam == "mingw" {
 		a.doctorContainer(ctx, &rep)
+	} else if fam == "linux" || fam == "macos" {
+		a.doctorUnix(&rep, fam, src)
+	} else if !a.Native && (fam == "vc6" || fam == "msvc") {
+		// Native builds are paused: these compilers only run in the container images.
+		rep.Backend = "none"
+		a.doctorImage(&rep, fam)
 	} else {
-		a.doctorNative(&rep, fam)
+		a.doctorNative(&rep, fam, src)
+		if fam == "vc6" || fam == "msvc" {
+			// No usable compiler on this PC? A container image can supply it. Keep the native report when neither works.
+			if !reportOK(rep) {
+				alt := Report{Preset: preset, Family: fam, Backend: "native", Skipped: a.SkipChecks}
+				if a.doctorImage(&alt, fam) {
+					rep = alt
+				}
+			}
+		}
 	}
+	a.doctorSource(&rep, project)
 	rep.Ready = a.SkipChecks
 	if !rep.Ready {
 		rep.Ready = true
@@ -168,6 +199,16 @@ func (a *Agent) Doctor(ctx context.Context, preset string) Report {
 	return rep
 }
 
+// reportOK is true when no check failed.
+func reportOK(r Report) bool {
+	for _, c := range r.Checks {
+		if c.Status == "fail" {
+			return false
+		}
+	}
+	return true
+}
+
 type docEntry struct {
 	at  time.Time
 	rep Report
@@ -175,15 +216,26 @@ type docEntry struct {
 
 // DoctorCached avoids re-probing Docker/WSL for every step of a long range build.
 func (a *Agent) DoctorCached(ctx context.Context, preset string) Report {
+	return a.DoctorCachedTC(ctx, preset, "")
+}
+
+// DoctorCachedTC is DoctorCached for a MinGW toolchain ("clang", "gcc" or "" for the agent's own).
+func (a *Agent) DoctorCachedTC(ctx context.Context, preset, tc string) Report {
+	return a.DoctorCachedProj(ctx, preset, tc, "")
+}
+
+// DoctorCachedProj is DoctorCachedTC for a project.
+func (a *Agent) DoctorCachedProj(ctx context.Context, preset, tc, project string) Report {
+	key := preset + "|" + tc + "|" + project + "|" + a.srcFor(project) + "|" + fmt.Sprint(a.isAuto(project))
 	a.docMu.Lock()
-	e, ok := a.docCache[preset]
+	e, ok := a.docCache[key]
 	a.docMu.Unlock()
 	if ok && time.Since(e.at) < 30*time.Second {
 		return e.rep
 	}
-	rep := a.Doctor(ctx, preset)
+	rep := a.DoctorProj(ctx, preset, tc, project)
 	a.docMu.Lock()
-	a.docCache[preset] = docEntry{time.Now(), rep}
+	a.docCache[key] = docEntry{time.Now(), rep}
 	a.docMu.Unlock()
 	return rep
 }
@@ -205,11 +257,11 @@ func printReport(rep Report) {
 func (a *Agent) printStartupReport() {
 	known, err := a.presets()
 	if err != nil {
-		return
+		known = nil // source not downloaded yet: check the usual presets anyway
 	}
 	fmt.Println("\nChecking this PC:")
 	for _, p := range []string{"vc6", "win32", "mingw-w64-i686"} {
-		if !known[p] {
+		if known != nil && !known[p] {
 			continue
 		}
 		rep := a.Doctor(context.Background(), p)
@@ -235,7 +287,13 @@ func (a *Agent) runCheckImage() int {
 		return 1
 	}
 	fmt.Println("Using", b.Name)
-	if err := a.ensureImage(context.Background(), *b, os.Stdout); err != nil {
+	var err error
+	if spec, shipped := a.mingwImage(); shipped && spec.Name != defaultImage {
+		err = a.ensureImageSpec(context.Background(), *b, spec, os.Stdout)
+	} else {
+		err = a.ensureImage(context.Background(), *b, os.Stdout)
+	}
+	if err != nil {
 		fmt.Println("FAILED:", err)
 		return 1
 	}
@@ -252,7 +310,7 @@ func (a *Agent) runCheckImage() int {
 	return 0
 }
 
-func (a *Agent) doctorNative(rep *Report, fam string) {
+func (a *Agent) doctorNative(rep *Report, fam, src string) {
 	add := func(c Check) { rep.Checks = append(rep.Checks, c) }
 	setup := map[string]string{
 		"vc6":  `Run the agent from a prompt where Visual C++ 6 is set up (run its VCVARS32.BAT first), or start the agent with --env-script "C:\path\to\VCVARS32.BAT".`,
@@ -261,14 +319,14 @@ func (a *Agent) doctorNative(rep *Report, fam string) {
 
 	if a.GOOS != "windows" {
 		add(Check{ID: "os", Name: "Windows", Status: "fail",
-			Detail: "These builds need Windows and Microsoft's compiler, and this computer is not running Windows.",
+			Detail: "Needs Windows. These builds need Windows and Microsoft's compiler, and this computer is not running Windows.",
 			Fix:    "Use a Windows PC, or pick the MinGW-w64 compiler, which builds in a container (Docker, Podman or WSL). You can still choose switches here and copy the cmake command."})
 		return
 	}
 	add(Check{ID: "os", Name: "Windows", Status: "ok"})
 
 	// CMake, at least the version the project asks for
-	gen, min := a.presetInfo(a.Src, rep.Preset)
+	gen, min := a.presetInfo(src, rep.Preset)
 	if min == [3]int{} {
 		min = [3]int{3, 28, 0}
 	}
@@ -398,4 +456,79 @@ func readTail(path string) string {
 	b := new(bytes.Buffer)
 	_, _ = b.ReadFrom(f)
 	return b.String()
+}
+
+// doctorUnix checks a native Linux or macOS build: the OS, CMake, a build tool, a compiler and git.
+func (a *Agent) doctorUnix(rep *Report, fam, src string) {
+	add := func(c Check) { rep.Checks = append(rep.Checks, c) }
+	wantOS, osName, needs := "linux", "Linux", "Needs Linux. This build runs natively on a Linux computer and this one is not running Linux."
+	if fam == "macos" {
+		wantOS, osName, needs = "darwin", "macOS", "Needs a Mac. This build runs natively on a Mac with Apple silicon and this computer is not a Mac."
+	}
+	if a.GOOS != wantOS {
+		add(Check{ID: "os", Name: osName, Status: "fail", Detail: needs,
+			Fix: "Use the right computer for this build, or pick a MinGW-w64 compiler, which builds in a container. You can still choose switches here and copy the cmake command."})
+		return
+	}
+	add(Check{ID: "os", Name: osName, Status: "ok"})
+	install := func(linuxPkg, brewPkg string) string {
+		if fam == "macos" {
+			return "Install it with: brew install " + brewPkg + " (or from its website), then open a new terminal."
+		}
+		return "Install it with your package manager, for example: sudo apt install " + linuxPkg
+	}
+
+	gen, min := a.presetInfo(src, rep.Preset)
+	if min == [3]int{} {
+		min = [3]int{3, 28, 0}
+	}
+	if out, ok := a.capture(15*time.Second, "cmake", "--version"); !ok && which(a.env, "cmake") == "" {
+		add(Check{ID: "cmake", Name: "CMake", Status: "fail", Detail: "CMake was not found.", Fix: install("cmake", "cmake")})
+	} else if m := reCMakeVer.FindStringSubmatch(out); m == nil {
+		add(Check{ID: "cmake", Name: "CMake", Status: "warn", Detail: "Found CMake but could not read its version."})
+	} else {
+		have := [3]int{atoi(m[1]), atoi(m[2]), atoi(m[3])}
+		if !versionAtLeast(have, min) {
+			add(Check{ID: "cmake", Name: "CMake", Status: "fail", Detail: fmt.Sprintf("CMake %d.%d.%d is too old; this project needs %d.%d.%d or newer.", have[0], have[1], have[2], min[0], min[1], min[2]), Fix: install("cmake (or pip install cmake)", "cmake")})
+		} else {
+			add(Check{ID: "cmake", Name: "CMake", Status: "ok", Detail: fmt.Sprintf("%d.%d.%d", have[0], have[1], have[2])})
+		}
+	}
+
+	haveNinja, haveMake := which(a.env, "ninja") != "", which(a.env, "make") != ""
+	switch {
+	case strings.HasPrefix(gen, "Ninja") && !haveNinja:
+		add(Check{ID: "ninja", Name: "Ninja", Status: "fail", Detail: "This preset uses the Ninja generator, and Ninja was not found.", Fix: install("ninja-build", "ninja")})
+	case !haveNinja && !haveMake:
+		add(Check{ID: "ninja", Name: "Ninja or make", Status: "fail", Detail: "Neither Ninja nor make was found.", Fix: install("ninja-build", "ninja")})
+	case haveNinja:
+		add(Check{ID: "ninja", Name: "Ninja", Status: "ok"})
+	default:
+		add(Check{ID: "ninja", Name: "make", Status: "ok"})
+	}
+
+	if fam == "macos" {
+		if which(a.env, "clang") == "" {
+			add(Check{ID: "compiler", Name: "Clang", Status: "fail", Detail: "clang was not found.", Fix: "Install Xcode's command line tools: xcode-select --install"})
+		} else if _, ok := a.capture(15*time.Second, "xcode-select", "-p"); !ok {
+			add(Check{ID: "compiler", Name: "Xcode command line tools", Status: "fail", Detail: "The Xcode command line tools are not installed.", Fix: "Run: xcode-select --install"})
+		} else {
+			add(Check{ID: "compiler", Name: "Clang (Xcode command line tools)", Status: "ok"})
+		}
+	} else {
+		switch {
+		case which(a.env, "g++") != "":
+			add(Check{ID: "compiler", Name: "C++ compiler", Status: "ok", Detail: "g++"})
+		case which(a.env, "clang++") != "":
+			add(Check{ID: "compiler", Name: "C++ compiler", Status: "ok", Detail: "clang++"})
+		default:
+			add(Check{ID: "compiler", Name: "C++ compiler", Status: "fail", Detail: "Neither g++ nor clang++ was found.", Fix: install("g++ (or build-essential)", "")})
+		}
+	}
+
+	if which(a.env, "git") == "" {
+		add(Check{ID: "git", Name: "Git", Status: "fail", Detail: "Git was not found. CMake uses it to download the project's dependencies, and version builds need it.", Fix: install("git", "git")})
+	} else {
+		add(Check{ID: "git", Name: "Git", Status: "ok", Detail: "The first build also needs internet access to download dependencies."})
+	}
 }

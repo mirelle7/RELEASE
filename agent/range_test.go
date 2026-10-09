@@ -300,6 +300,7 @@ func TestCancelStopsTheRangeAndClearsTheQueue(t *testing.T) {
 	if r := e.post(okJob); r.code != 202 {
 		t.Fatal(r.code)
 	}
+	e.waitResult("zh-vc6-release") // let it finish before the temp folders are removed
 }
 
 func TestRTSFlagsArgumentIsValidatedStrictly(t *testing.T) {
@@ -320,6 +321,7 @@ func TestRTSFlagsArgumentIsValidatedStrictly(t *testing.T) {
 			t.Errorf("%s -> %d, want 400", a, c)
 		}
 	}
+	e.waitResult("x") // let the accepted build finish before the temp folders are removed
 }
 
 var _ = httptest.NewServer

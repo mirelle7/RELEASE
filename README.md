@@ -42,13 +42,35 @@ Runs the builds on your computer with your compiler. It is one small program wit
 
 1. Download `build-agent-windows-x64.exe` (or `-x86`) from the site's "Build on my PC" section.
 2. Open the command prompt that has your compiler and CMake set up (a VS Developer Command Prompt, or after your VC6
-   `vcvars32.bat`), then run the agent from it. The first time it asks for the folder your GeneralsGameCode checkout is in
-   and remembers it.
+   `vcvars32.bat`), then run the agent from it. It downloads each project's source from GitHub itself the first time you
+   build it (a few hundred MB) and keeps it up to date, so it needs nothing but the agent and `git` on the PC (it checks,
+   and explains how to get git if missing). It never asks for a game folder; `--src` / `--project` are optional overrides,
+   and the page's Source panel can point a project at your own copy instead ("Use my own copy instead (advanced)").
 3. It opens the page already connected. Pick a configuration and press **Build on my PC**. When it finishes, press
    **Download from my PC**. Builds and logs are kept in `agent-output\` next to the program.
 
 Windows SmartScreen may warn about the program because it is not code-signed ("More info", then "Run anyway"). Its source is
 in `agent/` and `sh agent/build.sh` rebuilds it; the SHA-256 of each build is in `build-agent.sha256` next to the download.
+
+### Build platforms, the whole matrix, and the live view
+
+* **Build platforms on this PC** lists every compiler (Visual C++ 6, modern MSVC, MinGW-w64 + Clang, MinGW-w64 + GCC) with
+  a green *ready* or red *not ready* (and what to fix). Click one to select it in the configurator.
+* **Build the whole matrix on my PC** (above the matrix) queues every game, compiler and configuration that this PC is
+  ready for. Each cell then turns green (built), red (failed) or amber (building), and the line beside the button says
+  whether the whole matrix compiled.
+* **Live tasks** shows the running build with a timer and its log following along, and a bar of how much of the batch is done.
+
+What has been run for real on one Windows 11 PC (Podman for the containers, Visual Studio Build Tools 18 for MSVC):
+
+| Platform | Result |
+|---|---|
+| Visual C++ 6 (Podman + Wine) | Release, Profile, Debug, Release + logging, Weekly: green for Generals, Zero Hour and Universal |
+| Modern MSVC (native, `--env-script vcvarsall.bat --env-args x86`) | Release, Profile, Debug: green for all three |
+| MinGW-w64 + Clang 18 (Podman) | Release, Profile, Debug: green for all three. Profile has no function-level call tracing, because the source writes it in MSVC-only assembly |
+| MinGW-w64 + GCC (Podman) | Release, Debug: green for all three. There is no Profile build: gcc cannot compile that assembly |
+
+Not verified: WSL as the container route, the `vcpkg` presets, VC6 or MSVC *in Windows containers*, a second PC.
 
 ### Build across history
 
@@ -62,9 +84,13 @@ and its own download, which makes it easy to find the change where something sta
 * **Commits** count from the oldest commit of your current branch's first-parent history: commit 1 is the oldest.
 * Every step is built in a separate temporary git worktree. Your branch, working files and index are not touched, and the
   worktree is removed afterwards. The only change to your repository is the fetched objects. (A single build, not a range,
-  uses CMake's own `build/` folder in your checkout.)
+  uses CMake's own `build/` folder in the source folder.)
 * A revision that predates `CMakePresets.json`, or lacks the preset, is reported as failed for that step.
 * **Cancel** next to the progress line stops the running build, drops what is queued, and stops a range before its next step.
+
+### Where the source comes from
+
+Each project is either **auto** (default) or **local** (you gave a folder). In auto mode the agent keeps one blobless git clone per project in `<user cache dir>/gpa/<project>` (on Windows `%LocalAppData%\gpa\ggc`), fetches before each build, checks out the requested commit (or the newest default branch for `latest`, found with `git ls-remote --symref`) and builds there; `build/` is kept so rebuilds are incremental. `GET /api/projects` reports mode, cache size and checked-out commit; `POST /api/projects {"id","dir":""}` switches back to auto and `POST /api/projects/clear-cache {"id"}` deletes the download. Known projects: ggc, generalsx, bobtista, generalsonline; any other id needs a folder.
 
 ### Options and safety
 
