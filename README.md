@@ -1,5 +1,7 @@
 # RELEASE
 
+> **Warning: no warranty.** This software is provided "as is", without warranty of any kind, express or implied. The build agent, the builds it makes and this website may not work, may fail, or may not behave as expected. You use them entirely at your own risk.
+
 wasm builder and runner
 
 ## Generals Build Portal (demo)
@@ -85,7 +87,9 @@ Everything below was run on **one Windows 11 PC** (Podman for the containers, Vi
 
 **Untested**
 
-* **The built exes have never been run on Windows**, so a problem from the swapped-in static D3DX8 code would only show at run time.
+* **The new static-D3DX8 MinGW exes have not been confirmed to run.** The earlier MinGW exes were run on Windows by the
+  maintainer and started but complained about the missing `d3dx8d.dll` and `libwinpthread-1.dll`; the fixes remove exactly
+  those imports (checked in the import tables), but nobody has yet confirmed the new exes run (or render) correctly.
 * **macOS**: the macOS agent and the native macOS builds have never run (only checked with fakes). The Linux x86-64 agent was
   started in a container and built a toy project natively; the Linux ARM64 agent was only compiled.
 * **GeneralsX, the bobtista fork, Generals Online**: switches and presets are checked against their source, but no real game

@@ -33,7 +33,8 @@ Regenerate data and the bundle after touching `matrix.yaml`: `python3 scripts/po
   checks and explains (`doctor.go`), and the page disables Build until the PC is ready.
 - **No cloud builds.** Containers and WSL are the route for a ready-made environment. Visual C++ 6 and Visual Studio cannot be
   shipped (Microsoft licences), so they run natively on a Windows PC that has them; MinGW-w64 runs in a container or WSL.
-- **No data/trademark disclaimer text on the page.** The PR triangulator was removed on purpose: do not bring it back.
+- **No data/trademark disclaimer text on the page.** The one wanted exception is the short "no warranty" warning (top of the page and the
+  README): the owner asked for it explicitly. The PR triangulator was removed on purpose: do not bring it back.
 - Universal (both games in one package) is a game option, not a "default".
 - Do not open pull requests unless asked. Work is pushed straight to `main` of `mirelle7/RELEASE`.
 
@@ -59,7 +60,7 @@ Still open:
 9. MinGW exes are linked `-static` (no libwinpthread-1.dll) and against Microsoft's static `d3dx8.lib` from min-dx8-sdk instead of the
    debug import library (which needs d3dx8d.dll from the DirectX SDK): `agent/dx8shim.go` + `agent/toolchain/gpa_msvc_compat.cpp`
    (a few MSVC runtime helpers the lib needs) build `build/gpa-override/libd3dx8d.a` after configure. Verified by inspecting the exe imports
-   (clang on latest main, gcc on an older checkout); the built exe has never been run on Windows.
+   (clang on latest main, gcc on an older checkout); the maintainer ran the earlier exes on Windows (they failed on the two missing DLLs); the new exes are not yet confirmed to run.
 10. GCC cannot link the *latest* upstream main (2119cc9, undefined `MOTDSystem`, `OSDisplaySetBusyState`, winsock `_imp__listen`...) even
    without our flags: an upstream problem, older source links. Clang links it.
 8. The VC6 image copies the source onto the container's own disk (the Windows bind mount is far too slow); bump its tag if you change the recipe.
